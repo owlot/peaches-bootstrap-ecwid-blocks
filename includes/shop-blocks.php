@@ -17,6 +17,7 @@ function peaches_bootstrap_ecwid_create_blocks_init() {
 	register_block_type_from_metadata( __DIR__ . '/../build/ecwid-product' );
 	register_block_type_from_metadata( __DIR__ . '/../build/ecwid-category' );
 	register_block_type_from_metadata( __DIR__ . '/../build/ecwid-product-detail/' );
+	register_block_type_from_metadata( __DIR__ . '/../build/ecwid-product-field/' );
 	register_block_type_from_metadata( __DIR__ . '/../build/ecwid-product-add-to-cart/' );
 	register_block_type_from_metadata( __DIR__ . '/../build/ecwid-product-images/' );
 	register_block_type_from_metadata( __DIR__ . '/../build/ecwid-product-ingredients/' );

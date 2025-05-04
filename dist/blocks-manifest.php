@@ -22,14 +22,13 @@ return array(
 			'layout' => false,
 			'color' => array(
 				'overlay' => true
-			)
+			),
+			'interactivity' => true
 		),
 		'editorScript' => 'file:./index.js',
+		'viewScriptModule' => 'file:./view.js',
 		'editorStyle' => 'peaches-ecwid-category-editor',
 		'attributes' => array(
-			'classes' => array(
-				'type' => 'string'
-			),
 			'xs' => array(
 				'type' => 'object',
 				'default' => array(
@@ -89,14 +88,13 @@ return array(
 			'layout' => false,
 			'color' => array(
 				'overlay' => true
-			)
+			),
+			'interactivity' => true
 		),
 		'editorScript' => 'file:./index.js',
 		'style' => 'file:./style-index.css',
+		'viewScriptModule' => 'file:./view.js',
 		'attributes' => array(
-			'classes' => array(
-				'type' => 'string'
-			),
 			'id' => array(
 				'type' => 'integer'
 			),
@@ -263,6 +261,51 @@ return array(
 				)
 			)
 		)
+	),
+	'ecwid-product-field' => array(
+		'$schema' => 'https://schemas.wp.org/trunk/block.json',
+		'apiVersion' => 3,
+		'name' => 'peaches/ecwid-product-field',
+		'version' => '0.1.0',
+		'title' => 'Bootstrap ECWID Product Field',
+		'category' => 'peaches-bootstrap',
+		'ancestor' => array(
+			'peaches/ecwid-product-detail'
+		),
+		'description' => 'Display product field for ECWID products with Bootstrap styling.',
+		'keywords' => array(
+			'bootstrap',
+			'product',
+			'field',
+			'peaches',
+			'ecwid',
+			'template'
+		),
+		'textdomain' => 'peaches',
+		'supports' => array(
+			'html' => false,
+			'layout' => false,
+			'color' => array(
+				'overlay' => true
+			),
+			'interactivity' => true
+		),
+		'attributes' => array(
+			'fieldType' => array(
+				'type' => 'string',
+				'default' => 'title'
+			),
+			'htmlTag' => array(
+				'type' => 'string',
+				'default' => 'p'
+			),
+			'customFieldKey' => array(
+				'type' => 'string',
+				'default' => ''
+			)
+		),
+		'viewScriptModule' => 'file:./view.js',
+		'editorScript' => 'file:./index.js'
 	),
 	'ecwid-product-images' => array(
 		'$schema' => 'https://schemas.wp.org/trunk/block.json',

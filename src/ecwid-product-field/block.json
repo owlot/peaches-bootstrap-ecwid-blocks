@@ -1,0 +1,43 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "peaches/ecwid-product-field",
+	"version": "0.1.0",
+	"title": "Bootstrap ECWID Product Field",
+	"category": "peaches-bootstrap",
+	"ancestor": ["peaches/ecwid-product-detail"],
+	"description": "Display product field for ECWID products with Bootstrap styling.",
+	"keywords": [
+		"bootstrap",
+		"product",
+		"field",
+		"peaches",
+		"ecwid",
+		"template"
+	],
+	"textdomain": "peaches",
+	"supports": {
+		"html": false,
+		"layout": false,
+		"color": {
+			"overlay": true
+		},
+		"interactivity": true
+	},
+	"attributes": {
+		"fieldType": {
+			"type": "string",
+			"default": "title"
+		},
+		"htmlTag": {
+			"type": "string",
+			"default": "p"
+		},
+		"customFieldKey": {
+			"type": "string",
+			"default": ""
+		}
+	},
+	"viewScriptModule": "file:./view.js",
+	"editorScript": "file:./index.js"
+}
