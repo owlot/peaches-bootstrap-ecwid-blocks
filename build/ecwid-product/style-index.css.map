@@ -1,0 +1,1 @@
+{"version":3,"file":"ecwid-product/style-index.css","mappings":";;;AAAA;EACC;AACD,C","sources":["webpack://peaches-bootstrap-ecwid-blocks/./src/ecwid-product/style.scss"],"sourcesContent":[".card-footer {\n\t--bs-card-cap-bg: inherit;\n}\n"],"names":[],"sourceRoot":""}

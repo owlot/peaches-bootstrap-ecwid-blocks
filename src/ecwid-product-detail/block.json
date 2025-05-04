@@ -1,0 +1,49 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "peaches/ecwid-product-detail",
+	"version": "0.1.0",
+	"title": "Bootstrap ECWID Product Detail Template",
+	"category": "peaches-bootstrap",
+	"description": "A dynamic ECWID product detail template with Bootstrap styling.",
+	"keywords": [ "bootstrap", "product", "detail", "peaches", "ecwid", "template" ],
+	"textdomain": "peaches",
+	"supports": {
+		"html": false,
+		"layout": false,
+		"color": {
+			"overlay": true
+		}
+	},
+	"supports": {
+		"interactivity": true
+	},
+	"editorScript": "file:./index.js",
+	"render": "file:./render.php",
+	"attributes": {
+		"xs": {
+			"type": "object",
+			"default": {}
+		},
+		"sm": {
+			"type": "object",
+			"default": {}
+		},
+		"md": {
+			"type": "object",
+			"default": {}
+		},
+		"lg": {
+			"type": "object",
+			"default": {}
+		},
+		"xl": {
+			"type": "object",
+			"default": {}
+		},
+		"xxl": {
+			"type": "object",
+			"default": {}
+		}
+	}
+}

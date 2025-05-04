@@ -1,0 +1,40 @@
+{
+	"name": "peaches-bootstrap-ecwid-blocks",
+	"version": "0.1.1",
+	"description": "Gutenberg blocks created for Ecwid Bootstrap themed components.",
+	"author": "Peaches",
+	"license": "GPL-2.0-or-later",
+	"main": "build/index.js",
+	"scripts": {
+		"build": "wp-scripts build --experimental-modules",
+		"check-engines": "wp-scripts check-engines",
+		"check-licenses": "wp-scripts check-licenses",
+		"format": "wp-scripts format",
+		"lint:css": "wp-scripts lint-style",
+		"lint:js": "wp-scripts lint-js",
+		"fix:js": "wp-scripts lint-js --fix",
+		"lint:md:docs": "wp-scripts lint-md-docs",
+		"lint:pkg-json": "wp-scripts lint-pkg-json",
+		"packages-update": "wp-scripts packages-update",
+		"plugin-zip": "wp-scripts plugin-zip",
+		"start": "wp-scripts start --experimental-modules",
+		"test:e2e": "wp-scripts test-e2e",
+		"test:unit": "wp-scripts test-unit-js",
+		"write-manifest": "wp-scripts build-blocks-manifest --input=src --output=dist/blocks-manifest.php"
+	},
+	"devDependencies": {
+		"@wordpress/scripts": "^30.15.0",
+		"clsx": "^2.1.1"
+	},
+	"dependencies": {
+		"@wordpress/data": "^10.22.0",
+		"@wordpress/icons": "^10.22.0",
+		"@wordpress/interactivity": "^6.22.0",
+		"lodash.assign": "^4.2.0",
+		"react-slick": "^0.30.3",
+		"slick-carousel": "^1.8.1"
+	},
+	"files": [
+		"[^.]*"
+	]
+}

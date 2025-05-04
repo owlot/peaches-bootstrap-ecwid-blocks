@@ -1,0 +1,44 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "peaches/ecwid-product-images",
+	"version": "0.1.0",
+	"title": "Bootstrap ECWID Product Images",
+	"category": "peaches-bootstrap",
+	"ancestor": [ "peaches/ecwid-product-detail" ],
+	"description": "Display product images for ECWID products with Bootstrap styling.",
+	"keywords": [
+		"bootstrap",
+		"product",
+		"images",
+		"gallery",
+		"peaches",
+		"ecwid",
+		"template"
+	],
+	"textdomain": "peaches",
+	"supports": {
+		"html": false,
+		"layout": false,
+		"color": {
+			"overlay": true
+		},
+		"interactivity": true
+	},
+	"attributes": {
+		"imageSize": {
+			"type": "string",
+			"default": "medium"
+		},
+		"showThumbnails": {
+			"type": "boolean",
+			"default": true
+		},
+		"maxThumbnails": {
+			"type": "number",
+			"default": 5
+		}
+	},
+	"viewScriptModule": "file:./view.js",
+	"editorScript": "file:./index.js"
+}

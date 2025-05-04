@@ -1,0 +1,53 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "peaches/ecwid-product-add-to-cart",
+  "version": "0.1.0",
+  "title": "Bootstrap ECWID Product Add to cart Template",
+  "category": "peaches-bootstrap",
+  "ancestor": [
+    "peaches/ecwid-product-detail"
+  ],
+  "description": "A dynamic ECWID product add to cart template with Bootstrap styling.",
+  "keywords": [
+    "bootstrap",
+    "product",
+    "detail",
+    "peaches",
+    "ecwid",
+    "template",
+    "cart"
+  ],
+  "textdomain": "peaches",
+  "supports": {
+    "interactivity": true
+  },
+  "viewScriptModule": "file:./view.js",
+  "editorScript": "file:./index.js",
+  "attributes": {
+    "xs": {
+      "type": "object",
+      "default": {}
+    },
+    "sm": {
+      "type": "object",
+      "default": {}
+    },
+    "md": {
+      "type": "object",
+      "default": {}
+    },
+    "lg": {
+      "type": "object",
+      "default": {}
+    },
+    "xl": {
+      "type": "object",
+      "default": {}
+    },
+    "xxl": {
+      "type": "object",
+      "default": {}
+    }
+  }
+}
