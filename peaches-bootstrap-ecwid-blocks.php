@@ -22,10 +22,57 @@ define('PEACHES_ECWID_VERSION', '0.1.2');
 define('PEACHES_ECWID_PATH', plugin_dir_path(__FILE__));
 define('PEACHES_ECWID_URL', plugin_dir_url(__FILE__));
 
+// Load text domain for translations
+add_action('plugins_loaded', 'peaches_load_textdomain');
+function peaches_load_textdomain() {
+    load_plugin_textdomain('peaches', false, dirname(plugin_basename(__FILE__)) . '/languages');
+}
+
+// Add language detection early for both Polylang and WPML
+add_action('init', 'peaches_set_language', 0);
+function peaches_set_language() {
+    // Polylang support
+    if (function_exists('pll_current_language')) {
+        add_filter('parse_request', function($wp) {
+            if (preg_match('#^winkel/([^/]+)/?$#', $wp->request)) {
+                $curlang = pll_current_language();
+                if ($curlang) {
+                    // The correct way to set language in Polylang
+                    add_filter('pll_preferred_language', function() use ($curlang) {
+                        return $curlang;
+                    });
+
+                    // Set the language for Polylang (this is the correct approach)
+                    if (function_exists('pll_set_language')) {
+                        pll_set_language($curlang);
+                    }
+                }
+            }
+            return $wp;
+        }, 1);
+    }
+    // WPML support
+    elseif (defined('ICL_LANGUAGE_CODE') && class_exists('SitePress')) {
+        global $sitepress;
+        if ($sitepress) {
+            add_filter('parse_request', function($wp) {
+                if (preg_match('#^winkel/([^/]+)/?$#', $wp->request)) {
+                    if (defined('ICL_LANGUAGE_CODE')) {
+                        $sitepress->switch_lang(ICL_LANGUAGE_CODE);
+                    }
+                }
+                return $wp;
+            }, 1);
+        }
+    }
+}
+
 // Include required files
 require_once PEACHES_ECWID_PATH . 'includes/rewrite-rules.php';
 require_once PEACHES_ECWID_PATH . 'includes/shop-blocks.php';
-//require_once PEACHES_ECWID_PATH . 'includes/ecwid-integration.php';
+require_once PEACHES_ECWID_PATH . 'includes/ingredients-post-type.php';
+require_once PEACHES_ECWID_PATH . 'includes/master-ingredients-post-type.php';
+require_once PEACHES_ECWID_PATH . 'includes/ingredients-api.php';
 
 /**
  * Plugin activation hook
@@ -76,8 +123,6 @@ function peaches_missing_ecwid_notice() {
  * Force rewrite rules update when needed
  */
 function peaches_init_check() {
-	error_log('🍑 Peaches plugin loaded');
-
     // Check if we need to update rewrite rules
     $activated = get_option('peaches_ecwid_activated', 0);
     $flushed = get_option('peaches_ecwid_flushed', 0);

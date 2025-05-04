@@ -13,14 +13,13 @@
 		"layout": false,
 		"color": {
 			"overlay": true
-		}
+		},
+		"interactivity": true
 	},
 	"editorScript": "file:./index.js",
+	"viewScriptModule": "file:./view.js",
 	"editorStyle": "peaches-ecwid-category-editor",
 	"attributes": {
-		"classes": {
-			"type": "string"
-		},
 		"xs": {
 			"type": "object",
 			"default": {

@@ -12,6 +12,28 @@
 
 require_once plugin_dir_path(__FILE__) . '../../includes/utils.php';
 
+// Ensure proper language detection for Polylang and WPML
+$current_lang = '';
+
+if (function_exists('pll_current_language')) {
+    $current_lang = pll_current_language();
+
+    // Set the language for the current request (Polylang)
+    if ($current_lang && function_exists('pll_set_language')) {
+        pll_set_language($current_lang);
+    }
+} elseif (defined('ICL_LANGUAGE_CODE')) {
+    $current_lang = ICL_LANGUAGE_CODE;
+
+    // Set the language for WPML
+    if (class_exists('SitePress')) {
+        global $sitepress;
+        if ($sitepress) {
+            $sitepress->switch_lang($current_lang);
+        }
+    }
+}
+
 $product_slug = get_query_var('ecwid_product_slug', '');
 $product_id = peaches_get_product_id_from_slug($product_slug);
 

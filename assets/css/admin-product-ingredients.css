@@ -1,0 +1,35 @@
+.simple-product-search {
+    margin-top: 20px;
+    padding: 15px;
+    background: #f8f8f8;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+}
+
+.simple-product-search h4 {
+    margin-top: 0;
+    margin-bottom: 10px;
+}
+
+.product-search-results {
+    background: white;
+    border-radius: 3px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.product-search-item {
+    transition: background-color 0.2s ease;
+}
+
+.product-search-item:last-child {
+    border-bottom: none !important;
+}
+
+/* Ingredient items styling */
+.ingredient-item {
+    margin-bottom: 10px;
+}
+
+.ingredient-item .handle-actions {
+    float: right;
+}

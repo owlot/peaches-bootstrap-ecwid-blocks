@@ -7,7 +7,7 @@ import {
 	useBlockProps,
 } from '@wordpress/block-editor';
 import { useMemo } from '@wordpress/element';
-import { PanelBody, ToggleControl, SelectControl, RangeControl, Notice } from '@wordpress/components';
+import { PanelBody, ToggleControl, TextControl, Notice } from '@wordpress/components';
 
 /**
  * Internal dependencies
@@ -28,7 +28,7 @@ const SUPPORTED_SETTINGS = {
 
 function ProductIngredientsEdit(props) {
 	const { attributes, setAttributes } = props;
-	const { imageSize, showThumbnails, maxThumbnails } = attributes;
+	const { showTitle, accordionTitle, startOpened } = attributes;
 
 	const className = useMemo(
 		() => computeClassName(attributes),
@@ -40,32 +40,19 @@ function ProductIngredientsEdit(props) {
 		'data-wp-interactive': "peaches-ecwid-product-ingredients",
 	});
 
-	// Sample placeholder ingredients
-	const placeholderIngredients = [
-		{
-			name: 'Prickly Pear Seed Oil',
-			description: 'Rich in vitamin E and antioxidants, prickly pear seed oil helps protect the skin against environmental stressors while promoting hydration.'
-		},
-		{
-			name: 'Coriander Seed Oil',
-			description: 'Known for its soothing properties, coriander seed oil helps calm and balance the skin while providing gentle hydration.'
-		},
-		{
-			name: 'Plum Seed Oil',
-			description: 'A lightweight, non-greasy oil that deeply nourishes the skin and hair. Rich in essential fatty acids and antioxidants.'
-		},
-		{
-			name: 'Sacha Inchi Oil',
-			description: 'High in omega-3 fatty acids, this oil provides deep nourishment for damaged hair, helping to restore its natural shine and strength.'
-		}
-	];
 	return (
 		<>
 			<InspectorControls>
-				<PanelBody title={__('Product Images Settings', 'ecwid-shopping-cart')}>
+				<PanelBody title={__('Product Ingredients Settings', 'ecwid-shopping-cart')}>
 					<Notice status="info" isDismissible={false}>
 						{__('This block displays product ingredients dynamically based on the product detail block.', 'ecwid-shopping-cart')}
 					</Notice>
+
+					<ToggleControl
+						label={__('Start Opened', 'ecwid-shopping-cart')}
+						checked={startOpened}
+						onChange={(value) => setAttributes({ startOpened: value })}
+					/>
 				</PanelBody>
 
 				<BootstrapSettingsPanels
@@ -76,28 +63,57 @@ function ProductIngredientsEdit(props) {
 			</InspectorControls>
 
 			<div {...blockProps}>
-				<div className="ingredients-accordion">
-					{placeholderIngredients.map((ingredient, index) => (
-                        <div className="ingredient-item" key={index}>
-                            <div className="ingredient-header">
-                                <span className="ingredient-name">{ingredient.name}</span>
-                                <span className="toggle-icon">+</span>
-                            </div>
-                            {index === 0 && (
-                                <div className="ingredient-content" style={{ maxHeight: 'none', opacity: 1, padding: '0 1rem 1.25rem 0' }}>
-                                    <div className="ingredient-description">
-                                        {ingredient.description}
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                    ))}
-                </div>
-				<div className="components-notice is-info" style={{ marginTop: '20px' }}>
-                    <div className="components-notice__content">
-                        {__('This block displays product ingredients from the custom post type. Add ingredients in the Product Ingredients section of the admin.', 'ecwid-shopping-cart')}
-                    </div>
-                </div>
+				<div className="product-ingredients-preview">
+					{showTitle && (
+						<h3 className="mb-3">{accordionTitle}</h3>
+					)}
+
+					<div className="accordion" id="ingredientsPreview">
+						<div className="accordion-item">
+							<div className="accordion-header">
+								<button
+									className={ `accordion-button ${
+										! startOpened ? 'collapsed' : ''
+									}` }
+									type="button"
+								>
+									{ __(
+										'Prickly Pear Seed Oil',
+										'ecwid-shopping-cart'
+									) }
+								</button>
+							</div>
+							<div
+								className={ `accordion-collapse collapse ${
+									startOpened ? 'show' : ''
+								}` }
+							>
+								<div className="accordion-body">
+									{__('Rich in antioxidants and fatty acids.', 'ecwid-shopping-cart')}
+								</div>
+							</div>
+						</div>
+
+						<div className="accordion-item">
+							<div className="accordion-header">
+								<button
+									className="accordion-button collapsed"
+									type="button"
+								>
+									{ __(
+										'Coriander Seed Oil',
+										'ecwid-shopping-cart'
+									) }
+								</button>
+							</div>
+							<div className="accordion-collapse collapse">
+								<div className="accordion-body">
+									{__('Known for its hydrating properties.', 'ecwid-shopping-cart')}
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
 			</div>
 		</>
 	);

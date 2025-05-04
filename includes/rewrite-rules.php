@@ -14,12 +14,39 @@ function peaches_add_ecwid_rewrite_rules() {
     if ($template_page) {
         $template_page_id = $template_page->ID;
 
-        // Add rewrite rule with high priority
+        // Add rewrite rule for default URLs
         add_rewrite_rule(
             '^winkel/([^/]+)/?$',
             'index.php?page_id=' . $template_page_id . '&ecwid_product_slug=$matches[1]',
             'top'
         );
+
+        // Add support for Polylang language prefixes
+        if (function_exists('pll_languages_list')) {
+            $languages = pll_languages_list();
+            foreach ($languages as $lang) {
+                add_rewrite_rule(
+                    '^' . $lang . '/winkel/([^/]+)/?$',
+                    'index.php?page_id=' . $template_page_id . '&ecwid_product_slug=$matches[1]&lang=' . $lang,
+                    'top'
+                );
+            }
+        }
+
+        // Add support for WPML language prefixes
+        if (defined('ICL_LANGUAGE_CODE') && class_exists('SitePress')) {
+            global $sitepress;
+            if ($sitepress && method_exists($sitepress, 'get_active_languages')) {
+                $languages = $sitepress->get_active_languages();
+                foreach ($languages as $lang_code => $lang) {
+                    add_rewrite_rule(
+                        '^' . $lang_code . '/winkel/([^/]+)/?$',
+                        'index.php?page_id=' . $template_page_id . '&ecwid_product_slug=$matches[1]&lang=' . $lang_code,
+                        'top'
+                    );
+                }
+            }
+        }
     } else {
         peaches_register_product_template();
     }
@@ -62,8 +89,27 @@ function peaches_product_template_redirect() {
         // Get the product detail page
         $template_page = get_page_by_path('product-detail');
         if ($template_page) {
+            // If Polylang is active, get the translated page
+            if (function_exists('pll_get_post')) {
+                $current_lang = pll_current_language();
+                $translated_page = pll_get_post($template_page->ID, $current_lang);
+                if ($translated_page) {
+                    $template_page = get_post($translated_page);
+                }
+            }
+            // If WPML is active, get the translated page
+            elseif (function_exists('icl_object_id')) {
+                $current_lang = ICL_LANGUAGE_CODE;
+                $translated_page_id = icl_object_id($template_page->ID, 'page', false, $current_lang);
+                if ($translated_page_id) {
+                    $template_page = get_post($translated_page_id);
+                }
+            }
+
             // Force WordPress to use our template
             global $wp_query;
+            $wp_query->queried_object = $template_page;
+            $wp_query->queried_object_id = $template_page->ID;
             $wp_query->is_page = true;
             $wp_query->is_single = false;
             $wp_query->is_home = false;
@@ -71,48 +117,14 @@ function peaches_product_template_redirect() {
             $wp_query->is_category = false;
             $wp_query->is_404 = false;
             $wp_query->post = $template_page;
+            $wp_query->posts = array($template_page);
 
             // Prevent Ecwid from taking over
             remove_all_actions('template_redirect', 1);
         }
     }
 }
-add_action('template_redirect', 'peaches_product_template_redirect', 1); // Higher priority than Ecwid
-
-/**
- * Disable Ecwid's own product pages when on our custom product URLs
- */
-function peaches_disable_ecwid_pages($is_activate) {
-    // If this is our custom product URL, disable Ecwid's product page handling
-    if (get_query_var('ecwid_product_slug')) {
-        return false;
-    }
-    return $is_activate;
-}
-add_filter('ecwid_is_activate_html_catalog', 'peaches_disable_ecwid_pages', 20);
-
-/**
- * Priority function to disable Ecwid's store page processing when on our URLs
- */
-function peaches_prevent_ecwid_store_page_detect($result) {
-    if (get_query_var('ecwid_product_slug')) {
-        return false;
-    }
-    return $result;
-}
-add_filter('ecwid_is_store_page', 'peaches_prevent_ecwid_store_page_detect', 5);
-
-/**
- * Intercept Ecwid's URL parsing to prevent it from handling our URLs
- */
-function peaches_prevent_ecwid_parse_url($parse) {
-    if (get_query_var('ecwid_product_slug')) {
-        error_log("Custom product template triggered for slug: " . get_query_var('ecwid_product_slug'));
-        return false;
-    }
-    return $parse;
-}
-add_filter('ecwid_parse_url', 'peaches_prevent_ecwid_parse_url', 5);
+add_action('template_redirect', 'peaches_product_template_redirect', 1);
 
 /**
  * Manually flush rewrite rules on plugin activation
@@ -123,29 +135,6 @@ function peaches_flush_rewrite_rules() {
     peaches_add_ecwid_rewrite_rules();
 }
 register_activation_hook(__FILE__, 'peaches_flush_rewrite_rules');
-/**
- * Hijack Ecwid's default URL handling for /winkel/{slug}
- */
-add_action('parse_request', function ($wp) {
-    if (preg_match('#^winkel/([^/]+)/?$#', $wp->request, $matches)) {
-        $slug = sanitize_title($matches[1]);
-
-        // Point to your product-detail page
-        $page = get_page_by_path('product-detail');
-        if ($page) {
-            $wp->query_vars = [
-                'page_id' => $page->ID,
-                'ecwid_product_slug' => $slug,
-            ];
-            $wp->matched_rule = 'custom_winkel_override';
-            $wp->matched_query = 'index.php?page_id=' . $page->ID . '&ecwid_product_slug=' . $slug;
-        }
-    }
-});
-add_filter('query_vars', function ($vars) {
-    $vars[] = 'ecwid_product_slug';
-    return $vars;
-});
 
 /**
  * Add Open Graph tags for product pages

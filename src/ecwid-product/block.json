@@ -13,14 +13,13 @@
 		"layout": false,
 		"color": {
 			"overlay": true
-		}
+		},
+		"interactivity": true
 	},
 	"editorScript": "file:./index.js",
 	"style": "file:./style-index.css",
+	"viewScriptModule": "file:./view.js",
 	"attributes": {
-		"classes": {
-			"type": "string"
-		},
 		"id": {
 			"type": "integer"
 		},

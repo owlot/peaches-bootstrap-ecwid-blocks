@@ -5,16 +5,15 @@
 	"version": "0.1.0",
 	"title": "Bootstrap ECWID Product Ingredients",
 	"category": "peaches-bootstrap",
-	"ancestor": [ "peaches/ecwid-product-detail" ],
+	"ancestor": ["peaches/ecwid-product-detail"],
 	"description": "Display product ingredients for ECWID products with Bootstrap accordion styling.",
 	"keywords": [
 		"bootstrap",
 		"product",
-		"accordion",
 		"ingredients",
+		"accordion",
 		"peaches",
-		"ecwid",
-		"template"
+		"ecwid"
 	],
 	"textdomain": "peaches",
 	"supports": {
@@ -24,6 +23,12 @@
 			"overlay": true
 		},
 		"interactivity": true
+	},
+	"attributes": {
+		"startOpened": {
+			"type": "boolean",
+			"default": false
+		}
 	},
 	"viewScriptModule": "file:./view.js",
 	"editorScript": "file:./index.js"

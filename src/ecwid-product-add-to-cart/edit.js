@@ -58,11 +58,11 @@ function AddToCartEdit( props ) {
 			</InspectorControls>
 			<div { ...blockProps } >
 				<div className="input-group">
-					<button className="btn btn-outline-secondary quantity-decrease" type="button" data-wp-on--click="actions.decreaseAmount">-</button>
-					<input type="number" className="form-control text-center" data-wp-bind--value="context.amount" min="1" data-wp-on--input="actions.setAmount"/>
-					<button className="btn btn-outline-secondary quantity-increase" type="button" data-wp-on--click="actions.increaseAmount">+</button>
+					<button className="btn btn-light quantity-decrease" type="button" data-wp-on--click="actions.decreaseAmount">-</button>
+					<input type="number" className="form-control bg-light border-0 text-center" data-wp-bind--value="context.amount" min="1" data-wp-on--input="actions.setAmount"/>
+					<button className="btn btn-light quantity-increase" type="button" data-wp-on--click="actions.increaseAmount">+</button>
 				</div>
-				<button className="btn btn-primary" data-wp-on--click="actions.addToCart">
+				<button className="btn btn-secondary" data-wp-on--click="actions.addToCart">
 					{__('Add to Cart', 'ecwid-shopping-cart')}
 				</button>
 			</div>

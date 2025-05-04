@@ -88,21 +88,20 @@ function ProductImagesEdit(props) {
 
 			<div {...blockProps}>
 				<div className="product-images-container">
-					<div className="main-image">
+					<div className="main-image ratio ratio-1x1 border border-1 border-dark">
 						<img
-							src="https://placehold.co/600x400?text=Product+Image+Preview"
 							className="img-fluid"
+							src="https://placehold.co/600x400?text=Product+Image+Preview"
 							alt={__('Product Image Preview', 'ecwid-shopping-cart')}
 						/>
 					</div>
-
 					{showThumbnails && (
-						<div className="thumbnails d-flex mt-2">
+						<div className="thumbnails d-flex">
 							{Array.from({ length: Math.min(maxThumbnails, 5) }).map((_, i) => (
-								<div key={i} className="thumbnail-item me-2">
+								<div key={i} className="ratio ratio-1x1 border border-dark border-1">
 									<img
 										src={`https://placehold.co/100x100?text=${i + 1}`}
-										className="img-thumbnail"
+										className="img-fluid"
 										alt={__('Thumbnail', 'ecwid-shopping-cart')}
 									/>
 								</div>

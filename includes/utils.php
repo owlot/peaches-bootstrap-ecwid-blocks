@@ -315,4 +315,27 @@ function build_add_to_cart_block() {
 	<?php
 }
 
+function peaches_get_current_language() {
+    if (function_exists('pll_current_language')) {
+        return pll_current_language();
+    } elseif (defined('ICL_LANGUAGE_CODE')) {
+        return ICL_LANGUAGE_CODE;
+    }
+    return '';
+}
+
+function peaches_get_translated_post($post_id, $lang = null) {
+    if ($lang === null) {
+        $lang = peaches_get_current_language();
+    }
+
+    if (function_exists('pll_get_post')) {
+        return pll_get_post($post_id, $lang);
+    } elseif (function_exists('icl_object_id')) {
+        return icl_object_id($post_id, 'page', false, $lang);
+    }
+
+    return $post_id;
+}
+
 ?>

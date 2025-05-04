@@ -1,0 +1,31 @@
+<wpml-config>
+    <admin-texts>
+        <!-- Register admin strings for translation -->
+        <key name="peaches-ecwid-options">
+            <key name="*" />
+        </key>
+    </admin-texts>
+
+    <language-selector-settings>
+        <!-- Make sure language switcher appears on custom product pages -->
+        <key name="peaches_ecwid_product_page">
+            <key name="display_on_front" />
+        </key>
+    </language-selector-settings>
+
+    <custom-types>
+        <!-- Make post types translatable -->
+        <custom-type translate="1">product_ingredients</custom-type>
+        <custom-type translate="1">master_ingredient</custom-type>
+    </custom-types>
+
+    <custom-fields>
+        <!-- Make custom fields translatable -->
+        <custom-field action="translate">_ingredient_description</custom-field>
+        <custom-field action="translate">_ingredient_name_*</custom-field>
+        <custom-field action="translate">_ingredient_description_*</custom-field>
+        <custom-field action="copy">_ecwid_product_id</custom-field>
+        <custom-field action="copy">_ecwid_product_sku</custom-field>
+        <custom-field action="copy">_product_ingredients</custom-field>
+    </custom-fields>
+</wpml-config>
