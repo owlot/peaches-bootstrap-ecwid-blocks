@@ -24,8 +24,8 @@ const SUPPORTED_SETTINGS = {
 
 function ProductEdit( props ) {
 	const { attributes, setAttributes } = props;
-	const [productData, setProductData] = useState(null);
-	const [isLoading, setIsLoading] = useState(false);
+	const [ productData, setProductData ] = useState( null );
+	const [ isLoading, setIsLoading ] = useState( false );
 
 	const className = useMemo(
 		() => computeClassName( attributes ),
@@ -35,12 +35,12 @@ function ProductEdit( props ) {
 	const blockProps = useBlockProps( { className } );
 
 	// Fetch product data when ID changes using the WordPress AJAX endpoint
-	useEffect(() => {
-		if (attributes.id) {
-			setIsLoading(true);
+	useEffect( () => {
+		if ( attributes.id ) {
+			setIsLoading( true );
 
 			// Use WordPress AJAX to fetch product data from server
-			window.jQuery.ajax({
+			window.jQuery.ajax( {
 				url: window.ajaxurl || '/wp-admin/admin-ajax.php',
 				method: 'POST',
 				dataType: 'json',
@@ -48,30 +48,30 @@ function ProductEdit( props ) {
 					action: 'get_ecwid_product_data',
 					product_id: attributes.id,
 					_ajax_nonce: window.EcwidGutenbergParams?.nonce || '',
-					security: window.EcwidGutenbergParams?.nonce || ''
+					security: window.EcwidGutenbergParams?.nonce || '',
 				},
-				success: function(response) {
-					setIsLoading(false);
-					if (response && response.success && response.data) {
-						setProductData(response.data);
+				success: function ( response ) {
+					setIsLoading( false );
+					if ( response && response.success && response.data ) {
+						setProductData( response.data );
 					} else {
-						console.error('Product not found:', response);
+						console.error( 'Product not found:', response );
 					}
 				},
-				error: function(xhr, status, error) {
-					setIsLoading(false);
-					console.error('AJAX Error:', {
+				error: function ( xhr, status, error ) {
+					setIsLoading( false );
+					console.error( 'AJAX Error:', {
 						status: status,
 						error: error,
 						responseText: xhr.responseText,
-						statusCode: xhr.status
-					});
-				}
-			});
+						statusCode: xhr.status,
+					} );
+				},
+			} );
 		} else {
-			setProductData(null);
+			setProductData( null );
 		}
-	}, [attributes.id]);
+	}, [ attributes.id ] );
 
 	const saveCallback = function ( params ) {
 		const newAttributes = {
@@ -79,36 +79,44 @@ function ProductEdit( props ) {
 		};
 
 		// Update the global cache if it exists
-		if (window.EcwidGutenbergParams && window.EcwidGutenbergParams.products) {
-			window.EcwidGutenbergParams.products[ params.newProps.product.id ] = {
-				name: params.newProps.product.name,
-				imageUrl: params.newProps.product.thumb,
-			};
+		if (
+			window.EcwidGutenbergParams &&
+			window.EcwidGutenbergParams.products
+		) {
+			window.EcwidGutenbergParams.products[ params.newProps.product.id ] =
+				{
+					name: params.newProps.product.name,
+					imageUrl: params.newProps.product.thumb,
+				};
 		}
 
 		params.originalProps.setAttributes( newAttributes );
 	};
 
 	function openEcwidProductPopup( popupProps ) {
-		if (typeof window.ecwid_open_product_popup === 'function') {
+		if ( typeof window.ecwid_open_product_popup === 'function' ) {
 			window.ecwid_open_product_popup( {
 				saveCallback,
 				props: popupProps,
 			} );
 		} else {
-			console.error('Ecwid product popup function not found');
+			console.error( 'Ecwid product popup function not found' );
 		}
 	}
 
 	// Extract subtitle from product attributes
 	const getProductSubtitle = () => {
-		if (!productData || !productData.attributes) return '';
+		if ( ! productData || ! productData.attributes ) return '';
 
 		const subtitleAttribute = productData.attributes.find(
-			attr => attr.name === 'Ondertitel'
+			( attr ) => attr.name === 'Ondertitel'
 		);
 
-		return subtitleAttribute?.valueTranslated?.nl || subtitleAttribute?.value || '';
+		return (
+			subtitleAttribute?.valueTranslated?.nl ||
+			subtitleAttribute?.value ||
+			''
+		);
 	};
 
 	return (
@@ -126,7 +134,9 @@ function ProductEdit( props ) {
 								</label>
 							</div>
 							<div className="ec-store-inspector-row">
-								{ productData?.name && <label>{ productData.name }</label> }
+								{ productData?.name && (
+									<label>{ productData.name }</label>
+								) }
 
 								<button
 									className="button"
@@ -174,7 +184,8 @@ function ProductEdit( props ) {
 								openEcwidProductPopup( params );
 							} }
 						>
-							{ window.EcwidGutenbergParams?.chooseProduct || __( 'Choose Product', 'ecwid-shopping-cart' ) }
+							{ window.EcwidGutenbergParams?.chooseProduct ||
+								__( 'Choose Product', 'ecwid-shopping-cart' ) }
 						</button>
 					</div>
 				) }
@@ -182,9 +193,15 @@ function ProductEdit( props ) {
 					<div className="card h-100 border-0">
 						{ isLoading && (
 							<div className="position-absolute top-50 start-50 translate-middle">
-								<div className="spinner-border text-primary" role="status">
+								<div
+									className="spinner-border text-primary"
+									role="status"
+								>
 									<span className="visually-hidden">
-										{ __( 'Loading product...', 'ecwid-shopping-cart' ) }
+										{ __(
+											'Loading product...',
+											'ecwid-shopping-cart'
+										) }
 									</span>
 								</div>
 							</div>
@@ -200,7 +217,12 @@ function ProductEdit( props ) {
 							) : (
 								<div className="card-img-top bg-light d-flex align-items-center justify-content-center">
 									<span className="text-muted">
-										{ isLoading ? __( '...', 'ecwid-shopping-cart' ) : __( 'Product Image', 'ecwid-shopping-cart' ) }
+										{ isLoading
+											? __( '...', 'ecwid-shopping-cart' )
+											: __(
+													'Product Image',
+													'ecwid-shopping-cart'
+											  ) }
 									</span>
 								</div>
 							) }
@@ -208,18 +230,30 @@ function ProductEdit( props ) {
 						<div className="card-body p-2 p-md-3">
 							<h5 className="card-title">
 								{ productData?.name ||
-								  (isLoading ? '...' : __( 'Product Name', 'ecwid-shopping-cart' )) }
+									( isLoading
+										? '...'
+										: __(
+												'Product Name',
+												'ecwid-shopping-cart'
+										  ) ) }
 							</h5>
 							<p className="card-text text-muted">
 								{ getProductSubtitle() ||
-								  (isLoading ? '...' : __( 'Product Subtitle', 'ecwid-shopping-cart' )) }
+									( isLoading
+										? '...'
+										: __(
+												'Product Subtitle',
+												'ecwid-shopping-cart'
+										  ) ) }
 							</p>
 						</div>
 						<div className="card-footer border-0">
 							<div className="card-text fw-bold">
-								{ productData?.price ?
-								  `€ ${productData.price}` :
-								  (isLoading ? '...' : '€ --') }
+								{ productData?.price
+									? `€ ${ productData.price }`
+									: isLoading
+									? '...'
+									: '€ --' }
 							</div>
 						</div>
 					</div>

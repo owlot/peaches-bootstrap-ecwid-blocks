@@ -6,7 +6,14 @@
 	"title": "Bootstrap ECWID Product Detail Template",
 	"category": "peaches-bootstrap",
 	"description": "A dynamic ECWID product detail template with Bootstrap styling.",
-	"keywords": [ "bootstrap", "product", "detail", "peaches", "ecwid", "template" ],
+	"keywords": [
+		"bootstrap",
+		"product",
+		"detail",
+		"peaches",
+		"ecwid",
+		"template"
+	],
 	"textdomain": "peaches",
 	"supports": {
 		"html": false,

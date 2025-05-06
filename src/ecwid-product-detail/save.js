@@ -14,7 +14,9 @@ import { useBlockProps, useInnerBlocksProps } from '@wordpress/block-editor';
 import { computeClassName } from '../../../peaches-bootstrap-blocks/src/utils/bootstrap_settings';
 
 export default function save( { attributes } ) {
-	const blockProps = useBlockProps.save( { className: computeClassName( attributes ) } );
+	const blockProps = useBlockProps.save( {
+		className: computeClassName( attributes ),
+	} );
 	const innerBlocksProps = useInnerBlocksProps.save( blockProps );
 	return <div { ...innerBlocksProps } />;
 }

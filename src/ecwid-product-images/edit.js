@@ -2,12 +2,15 @@
  * External dependencies
  */
 import { __ } from '@wordpress/i18n';
-import {
-	InspectorControls,
-	useBlockProps,
-} from '@wordpress/block-editor';
+import { InspectorControls, useBlockProps } from '@wordpress/block-editor';
 import { useMemo } from '@wordpress/element';
-import { PanelBody, ToggleControl, SelectControl, RangeControl, Notice } from '@wordpress/components';
+import {
+	PanelBody,
+	ToggleControl,
+	SelectControl,
+	RangeControl,
+	Notice,
+} from '@wordpress/components';
 
 /**
  * Internal dependencies
@@ -27,87 +30,117 @@ const SUPPORTED_SETTINGS = {
 };
 
 const IMAGE_SIZE_OPTIONS = [
-	{ label: __('Small', 'ecwid-shopping-cart'), value: 'small' },
-	{ label: __('Medium', 'ecwid-shopping-cart'), value: 'medium' },
-	{ label: __('Large', 'ecwid-shopping-cart'), value: 'large' },
-	{ label: __('Original', 'ecwid-shopping-cart'), value: 'original' },
+	{ label: __( 'Small', 'ecwid-shopping-cart' ), value: 'small' },
+	{ label: __( 'Medium', 'ecwid-shopping-cart' ), value: 'medium' },
+	{ label: __( 'Large', 'ecwid-shopping-cart' ), value: 'large' },
+	{ label: __( 'Original', 'ecwid-shopping-cart' ), value: 'original' },
 ];
 
-function ProductImagesEdit(props) {
+function ProductImagesEdit( props ) {
 	const { attributes, setAttributes } = props;
 	const { imageSize, showThumbnails, maxThumbnails } = attributes;
 
 	const className = useMemo(
-		() => computeClassName(attributes),
-		[attributes]
+		() => computeClassName( attributes ),
+		[ attributes ]
 	);
 
-	const blockProps = useBlockProps({
+	const blockProps = useBlockProps( {
 		className,
-		'data-wp-interactive': "peaches-ecwid-product-images",
-	});
+		'data-wp-interactive': 'peaches-ecwid-product-images',
+	} );
 
 	return (
 		<>
 			<InspectorControls>
-				<PanelBody title={__('Product Images Settings', 'ecwid-shopping-cart')}>
-					<Notice status="info" isDismissible={false}>
-						{__('This block displays product images dynamically based on the product detail block.', 'ecwid-shopping-cart')}
+				<PanelBody
+					title={ __(
+						'Product Images Settings',
+						'ecwid-shopping-cart'
+					) }
+				>
+					<Notice status="info" isDismissible={ false }>
+						{ __(
+							'This block displays product images dynamically based on the product detail block.',
+							'ecwid-shopping-cart'
+						) }
 					</Notice>
 
 					<SelectControl
-						label={__('Main Image Size', 'ecwid-shopping-cart')}
-						value={imageSize}
-						options={IMAGE_SIZE_OPTIONS}
-						onChange={(value) => setAttributes({ imageSize: value })}
+						label={ __( 'Main Image Size', 'ecwid-shopping-cart' ) }
+						value={ imageSize }
+						options={ IMAGE_SIZE_OPTIONS }
+						onChange={ ( value ) =>
+							setAttributes( { imageSize: value } )
+						}
 					/>
 
 					<ToggleControl
-						label={__('Show Thumbnails', 'ecwid-shopping-cart')}
-						checked={showThumbnails}
-						onChange={(value) => setAttributes({ showThumbnails: value })}
+						label={ __( 'Show Thumbnails', 'ecwid-shopping-cart' ) }
+						checked={ showThumbnails }
+						onChange={ ( value ) =>
+							setAttributes( { showThumbnails: value } )
+						}
 					/>
 
-					{showThumbnails && (
+					{ showThumbnails && (
 						<RangeControl
-							label={__('Maximum Thumbnails', 'ecwid-shopping-cart')}
-							value={maxThumbnails}
-							onChange={(value) => setAttributes({ maxThumbnails: value })}
-							min={1}
-							max={10}
+							label={ __(
+								'Maximum Thumbnails',
+								'ecwid-shopping-cart'
+							) }
+							value={ maxThumbnails }
+							onChange={ ( value ) =>
+								setAttributes( { maxThumbnails: value } )
+							}
+							min={ 1 }
+							max={ 10 }
 						/>
-					)}
+					) }
 				</PanelBody>
 
 				<BootstrapSettingsPanels
-					setAttributes={setAttributes}
-					attributes={attributes}
-					supportedSettings={SUPPORTED_SETTINGS}
+					setAttributes={ setAttributes }
+					attributes={ attributes }
+					supportedSettings={ SUPPORTED_SETTINGS }
 				/>
 			</InspectorControls>
 
-			<div {...blockProps}>
+			<div { ...blockProps }>
 				<div className="product-images-container">
 					<div className="main-image ratio ratio-1x1 border border-1 border-dark">
 						<img
 							className="img-fluid"
 							src="https://placehold.co/600x400?text=Product+Image+Preview"
-							alt={__('Product Image Preview', 'ecwid-shopping-cart')}
+							alt={ __(
+								'Product Image Preview',
+								'ecwid-shopping-cart'
+							) }
 						/>
 					</div>
-					{showThumbnails && (
+					{ showThumbnails && (
 						<div className="thumbnails d-flex">
-							{Array.from({ length: Math.min(maxThumbnails, 5) }).map((_, i) => (
-								<div key={i} className="ratio ratio-1x1 border border-dark border-1">
+							{ Array.from( {
+								length: Math.min( maxThumbnails, 5 ),
+							} ).map( ( _, i ) => (
+								<div
+									key={ i }
+									className="ratio ratio-1x1 border border-dark border-1"
+								>
 									<img
-										src={`https://placehold.co/100x100?text=${i + 1}`}
+										src={ `https://placehold.co/100x100?text=${
+											i + 1
+										}` }
 										className="img-fluid"
-										alt={__('Thumbnail', 'ecwid-shopping-cart')}
+										alt={ __(
+											'Thumbnail',
+											'ecwid-shopping-cart'
+										) }
 									/>
 								</div>
-							))}
+							) ) }
 						</div>
-					)}
+					) }
 				</div>
 			</div>
 		</>

@@ -35,7 +35,7 @@ function ProductDetailEdit( { attributes, setAttributes } ) {
 	);
 
 	const blockProps = useBlockProps( { className } );
-	const innerBlocksProps = useInnerBlocksProps( blockProps, { } );
+	const innerBlocksProps = useInnerBlocksProps( blockProps, {} );
 
 	return (
 		<>

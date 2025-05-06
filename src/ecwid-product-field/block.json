@@ -5,7 +5,7 @@
 	"version": "0.1.0",
 	"title": "Bootstrap ECWID Product Field",
 	"category": "peaches-bootstrap",
-	"ancestor": ["peaches/ecwid-product-detail"],
+	"ancestor": [ "peaches/ecwid-product-detail" ],
 	"description": "Display product field for ECWID products with Bootstrap styling.",
 	"keywords": [
 		"bootstrap",

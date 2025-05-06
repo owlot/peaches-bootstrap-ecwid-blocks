@@ -2,12 +2,14 @@
  * External dependencies
  */
 import { __ } from '@wordpress/i18n';
-import {
-	InspectorControls,
-	useBlockProps,
-} from '@wordpress/block-editor';
+import { InspectorControls, useBlockProps } from '@wordpress/block-editor';
 import { useMemo } from '@wordpress/element';
-import { PanelBody, ToggleControl, TextControl, Notice } from '@wordpress/components';
+import {
+	PanelBody,
+	ToggleControl,
+	TextControl,
+	Notice,
+} from '@wordpress/components';
 
 /**
  * Internal dependencies
@@ -26,47 +28,57 @@ const SUPPORTED_SETTINGS = {
 	},
 };
 
-function ProductIngredientsEdit(props) {
+function ProductIngredientsEdit( props ) {
 	const { attributes, setAttributes } = props;
 	const { showTitle, accordionTitle, startOpened } = attributes;
 
 	const className = useMemo(
-		() => computeClassName(attributes),
-		[attributes]
+		() => computeClassName( attributes ),
+		[ attributes ]
 	);
 
-	const blockProps = useBlockProps({
+	const blockProps = useBlockProps( {
 		className,
-		'data-wp-interactive': "peaches-ecwid-product-ingredients",
-	});
+		'data-wp-interactive': 'peaches-ecwid-product-ingredients',
+	} );
 
 	return (
 		<>
 			<InspectorControls>
-				<PanelBody title={__('Product Ingredients Settings', 'ecwid-shopping-cart')}>
-					<Notice status="info" isDismissible={false}>
-						{__('This block displays product ingredients dynamically based on the product detail block.', 'ecwid-shopping-cart')}
+				<PanelBody
+					title={ __(
+						'Product Ingredients Settings',
+						'ecwid-shopping-cart'
+					) }
+				>
+					<Notice status="info" isDismissible={ false }>
+						{ __(
+							'This block displays product ingredients dynamically based on the product detail block.',
+							'ecwid-shopping-cart'
+						) }
 					</Notice>
 
 					<ToggleControl
-						label={__('Start Opened', 'ecwid-shopping-cart')}
-						checked={startOpened}
-						onChange={(value) => setAttributes({ startOpened: value })}
+						label={ __( 'Start Opened', 'ecwid-shopping-cart' ) }
+						checked={ startOpened }
+						onChange={ ( value ) =>
+							setAttributes( { startOpened: value } )
+						}
 					/>
 				</PanelBody>
 
 				<BootstrapSettingsPanels
-					setAttributes={setAttributes}
-					attributes={attributes}
-					supportedSettings={SUPPORTED_SETTINGS}
+					setAttributes={ setAttributes }
+					attributes={ attributes }
+					supportedSettings={ SUPPORTED_SETTINGS }
 				/>
 			</InspectorControls>
 
-			<div {...blockProps}>
+			<div { ...blockProps }>
 				<div className="product-ingredients-preview">
-					{showTitle && (
-						<h3 className="mb-3">{accordionTitle}</h3>
-					)}
+					{ showTitle && (
+						<h3 className="mb-3">{ accordionTitle }</h3>
+					) }
 
 					<div className="accordion" id="ingredientsPreview">
 						<div className="accordion-item">
@@ -89,7 +101,10 @@ function ProductIngredientsEdit(props) {
 								}` }
 							>
 								<div className="accordion-body">
-									{__('Rich in antioxidants and fatty acids.', 'ecwid-shopping-cart')}
+									{ __(
+										'Rich in antioxidants and fatty acids.',
+										'ecwid-shopping-cart'
+									) }
 								</div>
 							</div>
 						</div>
@@ -108,7 +123,10 @@ function ProductIngredientsEdit(props) {
 							</div>
 							<div className="accordion-collapse collapse">
 								<div className="accordion-body">
-									{__('Known for its hydrating properties.', 'ecwid-shopping-cart')}
+									{ __(
+										'Known for its hydrating properties.',
+										'ecwid-shopping-cart'
+									) }
 								</div>
 							</div>
 						</div>
