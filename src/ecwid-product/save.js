@@ -36,7 +36,7 @@ export default function save( { attributes } ) {
 					alt={ __( 'Product image', 'ecwid-shopping-cart' ) }
 				/>
 			</div>
-			<div className="card-body p-2 p-md-3">
+			<div className="card-body p-2 p-md-3 d-flex row-cols-1 flex-wrap align-content-between">
 				<h5
 					className="card-title"
 					data-wp-text="state.productName"

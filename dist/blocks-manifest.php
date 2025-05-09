@@ -92,6 +92,9 @@ return array(
 			'interactivity' => true
 		),
 		'editorScript' => 'file:./index.js',
+		'editorStyle' => array(
+			'file:./index.css'
+		),
 		'style' => 'file:./style-index.css',
 		'viewScriptModule' => 'file:./view.js',
 		'attributes' => array(

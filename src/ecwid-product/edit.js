@@ -13,6 +13,14 @@ import {
 	computeClassName,
 } from '../../../peaches-bootstrap-blocks/src/utils/bootstrap_settings';
 
+/**
+ * Lets webpack process CSS, SASS or SCSS files referenced in JavaScript files.
+ * Those files can contain any CSS code that gets applied to the editor.
+ *
+ * @see https://www.npmjs.com/package/@wordpress/scripts#using-css
+ */
+import './editor.scss';
+
 const SUPPORTED_SETTINGS = {
 	responsive: {
 		spacings: {
@@ -227,7 +235,7 @@ function ProductEdit( props ) {
 								</div>
 							) }
 						</div>
-						<div className="card-body p-2 p-md-3">
+						<div className="card-body p-2 p-md-3 d-flex row-cols-1 flex-wrap align-content-between">
 							<h5 className="card-title">
 								{ productData?.name ||
 									( isLoading
