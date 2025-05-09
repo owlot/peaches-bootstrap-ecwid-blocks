@@ -19,11 +19,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 // Define plugin constants
 define('PEACHES_ECWID_VERSION', '0.1.2');
-define('PEACHES_ECWID_PATH', plugin_dir_path(__FILE__));
-define('PEACHES_ECWID_URL', plugin_dir_url(__FILE__));
-define('PEACHES_ECWID_INCLUDES_DIR', PEACHES_ECWID_PATH . 'includes/');
-define('PEACHES_ECWID_ASSETS_URL', PEACHES_ECWID_URL . 'assets/');
-
+define('PEACHES_ECWID_PLUGIN_FILE', __FILE__);
+define('PEACHES_ECWID_PLUGIN_DIR', plugin_dir_path(__FILE__));
+define('PEACHES_ECWID_PLUGIN_URL', plugin_dir_url(__FILE__));
+define('PEACHES_ECWID_INCLUDES_DIR', PEACHES_ECWID_PLUGIN_DIR . 'includes/');
+define('PEACHES_ECWID_ASSETS_URL', PEACHES_ECWID_PLUGIN_URL . 'assets/');
 // Require the main plugin class
 require_once PEACHES_ECWID_INCLUDES_DIR . 'class-ecwid-blocks.php';
 

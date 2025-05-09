@@ -22,6 +22,15 @@
 		"test:unit": "wp-scripts test-unit-js",
 		"write-manifest": "wp-scripts build-blocks-manifest --input=src --output=dist/blocks-manifest.php"
 	},
+	"files": [
+		"build",
+		"dist",
+		"patterns",
+		"assets",
+		"includes",
+		"peaches-bootstrap-ecwid-blocks.php",
+		"readme.txt"
+	],
 	"devDependencies": {
 		"@wordpress/scripts": "^30.15.0",
 		"clsx": "^2.1.1"
@@ -33,8 +42,5 @@
 		"lodash.assign": "^4.2.0",
 		"react-slick": "^0.30.3",
 		"slick-carousel": "^1.8.1"
-	},
-	"files": [
-		"[^.]*"
-	]
+	}
 }

@@ -82,18 +82,18 @@ class Peaches_Product_Manager implements Peaches_Product_Manager_Interface {
 	public function register_blocks() {
 		// Register block metadata collection
 		wp_register_block_metadata_collection(
-			PEACHES_ECWID_PATH . 'dist',
-			PEACHES_ECWID_PATH . 'dist/blocks-manifest.php'
+			PEACHES_ECWID_PLUGIN_DIR . 'dist',
+			PEACHES_ECWID_PLUGIN_DIR . 'dist/blocks-manifest.php'
 		);
 
 		// Register all blocks
-		register_block_type_from_metadata(PEACHES_ECWID_PATH . 'build/ecwid-product');
-		register_block_type_from_metadata(PEACHES_ECWID_PATH . 'build/ecwid-category');
-		register_block_type_from_metadata(PEACHES_ECWID_PATH . 'build/ecwid-product-detail/');
-		register_block_type_from_metadata(PEACHES_ECWID_PATH . 'build/ecwid-product-field/');
-		register_block_type_from_metadata(PEACHES_ECWID_PATH . 'build/ecwid-product-add-to-cart/');
-		register_block_type_from_metadata(PEACHES_ECWID_PATH . 'build/ecwid-product-images/');
-		register_block_type_from_metadata(PEACHES_ECWID_PATH . 'build/ecwid-product-ingredients/');
+		register_block_type_from_metadata(PEACHES_ECWID_PLUGIN_DIR . 'build/ecwid-product');
+		register_block_type_from_metadata(PEACHES_ECWID_PLUGIN_DIR . 'build/ecwid-category');
+		register_block_type_from_metadata(PEACHES_ECWID_PLUGIN_DIR . 'build/ecwid-product-detail/');
+		register_block_type_from_metadata(PEACHES_ECWID_PLUGIN_DIR . 'build/ecwid-product-field/');
+		register_block_type_from_metadata(PEACHES_ECWID_PLUGIN_DIR . 'build/ecwid-product-add-to-cart/');
+		register_block_type_from_metadata(PEACHES_ECWID_PLUGIN_DIR . 'build/ecwid-product-images/');
+		register_block_type_from_metadata(PEACHES_ECWID_PLUGIN_DIR . 'build/ecwid-product-ingredients/');
 	}
 
 	/**

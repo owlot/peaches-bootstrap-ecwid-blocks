@@ -79,6 +79,15 @@ class Peaches_Ecwid_Blocks implements Peaches_Ecwid_Blocks_Interface {
 	private $master_ingredients_manager;
 
 	/**
+	 * Block patterns instance.
+	 *
+	 * @since  0.1.2
+	 * @access private
+	 * @var    Peaches_Ecwid_Block_Patterns_Interface
+	 */
+	private $block_patterns;
+
+	/**
 	 * Get singleton instance of the class.
 	 *
 	 * @since 0.1.2
@@ -118,6 +127,7 @@ class Peaches_Ecwid_Blocks implements Peaches_Ecwid_Blocks_Interface {
 		require_once PEACHES_ECWID_INCLUDES_DIR . 'interfaces/interface-rewrite-manager.php';
 		require_once PEACHES_ECWID_INCLUDES_DIR . 'interfaces/interface-product-manager.php';
 		require_once PEACHES_ECWID_INCLUDES_DIR . 'interfaces/interface-ingredients-manager.php';
+		require_once PEACHES_ECWID_INCLUDES_DIR . 'interfaces/interface-block-patterns.php';
 
 		// Load classes
 		require_once PEACHES_ECWID_INCLUDES_DIR . 'class-utilities.php';
@@ -126,6 +136,7 @@ class Peaches_Ecwid_Blocks implements Peaches_Ecwid_Blocks_Interface {
 		require_once PEACHES_ECWID_INCLUDES_DIR . 'class-product-manager.php';
 		require_once PEACHES_ECWID_INCLUDES_DIR . 'class-ingredients-manager.php';
 		require_once PEACHES_ECWID_INCLUDES_DIR . 'class-master-ingredients-manager.php';
+		require_once PEACHES_ECWID_INCLUDES_DIR . 'class-block-patterns.php';
 	}
 
 	/**
@@ -144,6 +155,11 @@ class Peaches_Ecwid_Blocks implements Peaches_Ecwid_Blocks_Interface {
 		$this->product_manager = new Peaches_Product_Manager($this->ecwid_api);
 		$this->ingredients_manager = new Peaches_Ingredients_Manager($this->ecwid_api);
 		$this->master_ingredients_manager = new Peaches_Master_Ingredients_Manager();
+
+		// Initialize patterns last and only if we're not in an AJAX request
+		if (!wp_doing_ajax()) {
+			$this->block_patterns = new Peaches_Ecwid_Block_Patterns();
+		}
 	}
 
 	/**
@@ -155,7 +171,7 @@ class Peaches_Ecwid_Blocks implements Peaches_Ecwid_Blocks_Interface {
 		// Plugin core hooks
 		add_action('plugins_loaded', array($this, 'load_textdomain'));
 		add_action('admin_init', array($this, 'check_ecwid_plugin'));
-		add_filter('plugin_action_links_' . plugin_basename(PEACHES_ECWID_PATH . 'peaches-bootstrap-ecwid-blocks.php'), array($this, 'add_settings_link'));
+		add_filter('plugin_action_links_' . plugin_basename(PEACHES_ECWID_PLUGIN_DIR . 'peaches-bootstrap-ecwid-blocks.php'), array($this, 'add_settings_link'));
 	}
 
 	/**
@@ -190,7 +206,7 @@ class Peaches_Ecwid_Blocks implements Peaches_Ecwid_Blocks_Interface {
 	 * @since 0.1.2
 	 */
 	public function load_textdomain() {
-		load_plugin_textdomain('peaches', false, dirname(plugin_basename(PEACHES_ECWID_PATH)) . '/languages');
+		load_plugin_textdomain('peaches', false, dirname(plugin_basename(PEACHES_ECWID_PLUGIN_DIR)) . '/languages');
 	}
 
 	/**
