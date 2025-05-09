@@ -10,7 +10,9 @@
  * @see https://github.com/WordPress/gutenberg/blob/trunk/docs/reference-guides/block-api/block-metadata.md#render
  */
 
-require_once plugin_dir_path(__FILE__) . '../../includes/utils.php';
+// Get the main plugin instance
+$ecwid_blocks = Peaches_Ecwid_Blocks::get_instance();
+$ecwid_api = $ecwid_blocks->get_ecwid_api();
 
 // Ensure proper language detection for Polylang and WPML
 $current_lang = '';
@@ -35,13 +37,18 @@ if (function_exists('pll_current_language')) {
 }
 
 $product_slug = get_query_var('ecwid_product_slug', '');
-$product_id = peaches_get_product_id_from_slug($product_slug);
+$product_id = 0;
+
+// Use the utility function to get product ID from slug
+if (class_exists('Peaches_Ecwid_Utilities') && !empty($product_slug)) {
+    $product_id = $ecwid_api->get_product_id_from_slug($product_slug);
+}
 
 // Get full product data if we have an ID
 $product_data = null;
 if (!empty($product_id)) {
     // Get product data using Ecwid API
-    $product = Ecwid_Product::get_by_id($product_id);
+    $product = $ecwid_api->get_product_by_id($product_id);
 
     if ($product) {
         // Convert product to JSON-compatible array

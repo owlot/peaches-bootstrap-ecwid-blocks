@@ -89,7 +89,7 @@ function AddToCartEdit( props ) {
 					</button>
 				</div>
 				<button
-					className="btn btn-secondary"
+					className="btn btn-secondary text-nowrap"
 					data-wp-on--click="actions.addToCart"
 				>
 					{ __( 'Add to Cart', 'ecwid-shopping-cart' ) }
