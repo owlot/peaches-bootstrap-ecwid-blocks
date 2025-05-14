@@ -301,29 +301,218 @@ class Peaches_Ecwid_Utilities {
 	}
 
 	/**
-	 * Build add to cart form.
+	 * Get the Ecwid shop page slug and path with multilingual support.
+	 *
+	 * This retrieves the store page slug and full path, taking into account
+	 * parent pages if the store is on a nested page, current language, and
+	 * user-configured language-specific shop paths.
 	 *
 	 * @since 0.1.2
-	 * @return string HTML for add to cart form.
+	 *
+	 * @param bool   $include_parents     Whether to include parent page slugs in the path.
+	 * @param bool   $with_trailing_slash Whether to add a trailing slash.
+	 * @param string $lang                Language code to get the path for. Empty for current language.
+	 *
+	 * @return string The store page slug or full path.
 	 */
-	public static function build_add_to_cart_block() {
-		ob_start();
-?>
-	<div class="add-to-cart-form d-flex align-items-center mb-3">
-	<div class="me-3">
-	<div class="input-group" style="max-width: 150px;">
-	<button class="btn btn-outline-secondary quantity-decrease" type="button" data-wp-on--click="actions.decreaseAmount">-</button>
-	<input type="number" class="form-control text-center product-quantity" data-wp-bind--value="context.amount" min="1" data-wp-on--input="actions.setAmount">
-	<button class="btn btn-outline-secondary quantity-increase" type="button" data-wp-on--click="actions.increaseAmount">+</button>
-	</div>
-	</div>
-	<div>
-	<button class="btn btn-primary add-to-cart-button" data-wp-on--click="actions.addToCart">
-	<?php echo  __('Add to Cart', 'peaches'); ?>
-		</button>
-			</div>
-			</div>
-<?php
-		return ob_get_clean();
+	public static function get_shop_path( $include_parents = true, $with_trailing_slash = true, $lang = '' ) {
+		$shop_path = '';
+
+		// First, check if there's a custom shop slug set in Ecwid settings
+		$custom_shop_slug = '';
+
+		// Try to get it from Ecwid settings if they're available
+		if ( class_exists( 'Ecwid_Store_Page' ) && method_exists( 'Ecwid_Store_Page', 'get_store_url_prefix' ) ) {
+			$custom_shop_slug = Ecwid_Store_Page::get_store_url_prefix();
+		} else {
+			// Fallback: check options directly
+			$custom_shop_slug = get_option( 'ecwid_store_url_prefix' );
+		}
+
+		// If we found a custom slug in Ecwid settings, use it for single-language sites
+		if ( ! empty( $custom_shop_slug ) && ! self::is_multilingual_site() ) {
+			$shop_path = $custom_shop_slug;
+
+			// Add trailing slash if requested
+			if ( $with_trailing_slash ) {
+				$shop_path .= '/';
+			}
+
+			return $shop_path;
+		}
+
+		// If no specific language is provided, get current language
+		if ( empty( $lang ) ) {
+			$lang = self::get_current_language();
+		}
+
+		// Get the default language
+		$default_lang = '';
+		if ( function_exists( 'pll_default_language' ) ) {
+			$default_lang = pll_default_language( 'slug' );
+		} elseif ( defined( 'ICL_LANGUAGE_CODE' ) && class_exists( 'SitePress' ) ) {
+			global $sitepress;
+			if ( $sitepress ) {
+				$default_lang = $sitepress->get_default_language();
+			}
+		}
+
+		// Try to get from multilingual settings first
+		if ( class_exists( 'Peaches_Multilingual_Settings' ) ) {
+			$settings_manager = Peaches_Multilingual_Settings::get_instance();
+			$configured_path = $settings_manager->get_shop_path_for_language( $lang );
+
+			if ( ! empty( $configured_path ) ) {
+				$shop_path = $configured_path;
+			}
+		}
+
+		// If no configured path found, fall back to previous logic
+		if ( empty( $shop_path ) ) {
+			// Get the store page ID - using the Ecwid constant if available
+			$store_page_id = null;
+
+			if ( defined( 'Ecwid_Store_Page::OPTION_MAIN_STORE_PAGE_ID' ) ) {
+				$store_page_id = get_option( Ecwid_Store_Page::OPTION_MAIN_STORE_PAGE_ID );
+			}
+
+			// Fallback to our own stored option if Ecwid constant isn't available
+			if ( ! $store_page_id ) {
+				$store_page_id = get_option( 'ecwid_store_page_id' );
+			}
+
+			$has_translation = false;
+
+			if ( $store_page_id ) {
+				// Get the translated store page ID if we have a language
+				if ( ! empty( $lang ) && $lang !== $default_lang ) {
+					$translated_id = self::get_translated_post( $store_page_id, $lang );
+					if ( $translated_id ) {
+						$store_page_id = $translated_id;
+						$has_translation = true;
+					}
+				}
+
+				// Get the store page object
+				$store_page = get_post( $store_page_id );
+
+				if ( $store_page && isset( $store_page->post_name ) ) {
+					// Use the page slug as the shop path
+					$shop_path = $store_page->post_name;
+
+					// If we should include parents and the page is nested, get the full path
+					if ( $include_parents && $store_page->post_parent != 0 ) {
+						$parent_slugs = array();
+						$parent_id = $store_page->post_parent;
+
+						while ( $parent_id ) {
+							$parent = get_post( $parent_id );
+							if ( $parent ) {
+								$parent_slugs[] = $parent->post_name;
+								$parent_id = $parent->post_parent;
+							} else {
+								$parent_id = 0;
+							}
+						}
+
+						// Reverse the array to get the correct order
+						$parent_slugs = array_reverse( $parent_slugs );
+
+						// Prepend parent slugs to the shop path
+						if ( ! empty( $parent_slugs ) ) {
+							$shop_path = implode( '/', $parent_slugs ) . '/' . $shop_path;
+						}
+					}
+				}
+			}
+
+			// If we still don't have a shop path, use language-specific defaults
+			if ( empty( $shop_path ) ) {
+				$shop_path = self::get_default_shop_path_for_language( $lang, $lang === $default_lang );
+			}
+		}
+
+		// Add trailing slash if requested
+		if ( $with_trailing_slash && ! empty( $shop_path ) ) {
+			$shop_path .= '/';
+		}
+
+		return $shop_path;
+	}
+
+	/**
+	 * Get default shop path for a specific language.
+	 *
+	 * @since 0.1.2
+	 *
+	 * @param string $language_code Language code.
+	 * @param bool   $is_default    Whether this is the default language.
+	 *
+	 * @return string Default shop path for the language.
+	 */
+	private static function get_default_shop_path_for_language( $language_code, $is_default = false ) {
+		// For default language, try to get from Ecwid first
+		if ( $is_default ) {
+			$ecwid_path = self::get_ecwid_shop_path();
+			if ( ! empty( $ecwid_path ) ) {
+				return trim( $ecwid_path, '/' );
+			}
+		}
+
+		// Language-specific defaults
+		$defaults = array(
+			'en' => 'shop',
+			'nl' => 'winkel',
+			'fr' => 'boutique',
+			'de' => 'geschaeft',
+			'es' => 'tienda',
+			'it' => 'negozio',
+			'pt' => 'loja',
+			'ru' => 'magazin',
+			'zh' => 'shop',
+			'ja' => 'shop',
+		);
+
+		return isset( $defaults[ $language_code ] ) ? $defaults[ $language_code ] : 'shop';
+	}
+
+	/**
+	 * Get Ecwid shop path from settings.
+	 *
+	 * @since 0.1.2
+	 *
+	 * @return string|null Ecwid shop path or null if not set.
+	 */
+	private static function get_ecwid_shop_path() {
+		// Try to get from Ecwid settings
+		if ( class_exists( 'Ecwid_Store_Page' ) && method_exists( 'Ecwid_Store_Page', 'get_store_url_prefix' ) ) {
+			return Ecwid_Store_Page::get_store_url_prefix();
+		}
+
+		// Fallback to option
+		return get_option( 'ecwid_store_url_prefix' );
+	}
+
+	/**
+	 * Check if the site is configured for multiple languages.
+	 *
+	 * @since 0.1.2
+	 *
+	 * @return bool True if multilingual plugin is active and configured.
+	 */
+	private static function is_multilingual_site() {
+		// Check for Polylang
+		if ( function_exists( 'pll_languages_list' ) ) {
+			$languages = pll_languages_list();
+			return is_array( $languages ) && count( $languages ) > 1;
+		}
+
+		// Check for WPML
+		if ( function_exists( 'icl_get_languages' ) ) {
+			$languages = icl_get_languages( 'skip_missing=0' );
+			return is_array( $languages ) && count( $languages ) > 1;
+		}
+
+		return false;
 	}
 }

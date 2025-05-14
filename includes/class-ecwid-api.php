@@ -26,8 +26,6 @@ class Peaches_Ecwid_API implements Peaches_Ecwid_API_Interface {
 	 * Constructor.
 	 */
 	public function __construct() {
-		// Ensure Ecwid compatibility
-		$this->ensure_ecwid_compatibility();
 	}
 
 	/**
@@ -90,7 +88,7 @@ class Peaches_Ecwid_API implements Peaches_Ecwid_API_Interface {
 			return 0;
 		}
 
-		$ecwid_store_id = $this->get_store_id();
+		$ecwid_store_id = EcwidPlatform::get_store_id();
 		$slug_api_url = "https://app.ecwid.com/storefront/api/v1/{$ecwid_store_id}/catalog/slug";
 
 		$slug_response = wp_remote_post($slug_api_url, array(
@@ -293,45 +291,5 @@ class Peaches_Ecwid_API implements Peaches_Ecwid_API_Interface {
 	</div>
 <?php
 		return ob_get_clean();
-	}
-
-	/**
-	 * Get Ecwid store ID.
-	 *
-	 * @since 0.1.2
-	 * @return int The store ID.
-	 */
-	public function get_store_id() {
-		if (function_exists('EcwidPlatform::get_store_id')) {
-			return EcwidPlatform::get_store_id();
-		} elseif (defined('ECWID_STORE_ID')) {
-			return ECWID_STORE_ID;
-		} else {
-			return get_option('ecwid_store_id', 0);
-		}
-	}
-
-	/**
-	 * Ensure compatibility with Ecwid.
-	 *
-	 * @since 0.1.2
-	 */
-	private function ensure_ecwid_compatibility() {
-		// If get_ecwid_store_id doesn't exist, create a fallback
-		if (!function_exists('get_ecwid_store_id')) {
-			function get_ecwid_store_id() {
-				// Try different ways to get the store ID
-				if (defined('ECWID_STORE_ID')) {
-					return ECWID_STORE_ID;
-				}
-
-				$store_id = get_option('ecwid_store_id');
-				if ($store_id) {
-					return $store_id;
-				}
-
-				return ''; // Return empty string as fallback
-			}
-		}
 	}
 }
