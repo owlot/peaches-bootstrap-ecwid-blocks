@@ -14,7 +14,7 @@ const { state, actions } = store( 'peaches-ecwid-product-field', {
 	},
 
 	callbacks: {
-		initProductField: function* () {
+		*initProductField() {
 			const context = getContext();
 
 			if ( ! state.productId || ! state.productData ) {

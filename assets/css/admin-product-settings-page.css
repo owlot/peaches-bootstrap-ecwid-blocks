@@ -1,0 +1,103 @@
+.peaches-tab-content {
+    background: #fff;
+    border: 1px solid #c3c4c7;
+    border-top: none;
+    padding: 20px;
+}
+
+.tab-content-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #dcdcde;
+}
+
+.tab-description h3 {
+    margin: 0 0 8px 0;
+    font-size: 18px;
+    color: #23282d;
+}
+
+.tab-description p {
+    margin: 0;
+    color: #646970;
+    max-width: 600px;
+    line-height: 1.5;
+}
+
+.nav-tab .count {
+    font-size: 11px;
+    font-weight: normal;
+    color: #646970;
+    margin-left: 4px;
+}
+
+.embedded-post-list .wp-list-table {
+    margin-top: 10px;
+    border: 1px solid #c3c4c7;
+}
+
+.embedded-post-list .tablenav {
+    padding: 8px 0;
+    background: #f6f7f7;
+    border-bottom: 1px solid #c3c4c7;
+}
+
+.embedded-post-list .tablenav .alignleft {
+    float: left;
+}
+
+.embedded-post-list .tablenav .alignright {
+    float: right;
+}
+
+.embedded-post-list .displaying-num {
+    color: #646970;
+    font-style: italic;
+}
+
+.no-items {
+    text-align: center;
+    padding: 40px 20px;
+    color: #646970;
+    background: #f9f9f9;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.column-media img {
+    border-radius: 3px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+.column-product-id,
+.column-ingredients,
+.column-media,
+.column-groups,
+.column-attributes {
+    width: 80px;
+    text-align: center;
+}
+
+.column-description {
+    width: 200px;
+}
+
+/* Responsive adjustments */
+@media screen and (max-width: 782px) {
+    .tab-content-header {
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .product-media-item .media-row {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .product-media-item .media-preview {
+        flex: none;
+    }
+}

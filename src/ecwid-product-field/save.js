@@ -22,17 +22,17 @@ export default function save( { attributes } ) {
 	const getEmptyContent = () => {
 		switch ( fieldType ) {
 			case 'title':
-				return __( 'Loading title...', 'ecwid-shopping-cart' );
+				return __( 'Loading title…', 'ecwid-shopping-cart' );
 			case 'subtitle':
 				return '';
 			case 'price':
-				return __( 'Loading price...', 'ecwid-shopping-cart' );
+				return __( 'Loading price…', 'ecwid-shopping-cart' );
 			case 'stock':
-				return __( 'Loading stock status...', 'ecwid-shopping-cart' );
+				return __( 'Loading stock status…', 'ecwid-shopping-cart' );
 			case 'description':
-				return __( 'Loading description...', 'ecwid-shopping-cart' );
+				return __( 'Loading description…', 'ecwid-shopping-cart' );
 			case 'custom':
-				return __( 'Loading custom field...', 'ecwid-shopping-cart' );
+				return __( 'Loading custom field…', 'ecwid-shopping-cart' );
 			default:
 				return '';
 		}

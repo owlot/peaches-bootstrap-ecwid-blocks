@@ -66,7 +66,7 @@ function CategoryEdit( props ) {
 				nonce: window.EcwidGutenbergParams?.nonce || '',
 				security: window.EcwidGutenbergParams?.nonce || '',
 			},
-			success: function ( response ) {
+			success( response ) {
 				setIsLoading( false );
 				if ( response && response.success && response.data ) {
 					setCategories( response.data );
@@ -74,11 +74,11 @@ function CategoryEdit( props ) {
 					console.error( 'Categories not found:', response );
 				}
 			},
-			error: function ( xhr, status, error ) {
+			error( xhr, status, error ) {
 				setIsLoading( false );
 				console.error( 'AJAX Error:', {
-					status: status,
-					error: error,
+					status,
+					error,
 					responseText: xhr.responseText,
 					statusCode: xhr.status,
 				} );
@@ -105,7 +105,7 @@ function CategoryEdit( props ) {
 						>
 							<span className="visually-hidden">
 								{ __(
-									'Loading categories...',
+									'Loading categories…',
 									'ecwid-shopping-cart'
 								) }
 							</span>

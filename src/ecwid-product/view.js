@@ -1,7 +1,7 @@
 // src/ecwid-product/view.js - Updated version
 import { store, getContext } from '@wordpress/interactivity';
 
-const { state, actions } = store( 'peaches-ecwid-product', {
+const { state } = store( 'peaches-ecwid-product', {
 	state: {
 		get productData() {
 			const context = getContext();
@@ -25,14 +25,19 @@ const { state, actions } = store( 'peaches-ecwid-product', {
 
 		get productSubtitle() {
 			const product = state.productData;
-			if ( ! product || ! product.attributes ) return '';
+			if ( ! product || ! product.attributes ) {
+				return '';
+			}
 
 			const subtitleAttribute = product.attributes.find(
 				( attr ) => attr.name === 'Ondertitel'
 			);
 
-			return subtitleAttribute?.valueTranslated?.nl ||
-				   subtitleAttribute?.value || '';
+			return (
+				subtitleAttribute?.valueTranslated?.nl ||
+				subtitleAttribute?.value ||
+				''
+			);
 		},
 
 		get productPrice() {
@@ -42,7 +47,9 @@ const { state, actions } = store( 'peaches-ecwid-product', {
 
 		get productUrl() {
 			const product = state.productData;
-			if ( ! product ) return '';
+			if ( ! product ) {
+				return '';
+			}
 
 			// If the server provided a complete URL, use it
 			if ( product.url ) {
@@ -63,13 +70,13 @@ const { state, actions } = store( 'peaches-ecwid-product', {
 			let shopPath = 'shop'; // Default fallback
 
 			// Adjust shop path based on detected language
-			if (langMatch && langMatch[1]) {
-				const lang = langMatch[1];
-				if (lang === 'nl') {
+			if ( langMatch && langMatch[ 1 ] ) {
+				const lang = langMatch[ 1 ];
+				if ( lang === 'nl' ) {
 					shopPath = 'winkel';
-				} else if (lang === 'fr') {
+				} else if ( lang === 'fr' ) {
 					shopPath = 'boutique';
-				} else if (lang === 'de') {
+				} else if ( lang === 'de' ) {
 					shopPath = 'geschaeft';
 				}
 			}
@@ -88,15 +95,11 @@ const { state, actions } = store( 'peaches-ecwid-product', {
 	},
 
 	callbacks: {
-		initProduct: function* () {
+		*initProduct() {
 			const context = getContext();
 			const productId = context.productId;
 
-			// Debug output to verify the product ID is available
-			console.log('Initializing product with ID:', productId);
-
 			if ( ! productId ) {
-				console.log( 'No product ID found' );
 				context.isLoading = false;
 				return;
 			}
@@ -106,9 +109,10 @@ const { state, actions } = store( 'peaches-ecwid-product', {
 			try {
 				// Get current language from URL or HTML
 				let currentLang = '';
-				const langMatch = window.location.pathname.match( /^\/([a-z]{2})\// );
-				if (langMatch && langMatch[1]) {
-					currentLang = langMatch[1];
+				const langMatch =
+					window.location.pathname.match( /^\/([a-z]{2})\// );
+				if ( langMatch && langMatch[ 1 ] ) {
+					currentLang = langMatch[ 1 ];
 				} else {
 					const htmlLang = document.documentElement.lang;
 					currentLang = htmlLang ? htmlLang.split( '-' )[ 0 ] : '';
@@ -119,13 +123,10 @@ const { state, actions } = store( 'peaches-ecwid-product', {
 				let ajaxNonce = '';
 
 				// Try to get settings from global EcwidSettings variable
-				if (window.EcwidSettings) {
+				if ( window.EcwidSettings ) {
 					ajaxUrl = window.EcwidSettings.ajaxUrl || ajaxUrl;
 					ajaxNonce = window.EcwidSettings.ajaxNonce || ajaxNonce;
 				}
-
-				console.log('Using AJAX URL:', ajaxUrl);
-				console.log('Using language:', currentLang);
 
 				// Fetch product data
 				const response = yield fetch( ajaxUrl, {
@@ -142,12 +143,10 @@ const { state, actions } = store( 'peaches-ecwid-product', {
 				} );
 
 				const data = yield response.json();
-				console.log('Received product data:', data);
 
 				if ( data && data.success && data.data ) {
 					context.product = data.data;
 					context.isLoading = false;
-					console.log('Product loaded successfully:', data.data.name);
 				} else {
 					throw new Error(
 						'Failed to fetch product data: ' +

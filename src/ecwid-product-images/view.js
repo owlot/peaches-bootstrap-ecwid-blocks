@@ -129,7 +129,7 @@ const { state, actions } = store( 'peaches-ecwid-product-images', {
 	// The callbacks section for lifecycle methods
 	callbacks: {
 		// This will be automatically called when the component is mounted via data-wp-init
-		initProductImages: function* () {
+		*initProductImages() {
 			if ( ! state.productId || ! state.productData ) {
 				console.error( 'Product data not available' );
 				return;

@@ -63,7 +63,7 @@
                             <p>
                                 <label>Ingredient Type:</label><br>
                                 <label>
-                                    <input type="radio" name="ingredient_type[${ ingredientIndex }]" value="master" class="ingredient-type-radio">
+                                    <input type="radio" name="ingredient_type[${ ingredientIndex }]" value="library" class="ingredient-type-radio">
                                     From Library
                                 </label>
                                 <label>
@@ -72,11 +72,11 @@
                                 </label>
                             </p>
 
-                            <div class="master-ingredient-selector" style="display:none;">
+                            <div class="library-ingredient-selector" style="display:none;">
                                 <p>
-                                    <label for="master_ingredient_${ ingredientIndex }">Select Ingredient:</label>
-                                    <select id="master_ingredient_${ ingredientIndex }" name="master_ingredient_id[]" class="widefat master-ingredient-select">
-                                        ${ getMasterIngredientsOptions() }
+                                    <label for="library_ingredient_${ ingredientIndex }">Select Ingredient:</label>
+                                    <select id="library_ingredient_${ ingredientIndex }" name="library_ingredient_id[]" class="widefat library-ingredient-select">
+                                        ${ getLibraryIngredientsOptions() }
                                     </select>
                                 </p>
                             </div>
@@ -102,28 +102,30 @@
 			// Handle ingredient type switching - use event delegation
 			$( document ).on( 'change', '.ingredient-type-radio', function () {
 				const $item = $( this ).closest( '.ingredient-item' );
-				const isMaster = $( this ).val() === 'master';
+				const isLibrary = $( this ).val() === 'library';
 
-				$item.find( '.master-ingredient-selector' ).toggle( isMaster );
-				$item.find( '.custom-ingredient-fields' ).toggle( ! isMaster );
+				$item
+					.find( '.library-ingredient-selector' )
+					.toggle( isLibrary );
+				$item.find( '.custom-ingredient-fields' ).toggle( ! isLibrary );
 
-				if ( isMaster ) {
+				if ( isLibrary ) {
 					// Clear custom fields
 					$item.find( '.ingredient-name-field' ).val( '' );
 					$item
 						.find( 'textarea[name="ingredient_description[]"]' )
 						.val( '' );
 				} else {
-					// Clear master selection
-					$item.find( '.master-ingredient-select' ).val( '' );
+					// Clear library selection
+					$item.find( '.library-ingredient-select' ).val( '' );
 					$item.find( '.hndle span' ).text( 'New Ingredient' );
 				}
 			} );
 
-			// Update ingredient title when master ingredient is selected
+			// Update ingredient title when library ingredient is selected
 			$( document ).on(
 				'change',
-				'.master-ingredient-select',
+				'.library-ingredient-select',
 				function () {
 					const $item = $( this ).closest( '.ingredient-item' );
 					const selectedText = $( this )
@@ -173,9 +175,9 @@
 				data: {
 					action: 'search_ecwid_products',
 					nonce: EcwidIngredientsParams.searchNonce,
-					query: query,
+					query,
 				},
-				success: function ( response ) {
+				success( response ) {
 					if ( response.success && response.data.products ) {
 						displaySearchResults( response.data.products );
 					} else {
@@ -187,7 +189,7 @@
 						);
 					}
 				},
-				error: function () {
+				error() {
 					$( '#product-search-results' ).html(
 						'<div style="padding: 10px; color: red;">Error searching products</div>'
 					);
@@ -268,23 +270,23 @@
 			).insertAfter( 'h1.wp-heading-inline' );
 		}
 
-		// Helper function to get master ingredients options
-		function getMasterIngredientsOptions() {
+		// Helper function to get library ingredients options
+		function getLibraryIngredientsOptions() {
 			let options = '<option value="">Select an ingredient...</option>';
 
 			// Check if we have localized data
 			if (
 				typeof EcwidIngredientsParams !== 'undefined' &&
-				EcwidIngredientsParams.masterIngredients
+				EcwidIngredientsParams.libraryIngredients
 			) {
-				EcwidIngredientsParams.masterIngredients.forEach(
+				EcwidIngredientsParams.libraryIngredients.forEach(
 					function ( ingredient ) {
 						options += `<option value="${ ingredient.id }">${ ingredient.title }</option>`;
 					}
 				);
 			} else {
 				// Try to get options from existing selectors
-				const $firstSelect = $( '.master-ingredient-select' ).first();
+				const $firstSelect = $( '.library-ingredient-select' ).first();
 				if ( $firstSelect.length ) {
 					$firstSelect.find( 'option' ).each( function () {
 						options += `<option value="${ $( this ).val() }">${ $(

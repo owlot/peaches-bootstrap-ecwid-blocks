@@ -1,0 +1,9 @@
+/* Media tag item button adjustments */
+.media-tag-item .btn {
+	white-space: nowrap;
+}
+
+.media-tag-item .btn .dashicons {
+	margin-right: 3px;
+}
+

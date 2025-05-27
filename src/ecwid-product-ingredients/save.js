@@ -26,7 +26,7 @@ export default function save( { attributes } ) {
 					<div className="accordion-item">
 						<div className="accordion-header">
 							<button
-								class={ `accordion-button ${
+								className={ `accordion-button ${
 									! startOpened ? 'collapsed' : ''
 								}` }
 								type="button"
@@ -40,7 +40,7 @@ export default function save( { attributes } ) {
 							</button>
 						</div>
 						<div
-							class={ `accordion-collapse collapse ${
+							className={ `accordion-collapse collapse ${
 								startOpened ? 'show' : ''
 							}` }
 							data-wp-bind--class--show="!(context.ingredient.isCollapsed ?? true)"
@@ -48,7 +48,7 @@ export default function save( { attributes } ) {
 							data-wp-bind--aria-labelledby="context.ingredient.headingId"
 						>
 							<div
-								class="accordion-body"
+								className="accordion-body"
 								data-wp-text="context.ingredient.description"
 							></div>
 						</div>
@@ -57,12 +57,12 @@ export default function save( { attributes } ) {
 
 				<div
 					data-wp-bind--hidden="!context.isLoading"
-					class="text-center my-3"
+					className="text-center my-3"
 				>
-					<div class="spinner-border text-primary" role="status">
-						<span class="visually-hidden">
+					<div className="spinner-border text-primary" role="status">
+						<span className="visually-hidden">
 							{ __(
-								'Loading ingredients...',
+								'Loading ingredients…',
 								'ecwid-shopping-cart'
 							) }
 						</span>

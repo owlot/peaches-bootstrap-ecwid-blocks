@@ -58,7 +58,7 @@ function ProductEdit( props ) {
 					_ajax_nonce: window.EcwidGutenbergParams?.nonce || '',
 					security: window.EcwidGutenbergParams?.nonce || '',
 				},
-				success: function ( response ) {
+				success( response ) {
 					setIsLoading( false );
 					if ( response && response.success && response.data ) {
 						setProductData( response.data );
@@ -66,11 +66,11 @@ function ProductEdit( props ) {
 						console.error( 'Product not found:', response );
 					}
 				},
-				error: function ( xhr, status, error ) {
+				error( xhr, status, error ) {
 					setIsLoading( false );
 					console.error( 'AJAX Error:', {
-						status: status,
-						error: error,
+						status,
+						error,
 						responseText: xhr.responseText,
 						statusCode: xhr.status,
 					} );
@@ -114,7 +114,9 @@ function ProductEdit( props ) {
 
 	// Extract subtitle from product attributes
 	const getProductSubtitle = () => {
-		if ( ! productData || ! productData.attributes ) return '';
+		if ( ! productData || ! productData.attributes ) {
+			return '';
+		}
 
 		const subtitleAttribute = productData.attributes.find(
 			( attr ) => attr.name === 'Ondertitel'
@@ -207,7 +209,7 @@ function ProductEdit( props ) {
 								>
 									<span className="visually-hidden">
 										{ __(
-											'Loading product...',
+											'Loading product…',
 											'ecwid-shopping-cart'
 										) }
 									</span>
@@ -226,7 +228,7 @@ function ProductEdit( props ) {
 								<div className="card-img-top bg-light d-flex align-items-center justify-content-center">
 									<span className="text-muted">
 										{ isLoading
-											? __( '...', 'ecwid-shopping-cart' )
+											? __( '…', 'ecwid-shopping-cart' )
 											: __(
 													'Product Image',
 													'ecwid-shopping-cart'

@@ -41,10 +41,10 @@ export default function save( { attributes } ) {
 						<template data-wp-each--image="state.galleryImages">
 							<div
 								data-wp-class--d-none="context.image.isCurrent"
-								class="ratio ratio-1x1"
+								className="ratio ratio-1x1"
 							>
 								<img
-									class="img-fluid"
+									className="img-fluid"
 									data-wp-bind--src="context.image.thumbnailUrl"
 									data-wp-bind--alt="state.productName"
 									data-wp-bind--data-imageUrl="context.image.imageUrl"

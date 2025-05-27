@@ -21,7 +21,7 @@ const { state, actions } = store( 'peaches-ecwid-product-ingredients', {
 	},
 
 	callbacks: {
-		initProductIngredients: function* () {
+		*initProductIngredients() {
 			const context = getContext();
 			const productId = state.productId;
 

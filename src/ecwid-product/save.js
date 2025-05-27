@@ -59,7 +59,7 @@ export default function save( { attributes } ) {
 			>
 				<div className="spinner-border text-primary" role="status">
 					<span className="visually-hidden">
-						{ __( 'Loading product...', 'ecwid-shopping-cart' ) }
+						{ __( 'Loading product…', 'ecwid-shopping-cart' ) }
 					</span>
 				</div>
 			</div>

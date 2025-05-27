@@ -22,18 +22,18 @@ export default function save( { attributes } ) {
 		<div { ...blockProps }>
 			<template data-wp-each--category="context.categories">
 				<div
-					class="col"
+					className="col"
 					data-wp-interactive="peaches-ecwid-category"
 					data-wp-context='{ "categoryId": context.category.id }'
 					data-wp-on--click="actions.navigateToCategory"
 				>
-					<div class="card h-100 border-0">
+					<div className="card h-100 border-0">
 						<a
-							class="ratio ratio-1x1"
+							className="ratio ratio-1x1"
 							data-wp-bind--href="context.category.url"
 						>
 							<img
-								class="card-img-top"
+								className="card-img-top"
 								data-wp-bind--src="context.category.thumbnailUrl"
 								data-wp-bind--alt="context.category.name"
 								alt={ __(
@@ -42,9 +42,9 @@ export default function save( { attributes } ) {
 								) }
 							/>
 						</a>
-						<div class="card-body p-2 p-md-3">
+						<div className="card-body p-2 p-md-3">
 							<h5
-								class="card-title"
+								className="card-title"
 								data-wp-text="context.category.name"
 							></h5>
 						</div>
@@ -54,11 +54,11 @@ export default function save( { attributes } ) {
 
 			<div
 				data-wp-bind--hidden="!context.isLoading"
-				class="text-center my-3"
+				className="text-center my-3"
 			>
-				<div class="spinner-border text-primary" role="status">
-					<span class="visually-hidden">
-						{ __( 'Loading categories...', 'ecwid-shopping-cart' ) }
+				<div className="spinner-border text-primary" role="status">
+					<span className="visually-hidden">
+						{ __( 'Loading categories…', 'ecwid-shopping-cart' ) }
 					</span>
 				</div>
 			</div>

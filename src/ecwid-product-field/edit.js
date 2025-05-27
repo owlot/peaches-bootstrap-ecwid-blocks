@@ -80,7 +80,7 @@ function ProductFieldEdit( props ) {
 				return __( 'In Stock', 'ecwid-shopping-cart' );
 			case 'description':
 				return __(
-					'This is a sample product description...',
+					'This is a sample product description…',
 					'ecwid-shopping-cart'
 				);
 			case 'custom':
