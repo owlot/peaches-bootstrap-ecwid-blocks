@@ -2,7 +2,8 @@
  * Admin script for Product Settings management
  *
  * Handles the dynamic interface for managing product settings including
- * ingredients table view, media with tags, and line assignments.
+ * ingredients table view and line assignments.
+ * Media management is handled by admin-product-media.js
  *
  * @param $
  * @package
@@ -20,7 +21,6 @@
 		}
 
 		let ingredientRowIndex = $( '.ingredient-row' ).length;
-		const mediaIndex = $( '.product-media-item' ).length;
 
 		/**
 		 * Initialize product search functionality
@@ -449,314 +449,32 @@
 		}
 
 		/**
-		 * Initialize media management with tags
-		 *
-		 * Sets up media selection and tag management functionality.
-		 */
-		function initializeMediaManagement() {
-			// Handle media selection for tag-based items
-			$( document ).on( 'click', '.select-media-button', function ( e ) {
-				e.preventDefault();
-
-				const $button = $( this );
-				const $container = $button.closest( '.media-tag-item' );
-				const tagKey = $container.data( 'tag-key' );
-
-				// Show loading state
-				$button
-					.html(
-						'<span class="dashicons dashicons-update spin"></span>Loading...'
-					)
-					.prop( 'disabled', true );
-
-				// Create media frame
-				const mediaFrame = wp.media( {
-					title:
-						ProductSettingsParams.selectMediaTitle ||
-						'Select Product Media',
-					button: {
-						text:
-							ProductSettingsParams.selectMediaButton ||
-							'Use this media',
-					},
-					multiple: false,
-				} );
-
-				// When media is selected
-				mediaFrame.on( 'select', function () {
-					const attachment = mediaFrame
-						.state()
-						.get( 'selection' )
-						.first()
-						.toJSON();
-
-					updateMediaTagItem( $container, attachment, tagKey );
-				} );
-
-				// When media frame is closed without selection
-				mediaFrame.on( 'close', function () {
-					// Restore button state
-					const hasMedia =
-						$container.find( '.media-attachment-id' ).val() !== '';
-					$button
-						.html(
-							'<span class="dashicons dashicons-' +
-								( hasMedia ? 'update' : 'plus-alt2' ) +
-								'"></span>' +
-								( hasMedia ? 'Change' : 'Select' )
-						)
-						.prop( 'disabled', false );
-				} );
-
-				mediaFrame.open();
-			} );
-
-			// Handle media removal
-			$( document ).on( 'click', '.remove-media-button', function ( e ) {
-				e.preventDefault();
-
-				const $button = $( this );
-				const $container = $button.closest( '.media-tag-item' );
-				const tagKey = $container.data( 'tag-key' );
-
-				// Confirm removal
-				if (
-					! confirm( 'Are you sure you want to remove this media?' )
-				) {
-					return;
-				}
-
-				removeMediaFromTag( $container, tagKey );
-			} );
-
-			// Initialize media item states
-			initializeMediaItemStates();
-		}
-
-		/**
-		 * Update media tag item with selected attachment
-		 *
-		 * Updates the UI and form data when media is selected for a tag.
-		 *
-		 * @param {jQuery} $container - Media tag container element
-		 * @param {Object} attachment - WordPress media attachment object
-		 * @param {string} tagKey     - Media tag key
-		 */
-		function updateMediaTagItem( $container, attachment, tagKey ) {
-			// Update hidden input with attachment ID
-			$container.find( '.media-attachment-id' ).val( attachment.id );
-
-			// Update preview image
-			const $preview = $container.find( '.media-preview' );
-			$preview.html(
-				'<img src="' +
-					attachment.url +
-					'" class="img-fluid rounded" style="max-height: 100px;" alt="' +
-					attachment.alt +
-					'">'
-			);
-
-			// Update select button
-			const $selectBtn = $container.find( '.select-media-button' );
-			$selectBtn
-				.removeClass( 'btn-primary' )
-				.addClass( 'btn-outline-primary' )
-				.html(
-					'<span class="dashicons dashicons-update"></span>Change'
-				)
-				.prop( 'disabled', false );
-
-			// Add/show remove button if not present
-			let $removeBtn = $container.find( '.remove-media-button' );
-			if ( $removeBtn.length === 0 ) {
-				$removeBtn = $(
-					'<button type="button" class="btn btn-outline-danger btn-sm remove-media-button"><span class="dashicons dashicons-trash"></span>Remove</button>'
-				);
-				$selectBtn.after( $removeBtn );
-			} else {
-				$removeBtn.show();
-			}
-
-			// Mark attachment as product media
-			markAttachmentAsProductMedia( attachment.id, tagKey );
-
-			// Show success feedback
-			showMediaFeedback(
-				$container,
-				'Media selected successfully!',
-				'success'
-			);
-		}
-
-		/**
-		 * Remove media from tag
-		 *
-		 * Removes media assignment from a tag and updates the UI.
-		 *
-		 * @param {jQuery} $container - Media tag container element
-		 * @param {string} tagKey     - Media tag key
-		 */
-		function removeMediaFromTag( $container, tagKey ) {
-			// Clear hidden input
-			$container.find( '.media-attachment-id' ).val( '' );
-
-			// Reset preview to empty state
-			const $preview = $container.find( '.media-preview' );
-			$preview.html(
-				'<span class="dashicons dashicons-format-image" style="font-size: 48px; color: #ccc;"></span>'
-			);
-
-			// Update select button
-			const $selectBtn = $container.find( '.select-media-button' );
-			$selectBtn
-				.removeClass( 'btn-outline-primary' )
-				.addClass( 'btn-primary' )
-				.html(
-					'<span class="dashicons dashicons-plus-alt2"></span>Select'
-				);
-
-			// Hide remove button
-			$container.find( '.remove-media-button' ).hide();
-
-			// Show success feedback
-			showMediaFeedback(
-				$container,
-				'Media removed successfully!',
-				'info'
-			);
-		}
-
-		/**
-		 * Initialize media item states
-		 *
-		 * Sets up the initial state for all media tag items based on existing data.
-		 */
-		function initializeMediaItemStates() {
-			$( '.media-tag-item' ).each( function () {
-				const $container = $( this );
-				const hasMedia =
-					$container.find( '.media-attachment-id' ).val() !== '';
-
-				if ( ! hasMedia ) {
-					// Hide remove button for empty items
-					$container.find( '.remove-media-button' ).hide();
-				}
-			} );
-		}
-
-		/**
-		 * Mark attachment as product media
-		 *
-		 * Makes an AJAX call to mark the attachment with appropriate meta data.
-		 *
-		 * @param {number} attachmentId - WordPress attachment ID
-		 * @param {string} tagKey       - Media tag key
-		 */
-		function markAttachmentAsProductMedia( attachmentId, tagKey ) {
-			$.post( ajaxurl, {
-				action: 'mark_product_media',
-				attachment_id: attachmentId,
-				tag_key: tagKey,
-				nonce: ProductSettingsParams.searchNonce,
-			} ).fail( function () {
-				console.warn( 'Failed to mark attachment as product media' );
-			} );
-		}
-
-		/**
-		 * Show media feedback message
-		 *
-		 * Displays a temporary feedback message for media operations.
-		 *
-		 * @param {jQuery} $container - Media tag container element
-		 * @param {string} message    - Feedback message
-		 * @param {string} type       - Message type (success, info, warning, danger)
-		 */
-		function showMediaFeedback( $container, message, type ) {
-			// Remove existing feedback
-			$container.find( '.media-feedback' ).remove();
-
-			// Create feedback element
-			const $feedback = $(
-				'<div class="media-feedback alert alert-' +
-					type +
-					' alert-sm mt-2 mb-0">' +
-					message +
-					'</div>'
-			);
-
-			// Add feedback
-			$container.append( $feedback );
-
-			// Auto-remove after 3 seconds
-			setTimeout( function () {
-				$feedback.fadeOut( 300, function () {
-					$( this ).remove();
-				} );
-			}, 3000 );
-		}
-
-		/**
 		 * Initialize form validation
 		 *
 		 * Validates form data before submission to ensure data integrity.
-		 * Note: Hero image is no longer mandatory.
 		 */
 		function initializeFormValidation() {
 			$( 'form#post' ).on( 'submit', function ( e ) {
 				let hasErrors = false;
 				const errors = [];
 
-				// Validate media tags are unique within this product
-				const mediaTags = [];
-				$( '.media-tag-field' ).each( function () {
-					const tag = $( this ).val().trim();
-					if ( tag ) {
-						if ( mediaTags.includes( tag ) ) {
-							hasErrors = true;
-							errors.push( 'Duplicate media tag: ' + tag );
-							$( this ).addClass( 'error' );
-						} else {
-							mediaTags.push( tag );
-							$( this ).removeClass( 'error' );
-						}
-					}
-				} );
+				// Validate that we have either an Ecwid Product ID or SKU
+				const productId = $( '#ecwid_product_id' ).val().trim();
+				const productSku = $( '#ecwid_product_sku' ).val().trim();
 
-				// Validate media tag format (alphanumeric, underscore, dash)
-				$( '.media-tag-field' ).each( function () {
-					const tag = $( this ).val().trim();
-					if ( tag && ! /^[a-zA-Z0-9_-]+$/.test( tag ) ) {
-						hasErrors = true;
-						errors.push(
-							'Invalid media tag format: ' +
-								tag +
-								'. Use only letters, numbers, underscore, and dash.'
-						);
-						$( this ).addClass( 'error' );
-					}
-				} );
-
-				// Check that media items with tags also have attachments
-				$( '.product-media-item' ).each( function () {
-					const $item = $( this );
-					const tag = $item.find( '.media-tag-field' ).val().trim();
-					const attachmentId = $item
-						.find( '.media-attachment-id' )
-						.val();
-
-					if ( tag && ! attachmentId ) {
-						hasErrors = true;
-						errors.push(
-							'Media tag "' +
-								tag +
-								'" requires a media file to be selected.'
-						);
-						$item.css( 'border-color', '#dc3232' );
-					} else {
-						$item.css( 'border-color', '' );
-					}
-				} );
+				if ( ! productId && ! productSku ) {
+					hasErrors = true;
+					errors.push(
+						'Please provide either an Ecwid Product ID or SKU to link this configuration.'
+					);
+					$( '#ecwid_product_id, #ecwid_product_sku' ).addClass(
+						'error'
+					);
+				} else {
+					$( '#ecwid_product_id, #ecwid_product_sku' ).removeClass(
+						'error'
+					);
+				}
 
 				if ( hasErrors ) {
 					e.preventDefault();
@@ -772,33 +490,16 @@
 		/**
 		 * Initialize tag suggestions functionality
 		 *
-		 * Sets up autocomplete for media tags and product tags.
+		 * Sets up autocomplete for product tags.
 		 */
 		function initializeTagSuggestions() {
-			// Enhanced autocomplete for media tags
-			$( document ).on( 'input', '.media-tag-field', function () {
-				const $field = $( this );
-				const value = $field.val().toLowerCase();
-
-				// Get existing suggestions from datalist
-				const $datalist = $( '#media_tag_suggestions' );
-				const suggestions = [];
-
-				$datalist.find( 'option' ).each( function () {
-					const optionValue = $( this ).val();
-					if ( optionValue.toLowerCase().includes( value ) ) {
-						suggestions.push( optionValue );
-					}
-				} );
-
-				// You could implement a dropdown here instead of relying on datalist
-				// For now, the datalist provides the functionality
-			} );
-
 			// Product tags autocomplete (WordPress built-in functionality)
 			if ( $( 'input[name="product_tags"]' ).length ) {
 				// WordPress tag autocomplete would be implemented here
 				// For now, users can type comma-separated tags
+				$( 'input[name="product_tags"]' ).on( 'input', function () {
+					// Could add real-time tag suggestions here
+				} );
 			}
 		}
 
@@ -845,38 +546,17 @@
 		 * Adds polish and user experience improvements.
 		 */
 		function initializeEnhancedUI() {
-			// Add loading states to buttons
-			$( document ).on( 'click', '.select-media-button', function () {
-				const $button = $( this );
-				const originalText = $button.text();
-				$button.text( 'Loading...' ).prop( 'disabled', true );
-
-				// Re-enable after media frame loads (timeout as fallback)
-				setTimeout( function () {
-					$button.text( originalText ).prop( 'disabled', false );
-				}, 1000 );
-			} );
-
-			// Add confirmation for removing items
-			$( document ).on(
-				'click',
-				'.remove-ingredient, .remove-media',
-				function ( e ) {
-					const itemType = $( this ).hasClass( 'remove-ingredient' )
-						? 'ingredient'
-						: 'media item';
-					if (
-						! confirm(
-							'Are you sure you want to remove this ' +
-								itemType +
-								'?'
-						)
-					) {
-						e.preventDefault();
-						e.stopPropagation();
-					}
+			// Add confirmation for removing ingredients
+			$( document ).on( 'click', '.remove-ingredient', function ( e ) {
+				if (
+					! confirm(
+						'Are you sure you want to remove this ingredient?'
+					)
+				) {
+					e.preventDefault();
+					e.stopPropagation();
 				}
-			);
+			} );
 
 			// Auto-expand textareas
 			$( document ).on( 'input', 'textarea', function () {
@@ -899,12 +579,14 @@
 		function initializeHelpSystem() {
 			// Add help tooltips for complex fields
 			const helpTexts = {
-				'.media-tag-field':
-					'Use descriptive names like "hero_image", "gallery_1", or "size_chart". These tags can be used to target specific media in your Gutenberg blocks.',
 				'.ingredient-name-field':
 					'Enter the ingredient name as it should appear on your product pages.',
 				'input[name="product_tags"]':
 					'Add descriptive tags like "waterproof", "organic", or "limited-edition" to help customers find products.',
+				'#ecwid_product_id':
+					'Enter the numeric ID of the Ecwid product you want to link to this configuration.',
+				'#ecwid_product_sku':
+					'Enter the SKU (Stock Keeping Unit) of the Ecwid product as an alternative to Product ID.',
 			};
 
 			Object.keys( helpTexts ).forEach( function ( selector ) {
@@ -919,73 +601,14 @@
 			} );
 		}
 
-		/**
-		 * Initialize enhanced media UI features
-		 *
-		 * Adds polish and user experience improvements for media management.
-		 */
-		function initializeEnhancedMediaUI() {
-			// Add hover effects to media tag items
-			$( document )
-				.on( 'mouseenter', '.media-tag-item', function () {
-					$( this ).addClass( 'border-primary' );
-				} )
-				.on( 'mouseleave', '.media-tag-item', function () {
-					$( this ).removeClass( 'border-primary' );
-				} );
-
-			// Add loading states for better UX
-			$( document ).on( 'click', '.select-media-button', function () {
-				const $container = $( this ).closest( '.media-tag-item' );
-				$container.addClass( 'media-loading' );
-			} );
-
-			// Remove loading state when media frame opens
-			$( document ).on( 'DOMNodeInserted', function ( e ) {
-				if ( $( e.target ).hasClass( 'media-modal' ) ) {
-					$( '.media-tag-item' ).removeClass( 'media-loading' );
-				}
-			} );
-
-			// Add drag and drop visual feedback
-			$( document )
-				.on( 'dragover', '.media-preview', function ( e ) {
-					e.preventDefault();
-					$( this ).addClass(
-						'border-dashed border-primary bg-light'
-					);
-				} )
-				.on( 'dragleave', '.media-preview', function () {
-					$( this ).removeClass(
-						'border-dashed border-primary bg-light'
-					);
-				} );
-
-			// Handle drag and drop (basic implementation)
-			$( document ).on( 'drop', '.media-preview', function ( e ) {
-				e.preventDefault();
-				$( this ).removeClass(
-					'border-dashed border-primary bg-light'
-				);
-
-				// Note: Full drag and drop implementation would require additional
-				// WordPress media handling - this is a placeholder for future enhancement
-				console.log(
-					'Drag and drop functionality can be enhanced in future versions'
-				);
-			} );
-		}
-
 		// Initialize all functionality
 		initializeProductSearch();
 		initializeIngredientsManagement();
-		initializeMediaManagement();
 		initializeFormValidation();
 		initializeTagSuggestions();
 		initializeLinesManagement();
 		initializeEnhancedUI();
 		initializeHelpSystem();
-		initializeEnhancedMediaUI();
 
 		// Update ingredient dropdowns on page load to handle existing selections
 		if ( $( '.library-ingredient-select' ).length > 0 ) {

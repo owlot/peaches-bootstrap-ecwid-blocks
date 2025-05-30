@@ -79,6 +79,15 @@ class Peaches_Ecwid_Blocks implements Peaches_Ecwid_Blocks_Interface {
 	private $product_lines_manager;
 
 	/**
+	 * Product Media Manager instance.
+	 *
+	 * @since  0.2.1
+	 * @access private
+	 * @var    Peaches_Product_Media_Manager
+	 */
+	private $product_media_manager;
+
+	/**
 	 * Ingredients Manager instance.
 	 *
 	 * @since  0.2.0
@@ -202,62 +211,31 @@ class Peaches_Ecwid_Blocks implements Peaches_Ecwid_Blocks_Interface {
 			}
 		}
 
-		// Load core classes
-		$core_classes = array(
+		// Load classes
+		$classes = array(
 			'class-utilities.php',
 			'class-ecwid-api.php',
 			'class-rewrite-manager.php',
+			'class-enhanced-navigation.php',
 			'class-product-manager.php',
 			'class-ingredients-library-manager.php',
 			'class-ecwid-settings.php',
 			'class-ecwid-product-settings.php',
-			'class-block-patterns.php'
-		);
-
-		foreach ($core_classes as $class_file) {
-			$file_path = PEACHES_ECWID_INCLUDES_DIR . $class_file;
-			if (file_exists($file_path)) {
-				require_once $file_path;
-			} else {
-				error_log('Missing class file: ' . $file_path);
-			}
-		}
-
-		// Load new classes (replacing groups)
-		$new_classes = array(
+			'class-block-patterns.php',
 			'class-db-migration.php',
 			'class-product-lines-manager.php',
 			'class-product-settings-manager.php',
-			'class-enhanced-navigation.php'
-		);
-
-		foreach ($new_classes as $class_file) {
-			$file_path = PEACHES_ECWID_INCLUDES_DIR . $class_file;
-			if (file_exists($file_path)) {
-				require_once $file_path;
-			}
-		}
-
-		// Load media tags classes
-		$media_classes = array(
+			'class-product-media-manager.php',
+			'class-ingredients-manager.php',
 			'class-media-tags-manager.php',
-			'class-media-tags-api.php'
+			'class-media-tags-api.php',
 		);
 
-		foreach ($media_classes as $class_file) {
+		foreach ($classes as $class_file) {
 			$file_path = PEACHES_ECWID_INCLUDES_DIR . $class_file;
 			if (file_exists($file_path)) {
-				require_once $file_path;
+				require_once $class_file;
 			}
-		}
-		// Enhanced Navigation should handle all our post types and taxonomies
-		if (file_exists(PEACHES_ECWID_INCLUDES_DIR . 'class-enhanced-navigation.php')) {
-			require_once PEACHES_ECWID_INCLUDES_DIR . 'class-enhanced-navigation.php';
-		}
-
-		// Fallback: if product-settings-manager doesn't exist, use the old ingredients manager
-		if (!class_exists('Peaches_Product_Settings_Manager') && file_exists(PEACHES_ECWID_INCLUDES_DIR . 'class-ingredients-manager.php')) {
-			require_once PEACHES_ECWID_INCLUDES_DIR . 'class-ingredients-manager.php';
 		}
 	}
 
@@ -293,6 +271,11 @@ class Peaches_Ecwid_Blocks implements Peaches_Ecwid_Blocks_Interface {
 		// Initialize product lines manager (replaces groups)
 		if (class_exists('Peaches_Product_Lines_Manager')) {
 			$this->product_lines_manager = new Peaches_Product_Lines_Manager();
+		}
+
+		// Initialize product media manager
+		if (class_exists('Peaches_Product_Media_Manager') && $this->ecwid_api && $this->media_tags_manager) {
+			$this->product_media_manager = new Peaches_Product_Media_Manager($this->ecwid_api, $this->media_tags_manager);
 		}
 
 		// Initialize other components with dependencies
@@ -585,6 +568,10 @@ class Peaches_Ecwid_Blocks implements Peaches_Ecwid_Blocks_Interface {
 
 	public function get_product_lines_manager() {
 		return $this->product_lines_manager;
+	}
+
+	public function get_product_media_manager() {
+		return $this->product_media_manager;
 	}
 
 	public function get_ingredients_library_manager() {

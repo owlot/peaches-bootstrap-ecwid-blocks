@@ -135,8 +135,17 @@
 				const tagLabel = $( this ).data( 'tag-label' );
 				const tagDescription = $( this ).data( 'tag-description' );
 				const tagCategory = $( this ).data( 'tag-category' );
+				const tagExpectedMediaType = $( this ).data(
+					'tag-expected-media-type'
+				);
 
-				openEditModal( tagKey, tagLabel, tagDescription, tagCategory );
+				openEditModal(
+					tagKey,
+					tagLabel,
+					tagDescription,
+					tagCategory,
+					tagExpectedMediaType
+				);
 			} );
 
 		// Delete button handler
@@ -320,6 +329,9 @@
 			tag_label: $form.find( '#tag_label' ).val(),
 			tag_description: $form.find( '#tag_description' ).val(),
 			tag_category: $form.find( '#tag_category' ).val(),
+			tag_expected_media_type: $form
+				.find( '#tag_expected_media_type' )
+				.val(),
 		};
 
 		$.post( MediaTagsParams.ajaxUrl, formData )
@@ -376,6 +388,9 @@
 			tag_label: $form.find( '#edit_tag_label' ).val(),
 			tag_description: $form.find( '#edit_tag_description' ).val(),
 			tag_category: $form.find( '#edit_tag_category' ).val(),
+			tag_expected_media_type: $form
+				.find( '#edit_tag_expected_media_type' )
+				.val(),
 		};
 
 		$.post( MediaTagsParams.ajaxUrl, formData )
@@ -504,12 +519,19 @@
 	 *
 	 * Populates and shows the edit modal with current tag information.
 	 *
-	 * @param {string} tagKey         - Tag key
-	 * @param {string} tagLabel       - Tag label
-	 * @param {string} tagDescription - Tag description
-	 * @param {string} tagCategory    - Tag category
+	 * @param {string} tagKey               - Tag key
+	 * @param {string} tagLabel             - Tag label
+	 * @param {string} tagDescription       - Tag description
+	 * @param {string} tagCategory          - Tag category
+	 * @param {string} tagExpectedMediaType - Expected media type
 	 */
-	function openEditModal( tagKey, tagLabel, tagDescription, tagCategory ) {
+	function openEditModal(
+		tagKey,
+		tagLabel,
+		tagDescription,
+		tagCategory,
+		tagExpectedMediaType
+	) {
 		const $form = $( '#edit-media-tag-form' );
 
 		// Populate form fields
@@ -517,6 +539,9 @@
 		$form.find( '#edit_tag_label' ).val( tagLabel );
 		$form.find( '#edit_tag_description' ).val( tagDescription );
 		$form.find( '#edit_tag_category' ).val( tagCategory );
+		$form
+			.find( '#edit_tag_expected_media_type' )
+			.val( tagExpectedMediaType );
 
 		// Update modal title
 		$( '#editTagModalLabel' ).html(
@@ -548,9 +573,29 @@
 			media: 'bg-warning text-dark',
 		};
 
+		const mediaTypeBadges = {
+			image: 'bg-success',
+			video: 'bg-danger',
+			audio: 'bg-warning text-dark',
+			document: 'bg-info',
+		};
+
 		const badgeClass = categoryBadges[ tagData.category ] || 'bg-secondary';
+		const mediaTypeBadge =
+			mediaTypeBadges[ tagData.expected_media_type ] || 'bg-secondary';
 		const description =
 			tagData.description || '<em class="text-muted">No description</em>';
+
+		// Get media type label from MediaTagsParams if available
+		let mediaTypeLabel = tagData.expected_media_type;
+		if (
+			typeof MediaTagsParams !== 'undefined' &&
+			MediaTagsParams.mediaTypes
+		) {
+			mediaTypeLabel =
+				MediaTagsParams.mediaTypes[ tagData.expected_media_type ] ||
+				tagData.expected_media_type;
+		}
 
 		const newRowHtml = `
 			<tr class="media-tag-row" data-tag-key="${ escapeHtml(
@@ -558,15 +603,20 @@
 			) }" style="display: none;">
 				<td>
 					<div class="d-flex align-items-center">
-						<div class="me-3">
-							<code class="bg-light px-2 py-1 rounded text-dark">${ escapeHtml(
-								tagKey
-							) }</code>
-						</div>
 						<div>
 							<h6 class="mb-1">${ escapeHtml( tagData.label ) }</h6>
 						</div>
 					</div>
+				</td>
+				<td>
+					<code class="bg-light px-2 py-1 rounded text-dark text-nowrap">${ escapeHtml(
+						tagKey
+					) }</code>
+				</td>
+				<td>
+					<span class="badge ${ mediaTypeBadge }">
+						${ escapeHtml( mediaTypeLabel ) }
+					</span>
 				</td>
 				<td>
 					<span class="badge ${ badgeClass }">
@@ -585,6 +635,7 @@
 								data-tag-label="${ escapeHtml( tagData.label ) }"
 								data-tag-description="${ escapeHtml( tagData.description ) }"
 								data-tag-category="${ escapeHtml( tagData.category ) }"
+								data-tag-expected-media-type="${ escapeHtml( tagData.expected_media_type ) }"
 								data-bs-toggle="tooltip"
 								title="Edit tag">
 							<i class="dashicons dashicons-edit"></i>
@@ -639,28 +690,66 @@
 			media: 'bg-warning text-dark',
 		};
 
+		const mediaTypeBadges = {
+			image: 'bg-success',
+			video: 'bg-danger',
+			audio: 'bg-warning text-dark',
+			document: 'bg-info',
+		};
+
 		const badgeClass = categoryBadges[ tagData.category ] || 'bg-secondary';
+		const mediaTypeBadge =
+			mediaTypeBadges[ tagData.expected_media_type ] || 'bg-secondary';
 		const description =
 			tagData.description || '<em class="text-muted">No description</em>';
 
+		// Get media type label from MediaTagsParams if available
+		let mediaTypeLabel = tagData.expected_media_type;
+		if (
+			typeof MediaTagsParams !== 'undefined' &&
+			MediaTagsParams.mediaTypes
+		) {
+			mediaTypeLabel =
+				MediaTagsParams.mediaTypes[ tagData.expected_media_type ] ||
+				tagData.expected_media_type;
+		}
+
 		// Update row content
 		$row.find( 'h6' ).text( tagData.label );
-		$row.find( '.badge' )
+
+		// Update media type badge
+		$row.find( 'td' )
+			.eq( 2 )
+			.find( '.badge' )
+			.attr( 'class', `badge ${ mediaTypeBadge }` )
+			.text( mediaTypeLabel );
+
+		// Update category badge
+		$row.find( 'td' )
+			.eq( 3 )
+			.find( '.badge' )
 			.attr( 'class', `badge ${ badgeClass }` )
 			.text(
 				tagData.category.charAt( 0 ).toUpperCase() +
 					tagData.category.slice( 1 )
 			);
-		$row.find( 'td' ).eq( 2 ).html( description );
+
+		// Update description
+		$row.find( 'td' ).eq( 4 ).html( description );
 
 		// Update button data attributes
 		$row.find( '.edit-tag-btn' )
 			.data( 'tag-label', tagData.label )
 			.data( 'tag-description', tagData.description )
 			.data( 'tag-category', tagData.category )
+			.data( 'tag-expected-media-type', tagData.expected_media_type )
 			.attr( 'data-tag-label', tagData.label )
 			.attr( 'data-tag-description', tagData.description )
-			.attr( 'data-tag-category', tagData.category );
+			.attr( 'data-tag-category', tagData.category )
+			.attr(
+				'data-tag-expected-media-type',
+				tagData.expected_media_type
+			);
 
 		$row.find( '.delete-tag-btn' )
 			.data( 'tag-label', tagData.label )
@@ -840,6 +929,15 @@
 			isValid = false;
 		} else {
 			$tagLabel.removeClass( 'is-invalid' ).addClass( 'is-valid' );
+		}
+
+		// Validate expected media type
+		const $mediaType = $form.find( '#tag_expected_media_type' );
+		if ( $mediaType.val().length === 0 ) {
+			$mediaType.addClass( 'is-invalid' );
+			isValid = false;
+		} else {
+			$mediaType.removeClass( 'is-invalid' ).addClass( 'is-valid' );
 		}
 
 		return isValid;

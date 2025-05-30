@@ -37,10 +37,9 @@ export default function save( { attributes } ) {
 				/>
 			</div>
 			<div className="card-body p-2 p-md-3 d-flex row-cols-1 flex-wrap align-content-between">
-				<h5
-					className="card-title"
-					data-wp-text="state.productName"
-				></h5>
+				<h5 className="card-title" data-wp-text="state.productName">
+					Product Name
+				</h5>
 				<p
 					className="card-text text-muted"
 					data-wp-text="state.productSubtitle"

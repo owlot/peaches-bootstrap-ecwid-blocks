@@ -310,6 +310,91 @@ return array(
 		'viewScriptModule' => 'file:./view.js',
 		'editorScript' => 'file:./index.js'
 	),
+	'ecwid-product-gallery-image' => array(
+		'$schema' => 'https://schemas.wp.org/trunk/block.json',
+		'apiVersion' => 3,
+		'name' => 'peaches/ecwid-product-gallery-image',
+		'version' => '0.1.0',
+		'title' => 'Bootstrap ECWID Product Gallery Image',
+		'category' => 'peaches-bootstrap',
+		'ancestor' => array(
+			'peaches/ecwid-product-detail'
+		),
+		'description' => 'Display a specific product media item based on media tag selection with Bootstrap styling and media type-specific controls.',
+		'keywords' => array(
+			'bootstrap',
+			'product',
+			'media',
+			'gallery',
+			'image',
+			'video',
+			'audio',
+			'document',
+			'peaches',
+			'ecwid'
+		),
+		'textdomain' => 'peaches',
+		'supports' => array(
+			'html' => false,
+			'layout' => false,
+			'color' => array(
+				'overlay' => true
+			),
+			'interactivity' => true
+		),
+		'attributes' => array(
+			'selectedMediaTag' => array(
+				'type' => 'string',
+				'default' => ''
+			),
+			'hideIfMissing' => array(
+				'type' => 'boolean',
+				'default' => true
+			),
+			'fallbackType' => array(
+				'type' => 'string',
+				'default' => 'none'
+			),
+			'fallbackTagKey' => array(
+				'type' => 'string',
+				'default' => ''
+			),
+			'fallbackMediaId' => array(
+				'type' => 'number',
+				'default' => 0
+			),
+			'videoAutoplay' => array(
+				'type' => 'boolean',
+				'default' => false
+			),
+			'videoMuted' => array(
+				'type' => 'boolean',
+				'default' => false
+			),
+			'videoLoop' => array(
+				'type' => 'boolean',
+				'default' => false
+			),
+			'videoControls' => array(
+				'type' => 'boolean',
+				'default' => true
+			),
+			'audioAutoplay' => array(
+				'type' => 'boolean',
+				'default' => false
+			),
+			'audioLoop' => array(
+				'type' => 'boolean',
+				'default' => false
+			),
+			'audioControls' => array(
+				'type' => 'boolean',
+				'default' => true
+			)
+		),
+		'viewScriptModule' => 'file:./view.js',
+		'editorScript' => 'file:./index.js'
+	),
 	'ecwid-product-images' => array(
 		'$schema' => 'https://schemas.wp.org/trunk/block.json',
 		'apiVersion' => 3,

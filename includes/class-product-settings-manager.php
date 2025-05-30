@@ -12,16 +12,13 @@ if (!defined('ABSPATH')) {
 	exit;
 }
 
-// Include the interface
-require_once PEACHES_ECWID_INCLUDES_DIR . 'interfaces/interface-ingredients-manager.php';
-
 /**
  * Class Peaches_Product_Settings_Manager
  *
  * @package PeachesEcwidBlocks
  * @since   0.2.0
  */
-class Peaches_Product_Settings_Manager implements Peaches_Ingredients_Manager_Interface {
+class Peaches_Product_Settings_Manager {
 	/**
 	 * Ecwid API instance.
 	 *
@@ -39,6 +36,15 @@ class Peaches_Product_Settings_Manager implements Peaches_Ingredients_Manager_In
 	 * @var    Peaches_Product_Lines_Manager
 	 */
 	private $lines_manager;
+
+	/**
+	 * Product Media Manager instance.
+	 *
+	 * @since  0.2.1
+	 * @access private
+	 * @var    Peaches_Product_Media_Manager
+	 */
+	private $media_manager;
 
 	/**
 	 * Constructor.
@@ -77,6 +83,7 @@ class Peaches_Product_Settings_Manager implements Peaches_Ingredients_Manager_In
 		add_action('wp_ajax_search_ecwid_products', array($this, 'ajax_search_products'));
 		add_action('rest_api_init', array($this, 'register_api_routes'));
 		add_action('save_post_product_settings', array($this, 'register_translation_strings'), 10, 1);
+		add_action('wp_ajax_get_ecwid_product_media', array($this, 'ajax_get_ecwid_product_media'));
 
 		add_filter('manage_product_settings_posts_columns', array($this, 'add_custom_columns'));
 	}
@@ -145,18 +152,18 @@ class Peaches_Product_Settings_Manager implements Peaches_Ingredients_Manager_In
 		);
 
 		add_meta_box(
-			'product_ingredients_meta',
-			__('Product Ingredients', 'peaches'),
-			array($this, 'render_ingredients_meta_box'),
+			'product_lines_meta',
+			__('Product Lines', 'peaches'),
+			array($this, 'render_lines_meta_box'),
 			'product_settings',
 			'normal',
 			'high'
 		);
 
 		add_meta_box(
-			'product_lines_meta',
-			__('Product Lines', 'peaches'),
-			array($this, 'render_lines_meta_box'),
+			'product_ingredients_meta',
+			__('Product Ingredients', 'peaches'),
+			array($this, 'render_ingredients_meta_box'),
 			'product_settings',
 			'normal',
 			'high'
@@ -221,184 +228,113 @@ class Peaches_Product_Settings_Manager implements Peaches_Ingredients_Manager_In
 		}
 	}
 
-/**
- * Render the Named Product Media meta box.
- *
- * @since 0.2.0
- * @param WP_Post $post Current post object.
- */
-public function render_media_meta_box($post) {
-	// Get current product media
-	$product_media = get_post_meta($post->ID, '_product_media', true);
-	if (!is_array($product_media)) {
-		$product_media = array();
-	}
-
-	// Get all available media tags
-	$media_tags_manager = new Peaches_Media_Tags_Manager();
-	$available_tags = $media_tags_manager->get_all_tags();
-
-	// Convert product media to tag-based array for easier handling
-	$media_by_tag = array();
-	foreach ($product_media as $media_item) {
-		if (isset($media_item['tag_name'])) {
-			$media_by_tag[$media_item['tag_name']] = $media_item;
+	/**
+	 * Render the Named Product Media meta box with enhanced media types.
+	 *
+	 * @since 0.2.1
+	 * @param WP_Post $post Current post object.
+	 */
+	public function render_media_meta_box($post) {
+		// Get current product media
+		$product_media = get_post_meta($post->ID, '_product_media', true);
+		if (!is_array($product_media)) {
+			$product_media = array();
 		}
-	}
 
-	wp_nonce_field('save_product_media', 'product_media_nonce');
-	?>
-	<div class="product-media-meta-box">
-		<div class="d-flex justify-content-between align-items-start mb-3">
-			<div>
-				<p class="description mb-2">
-					<?php _e('Assign media files to predefined tags for this product. Each tag can have one media item.', 'peaches'); ?>
-				</p>
-				<?php if (empty($available_tags)): ?>
-					<div class="alert alert-warning">
-						<strong><?php _e('No media tags available.', 'peaches'); ?></strong>
-						<?php _e('Please create some media tags first.', 'peaches'); ?>
-						<a href="<?php echo admin_url('admin.php?page=peaches-media-tags'); ?>" class="btn btn-sm btn-outline-primary ms-2">
-							<?php _e('Manage Media Tags', 'peaches'); ?>
-						</a>
-					</div>
-				<?php endif; ?>
-			</div>
-			<?php if (!empty($available_tags)): ?>
-				<a href="<?php echo admin_url('admin.php?page=peaches-media-tags'); ?>" class="btn btn-sm btn-outline-secondary">
-					<span class="dashicons dashicons-admin-generic"></span>
-					<?php _e('Manage Tags', 'peaches'); ?>
-				</a>
-			<?php endif; ?>
-		</div>
+		// Get all available media tags
+		$media_tags_manager = new Peaches_Media_Tags_Manager();
+		$available_tags = $media_tags_manager->get_all_tags();
 
-		<?php if (!empty($available_tags)): ?>
-			<div id="product-media-container">
-				<?php
-				// Group tags by category for better organization
-				$tags_by_category = array();
-				foreach ($available_tags as $tag_key => $tag_data) {
-					$category = isset($tag_data['category']) ? $tag_data['category'] : 'other';
-					$tags_by_category[$category][] = array('key' => $tag_key, 'data' => $tag_data);
-				}
-
-				// Define category order and labels
-				$category_info = array(
-					'primary' => array('label' => __('Primary Images', 'peaches'), 'color' => 'primary'),
-					'gallery' => array('label' => __('Gallery Images', 'peaches'), 'color' => 'success'),
-					'secondary' => array('label' => __('Secondary Images', 'peaches'), 'color' => 'secondary'),
-					'reference' => array('label' => __('Reference Materials', 'peaches'), 'color' => 'info'),
-					'media' => array('label' => __('Rich Media', 'peaches'), 'color' => 'warning'),
-					'other' => array('label' => __('Other', 'peaches'), 'color' => 'secondary')
-				);
-
-				foreach ($category_info as $category => $info):
-					if (empty($tags_by_category[$category])) continue;
-					?>
-					<div class="card mb-3">
-						<div class="card-header">
-							<h6 class="card-title mb-0">
-								<span class="badge bg-<?php echo esc_attr($info['color']); ?> me-2"><?php echo esc_html($info['label']); ?></span>
-								<small class="text-muted">(<?php echo count($tags_by_category[$category]); ?> <?php _e('tags', 'peaches'); ?>)</small>
-							</h6>
-						</div>
-						<div class="card-body">
-							<div class="row g-3">
-								<?php foreach ($tags_by_category[$category] as $tag): ?>
-									<?php
-									$tag_key = $tag['key'];
-									$tag_data = $tag['data'];
-									$current_media = isset($media_by_tag[$tag_key]) ? $media_by_tag[$tag_key] : null;
-									$attachment_id = $current_media ? $current_media['attachment_id'] : '';
-									?>
-									<div class="col-md-6 col-lg-4">
-										<?php $this->render_media_tag_item($tag_key, $tag_data, $attachment_id, $post->ID); ?>
-									</div>
-								<?php endforeach; ?>
-							</div>
-						</div>
-					</div>
-				<?php endforeach; ?>
-			</div>
-		<?php endif; ?>
-	</div>
-	<?php
-}
-
-/**
- * Render an individual media tag item.
- *
- * @since 0.2.0
- * @param string $tag_key       Tag key
- * @param array  $tag_data      Tag data
- * @param string $attachment_id Current attachment ID
- * @param int    $post_id       Current post ID for Ecwid fallback
- */
-private function render_media_tag_item($tag_key, $tag_data, $attachment_id = '', $post_id = 0) {
-	$has_media = !empty($attachment_id);
-	$fallback_used = false;
-
-	// Check for hero image fallback
-	if (!$has_media && $tag_key === 'hero_image' && $post_id) {
-		$ecwid_product_id = get_post_meta($post_id, '_ecwid_product_id', true);
-		if ($ecwid_product_id) {
-			$product = $this->ecwid_api->get_product_by_id($ecwid_product_id);
-			if ($product && !empty($product->thumbnailUrl)) {
-				$fallback_image_url = $product->thumbnailUrl;
-				$fallback_used = true;
+		// Convert product media to tag-based array for easier handling
+		$media_by_tag = array();
+		foreach ($product_media as $media_item) {
+			if (isset($media_item['tag_name'])) {
+				$media_by_tag[$media_item['tag_name']] = $media_item;
 			}
 		}
-	}
-	?>
-	<div class="media-tag-item border rounded p-3 h-100" data-tag-key="<?php echo esc_attr($tag_key); ?>">
-		<div class="text-center mb-3">
-			<div class="media-preview bg-light rounded" style="height: 120px; display: flex; align-items: center; justify-content: center;">
-				<?php if ($has_media): ?>
-					<?php echo wp_get_attachment_image($attachment_id, 'thumbnail', false, array('class' => 'img-fluid rounded', 'style' => 'max-height: 100px;')); ?>
-				<?php elseif ($fallback_used): ?>
-					<img src="<?php echo esc_url($fallback_image_url); ?>" class="img-fluid rounded" style="max-height: 100px;" alt="<?php _e('Fallback from Ecwid', 'peaches'); ?>">
-					<div class="position-absolute bottom-0 end-0 p-1">
-						<small class="badge bg-info"><?php _e('From Ecwid', 'peaches'); ?></small>
-					</div>
-				<?php else: ?>
-					<i class="fas fa-image fa-2x text-muted"></i>
+
+		// Initialize Media Manager if not already done
+		if (!isset($this->media_manager)) {
+			$this->media_manager = new Peaches_Product_Media_Manager($this->ecwid_api, $media_tags_manager);
+		}
+
+		wp_nonce_field('save_product_media', 'product_media_nonce');
+		?>
+		<div class="product-media-meta-box">
+			<div class="d-flex justify-content-between align-items-start mb-3">
+				<div>
+					<p class="description mb-2">
+						<?php _e('Assign media files, URLs, or Ecwid images to predefined tags for this product. Each tag can have one media item from any source.', 'peaches'); ?>
+					</p>
+					<?php if (empty($available_tags)): ?>
+						<div class="alert alert-warning">
+							<strong><?php _e('No media tags available.', 'peaches'); ?></strong>
+							<?php _e('Please create some media tags first.', 'peaches'); ?>
+							<a href="<?php echo admin_url('admin.php?page=peaches-ecwid-product-settings&tab=media_tags'); ?>" class="btn btn-sm btn-outline-primary ms-2">
+								<?php _e('Manage Media Tags', 'peaches'); ?>
+							</a>
+						</div>
+					<?php endif; ?>
+				</div>
+				<?php if (!empty($available_tags)): ?>
+					<a href="<?php echo admin_url('admin.php?page=peaches-ecwid-product-settings&tab=media_tags'); ?>" class="btn btn-sm btn-outline-secondary">
+						<span class="dashicons dashicons-admin-generic"></span>
+						<?php _e('Manage Tags', 'peaches'); ?>
+					</a>
 				<?php endif; ?>
 			</div>
-		</div>
 
-		<div class="text-center">
-			<h6 class="mb-1"><?php echo esc_html($tag_data['label']); ?></h6>
-			<small class="text-muted d-block mb-2">
-				<code><?php echo esc_html($tag_key); ?></code>
-			</small>
-			<?php if (!empty($tag_data['description'])): ?>
-				<small class="text-muted d-block mb-3"><?php echo esc_html($tag_data['description']); ?></small>
+			<?php if (!empty($available_tags)): ?>
+				<div id="product-media-container">
+					<?php
+					// Group tags by category for better organization
+					$tags_by_category = array();
+					foreach ($available_tags as $tag_key => $tag_data) {
+						$category = isset($tag_data['category']) ? $tag_data['category'] : 'other';
+						$tags_by_category[$category][] = array('key' => $tag_key, 'data' => $tag_data);
+					}
+
+					// Define category order and labels
+					$category_info = array(
+						'primary' => array('label' => __('Primary Images', 'peaches'), 'color' => 'primary'),
+						'gallery' => array('label' => __('Gallery Images', 'peaches'), 'color' => 'success'),
+						'secondary' => array('label' => __('Secondary Images', 'peaches'), 'color' => 'secondary'),
+						'reference' => array('label' => __('Reference Materials', 'peaches'), 'color' => 'info'),
+						'media' => array('label' => __('Rich Media', 'peaches'), 'color' => 'warning'),
+						'other' => array('label' => __('Other', 'peaches'), 'color' => 'secondary')
+					);
+
+					foreach ($category_info as $category => $info):
+						if (empty($tags_by_category[$category])) continue;
+						?>
+						<div class="card mb-3">
+							<div class="card-header">
+								<h6 class="card-title mb-0">
+									<span class="badge bg-<?php echo esc_attr($info['color']); ?> me-2"><?php echo esc_html($info['label']); ?></span>
+									<small class="text-muted">(<?php echo count($tags_by_category[$category]); ?> <?php _e('tags', 'peaches'); ?>)</small>
+								</h6>
+							</div>
+							<div class="card-body">
+								<div class="row g-3">
+									<?php foreach ($tags_by_category[$category] as $tag): ?>
+										<?php
+										$tag_key = $tag['key'];
+										$tag_data = $tag['data'];
+										$current_media = isset($media_by_tag[$tag_key]) ? $media_by_tag[$tag_key] : null;
+										?>
+										<div class="col-md-6 col-lg-4">
+											<?php $this->media_manager->render_media_tag_item($tag_key, $tag_data, $current_media, $post->ID); ?>
+										</div>
+									<?php endforeach; ?>
+								</div>
+							</div>
+						</div>
+					<?php endforeach; ?>
+				</div>
 			<?php endif; ?>
-
-			<input type="hidden"
-				   name="product_media[<?php echo esc_attr($tag_key); ?>][tag_name]"
-				   value="<?php echo esc_attr($tag_key); ?>">
-			<input type="hidden"
-				   name="product_media[<?php echo esc_attr($tag_key); ?>][attachment_id]"
-				   value="<?php echo esc_attr($attachment_id); ?>"
-				   class="media-attachment-id">
-
-			<div class="btn-group-vertical w-100">
-				<button type="button" class="btn btn-<?php echo $has_media ? 'outline-secondary' : 'secondary'; ?> btn-sm select-media-button">
-					<span class="dashicons dashicons-<?php echo $has_media ? 'update' : 'plus-alt2'; ?>"></span>
-					<?php echo $has_media ? __('Change', 'peaches') : __('Select', 'peaches'); ?>
-				</button>
-				<?php if ($has_media): ?>
-					<button type="button" class="btn btn-outline-danger btn-sm remove-media-button">
-						<span class="dashicons dashicons-trash"></span>
-						<?php _e('Remove', 'peaches'); ?>
-					</button>
-				<?php endif; ?>
-			</div>
 		</div>
-	</div>
-	<?php
-}
+		<?php
+	}
 
 	/**
 	 * Render the Product Lines meta box.
@@ -421,17 +357,28 @@ private function render_media_tag_item($tag_key, $tag_data, $attachment_id = '',
 		wp_nonce_field('save_product_lines', 'product_lines_nonce');
 ?>
 		<div class="product-lines-meta-box">
+			<div class="d-flex justify-content-between align-items-start mb-3">
+				<div>
+					<p class="description mb-2">
+						<?php _e('Select which product lines this product belongs to. Products can belong to multiple lines.', 'peaches'); ?>
+					</p>
+				</div>
+				<div>
+					<a href="<?php echo esc_url(admin_url('edit-tags.php?taxonomy=product_line')); ?>"
+					   class="btn btn-sm btn-outline-primary"
+					   target="_blank">
+						<span class="dashicons dashicons-plus-alt2"></span>
+						<?php _e('Create New Product Line', 'peaches'); ?>
+					</a>
+				</div>
+			</div>
 			<?php if (empty($all_lines)): ?>
 				<p><?php _e('No product lines available.', 'peaches'); ?>
 				<a href="<?php echo admin_url('edit-tags.php?taxonomy=product_line'); ?>" target="_blank">
 					<?php _e('Create a product line', 'peaches'); ?>
 				</a></p>
 			<?php else: ?>
-				<p class="description">
-					<?php _e('Select which product lines this product belongs to. Products can belong to multiple lines.', 'peaches'); ?>
-				</p>
-
-				<div class="lines-checklist" style="max-height: 200px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; background: #f9f9f9;">
+				<div class="hstack gap-2">
 					<?php foreach ($all_lines as $line): ?>
 						<label style="display: block; margin-bottom: 8px; cursor: pointer;">
 							<input type="checkbox"
@@ -622,9 +569,9 @@ private function render_media_tag_item($tag_key, $tag_data, $attachment_id = '',
 	}
 
 	/**
-	 * Save the meta box data.
+	 * Save the meta box data with enhanced media support.
 	 *
-	 * @since 0.2.0
+	 * @since 0.2.1
 	 * @param int $post_id The post ID.
 	 */
 	public function save_meta_data($post_id) {
@@ -676,29 +623,16 @@ private function render_media_tag_item($tag_key, $tag_data, $attachment_id = '',
 			update_post_meta($post_id, '_product_ingredients', $ingredients);
 		}
 
-		// Save product media with predefined tags
+		// Save product media with enhanced format using Media Manager
 		if (isset($_POST['product_media_nonce']) && wp_verify_nonce($_POST['product_media_nonce'], 'save_product_media')) {
-			$product_media = array();
-
-			if (isset($_POST['product_media']) && is_array($_POST['product_media'])) {
-				foreach ($_POST['product_media'] as $tag_key => $media_data) {
-					if (!empty($media_data['attachment_id']) && !empty($media_data['tag_name'])) {
-						$attachment_id = absint($media_data['attachment_id']);
-						$tag_name = sanitize_text_field($media_data['tag_name']);
-
-						$product_media[] = array(
-							'tag_name' => $tag_name,
-							'attachment_id' => $attachment_id
-						);
-
-						// Mark attachment as product media
-						update_post_meta($attachment_id, '_peaches_product_media', true);
-						update_post_meta($attachment_id, '_peaches_product_media_tag', $tag_name);
-					}
-				}
+			if (!isset($this->media_manager)) {
+				$media_tags_manager = new Peaches_Media_Tags_Manager();
+				$this->media_manager = new Peaches_Product_Media_Manager($this->ecwid_api, $media_tags_manager);
 			}
 
-			update_post_meta($post_id, '_product_media', $product_media);
+			if (isset($_POST['product_media']) && is_array($_POST['product_media'])) {
+				$this->media_manager->save_product_media($post_id, $_POST['product_media']);
+			}
 		}
 
 		// Save product lines
@@ -729,57 +663,9 @@ private function render_media_tag_item($tag_key, $tag_data, $attachment_id = '',
 	}
 
 	/**
-	 * Helper method to get product media by tag
+	 * Enqueue admin scripts and styles with media management support.
 	 *
-	 * @since 0.2.0
-	 * @param int    $product_id Product ID
-	 * @param string $tag_key    Media tag key
-	 *
-	 * @return string|null Attachment ID or null if not found
-	 */
-	public function get_product_media_by_tag($product_id, $tag_key) {
-		$product_media = get_post_meta($product_id, '_product_media', true);
-
-		if (!is_array($product_media)) {
-			return null;
-		}
-
-		foreach ($product_media as $media_item) {
-			if (isset($media_item['tag_name']) && $media_item['tag_name'] === $tag_key) {
-				return $media_item['attachment_id'];
-			}
-		}
-
-		return null;
-	}
-
-	/**
-	 * Helper method to get all product media organized by tag
-	 *
-	 * @since 0.2.0
-	 * @param int $product_id Product ID
-	 *
-	 * @return array Array of media organized by tag key
-	 */
-	public function get_product_media_by_tags($product_id) {
-		$product_media = get_post_meta($product_id, '_product_media', true);
-		$media_by_tag = array();
-
-		if (is_array($product_media)) {
-			foreach ($product_media as $media_item) {
-				if (isset($media_item['tag_name'])) {
-					$media_by_tag[$media_item['tag_name']] = $media_item['attachment_id'];
-				}
-			}
-		}
-
-		return $media_by_tag;
-	}
-
-	/**
-	 * Enqueue admin scripts and styles.
-	 *
-	 * @since 0.2.0
+	 * @since 0.2.1
 	 * @param string $hook Current admin page.
 	 */
 	public function enqueue_admin_scripts($hook) {
@@ -789,6 +675,7 @@ private function render_media_tag_item($tag_key, $tag_data, $attachment_id = '',
 			wp_enqueue_media();
 			wp_enqueue_script('jquery-ui-sortable');
 
+			// Main product settings script
 			wp_enqueue_script(
 				'product-settings-admin',
 				PEACHES_ECWID_ASSETS_URL . 'js/admin-product-settings.js',
@@ -797,9 +684,27 @@ private function render_media_tag_item($tag_key, $tag_data, $attachment_id = '',
 				true
 			);
 
+			// New media management script
+			wp_enqueue_script(
+				'product-media-management',
+				PEACHES_ECWID_ASSETS_URL . 'js/admin-product-media.js',
+				array('jquery', 'media-upload'),
+				PEACHES_ECWID_VERSION,
+				true
+			);
+
+			// Main styles
 			wp_enqueue_style(
 				'product-settings-admin',
 				PEACHES_ECWID_ASSETS_URL . 'css/admin-product-settings.css',
+				array(),
+				PEACHES_ECWID_VERSION
+			);
+
+			// Media management styles
+			wp_enqueue_style(
+				'product-media-admin',
+				PEACHES_ECWID_ASSETS_URL . 'css/admin-product-media.css',
 				array(),
 				PEACHES_ECWID_VERSION
 			);
@@ -822,20 +727,30 @@ private function render_media_tag_item($tag_key, $tag_data, $attachment_id = '',
 				);
 			}
 
+			// Localize main script
 			wp_localize_script(
 				'product-settings-admin',
 				'ProductSettingsParams',
 				array(
 					'newIngredientText' => __('New Ingredient', 'peaches'),
-					'newMediaText' => __('New Media', 'peaches'),
 					'chooseProductText' => __('Choose Product', 'peaches'),
 					'changeProductText' => __('Change Product', 'peaches'),
 					'searchNonce' => wp_create_nonce('search_ecwid_products'),
 					'ajaxUrl' => admin_url('admin-ajax.php'),
 					'productIngredients' => $product_ingredients_array,
 					'newIngredientUrl' => admin_url('post-new.php?post_type=product_ingredient'),
+				)
+			);
+
+			// Localize media management script
+			wp_localize_script(
+				'product-media-management',
+				'ProductMediaParams',
+				array(
 					'selectMediaTitle' => __('Select Product Media', 'peaches'),
 					'selectMediaButton' => __('Use this media', 'peaches'),
+					'ajaxUrl' => admin_url('admin-ajax.php'),
+					'nonce' => wp_create_nonce('product_media_nonce'),
 				)
 			);
 		}
@@ -913,6 +828,62 @@ private function render_media_tag_item($tag_key, $tag_data, $attachment_id = '',
 		wp_send_json_success(array('products' => $products));
 	}
 
+	/**
+	 * AJAX handler to get Ecwid product media.
+	 *
+	 * @since 0.2.1
+	 */
+	public function ajax_get_ecwid_product_media() {
+		// Verify nonce
+		if (!isset($_POST['nonce']) || !wp_verify_nonce($_POST['nonce'], 'product_media_nonce')) {
+			wp_send_json_error(__('Security check failed', 'peaches'));
+		}
+
+		// Check permissions
+		if (!current_user_can('edit_posts')) {
+			wp_send_json_error(__('Insufficient permissions', 'peaches'));
+		}
+
+		$product_id = isset($_POST['product_id']) ? absint($_POST['product_id']) : 0;
+
+		if (!$product_id) {
+			wp_send_json_error(__('Product ID is required', 'peaches'));
+		}
+
+		$product = $this->ecwid_api->get_product_by_id($product_id);
+
+		if (!$product) {
+			wp_send_json_error(__('Product not found', 'peaches'));
+		}
+
+		$images = array();
+
+		// Add main image
+		if (!empty($product->thumbnailUrl)) {
+			$images[] = array(
+				'position' => 0,
+				'label' => __('Main image (position 1)', 'peaches'),
+				'url' => $product->thumbnailUrl
+			);
+		}
+
+		// Add gallery images
+		if (!empty($product->galleryImages) && is_array($product->galleryImages)) {
+			foreach ($product->galleryImages as $index => $gallery_image) {
+				$images[] = array(
+					'position' => $index + 1,
+					'label' => sprintf(__('Gallery image %d (position %d)', 'peaches'), $index + 1, $index + 2),
+					'url' => $gallery_image->url
+				);
+			}
+		}
+
+		wp_send_json_success(array(
+			'images' => $images,
+			'product_name' => $product->name
+		));
+	}
+
 	public function register_api_routes() {
 		register_rest_route('peaches/v1', '/product-ingredients/(?P<id>\d+)', array(
 			'methods' => 'GET',
@@ -927,7 +898,8 @@ private function render_media_tag_item($tag_key, $tag_data, $attachment_id = '',
 			),
 		));
 	}
-public function get_product_ingredients_api($request) {
+
+	public function get_product_ingredients_api($request) {
 		$product_id = $request['id'];
 		$raw_ingredients = $this->get_product_ingredients($product_id);
 
@@ -1062,8 +1034,60 @@ public function get_product_ingredients_api($request) {
 		return array();
 	}
 
+	/**
+	 * Updated helper method to get product media by tag with enhanced format support
+	 *
+	 * @since 0.2.1
+	 * @param int    $product_id Product ID
+	 * @param string $tag_key    Media tag key
+	 *
+	 * @return array|null Media data or null if not found
+	 */
+	public function get_product_media_by_tag($product_id, $tag_key) {
+		if (!isset($this->media_manager)) {
+			$media_tags_manager = new Peaches_Media_Tags_Manager();
+			$this->media_manager = new Peaches_Product_Media_Manager($this->ecwid_api, $media_tags_manager);
+		}
+
+		return $this->media_manager->get_product_media_by_tag($product_id, $tag_key);
+	}
+
+	/**
+	 * Updated helper method to get all product media organized by tag with enhanced format support
+	 *
+	 * @since 0.2.1
+	 * @param int $product_id Product ID
+	 *
+	 * @return array Array of media organized by tag key with enhanced data
+	 */
+	public function get_product_media_by_tags($product_id) {
+		$product_media = get_post_meta($product_id, '_product_media', true);
+		$media_by_tag = array();
+
+		if (is_array($product_media)) {
+			foreach ($product_media as $media_item) {
+				if (isset($media_item['tag_name'])) {
+					$media_by_tag[$media_item['tag_name']] = $media_item;
+				}
+			}
+		}
+
+		return $media_by_tag;
+	}
+
 	// Getter for lines manager
 	public function get_lines_manager() {
 		return $this->lines_manager;
+	}
+
+	/**
+	 * Get Media Manager instance
+	 *
+	 * @since 0.2.1
+	 *
+	 * @return Peaches_Product_Media_Manager|null
+	 */
+	public function get_media_manager() {
+		return $this->media_manager;
 	}
 }

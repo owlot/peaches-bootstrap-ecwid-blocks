@@ -1,10 +1,10 @@
-import { store, getContext } from '@wordpress/interactivity';
+import { store } from '@wordpress/interactivity';
 
 // Access the parent product detail store
 const productDetailStore = store( 'peaches-ecwid-product-detail' );
 
 // Store definition with proper lifecycle methods
-const { state, actions } = store( 'peaches-ecwid-product-images', {
+const { state } = store( 'peaches-ecwid-product-images', {
 	state: {
 		get productId() {
 			return productDetailStore.state.productId;

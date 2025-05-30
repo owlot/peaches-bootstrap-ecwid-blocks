@@ -1,0 +1,83 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "peaches/ecwid-product-gallery-image",
+	"version": "0.1.0",
+	"title": "Bootstrap ECWID Product Gallery Image",
+	"category": "peaches-bootstrap",
+	"ancestor": [ "peaches/ecwid-product-detail" ],
+	"description": "Display a specific product media item based on media tag selection with Bootstrap styling and media type-specific controls.",
+	"keywords": [
+		"bootstrap",
+		"product",
+		"media",
+		"gallery",
+		"image",
+		"video",
+		"audio",
+		"document",
+		"peaches",
+		"ecwid"
+	],
+	"textdomain": "peaches",
+	"supports": {
+		"html": false,
+		"layout": false,
+		"color": {
+			"overlay": true
+		},
+		"interactivity": true
+	},
+	"attributes": {
+		"selectedMediaTag": {
+			"type": "string",
+			"default": ""
+		},
+		"hideIfMissing": {
+			"type": "boolean",
+			"default": true
+		},
+		"fallbackType": {
+			"type": "string",
+			"default": "none"
+		},
+		"fallbackTagKey": {
+			"type": "string",
+			"default": ""
+		},
+		"fallbackMediaId": {
+			"type": "number",
+			"default": 0
+		},
+		"videoAutoplay": {
+			"type": "boolean",
+			"default": false
+		},
+		"videoMuted": {
+			"type": "boolean",
+			"default": false
+		},
+		"videoLoop": {
+			"type": "boolean",
+			"default": false
+		},
+		"videoControls": {
+			"type": "boolean",
+			"default": true
+		},
+		"audioAutoplay": {
+			"type": "boolean",
+			"default": false
+		},
+		"audioLoop": {
+			"type": "boolean",
+			"default": false
+		},
+		"audioControls": {
+			"type": "boolean",
+			"default": true
+		}
+	},
+	"viewScriptModule": "file:./view.js",
+	"editorScript": "file:./index.js"
+}
