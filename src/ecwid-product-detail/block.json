@@ -20,14 +20,23 @@
 		"layout": false,
 		"color": {
 			"overlay": true
-		}
-	},
-	"supports": {
+		},
 		"interactivity": true
+	},
+	"providesContext": {
+		"peaches/testProductData": "testProductData"
 	},
 	"editorScript": "file:./index.js",
 	"render": "file:./render.php",
 	"attributes": {
+		"testProductId": {
+			"type": "number",
+			"default": 0
+		},
+		"testProductData": {
+			"type": "object",
+			"default": null
+		},
 		"xs": {
 			"type": "object",
 			"default": {}

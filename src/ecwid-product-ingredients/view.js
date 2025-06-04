@@ -3,7 +3,7 @@ import { store, getContext } from '@wordpress/interactivity';
 // Access the parent product detail store
 const productDetailStore = store( 'peaches-ecwid-product-detail' );
 
-const { state, actions } = store( 'peaches-ecwid-product-ingredients', {
+const { state } = store( 'peaches-ecwid-product-ingredients', {
 	state: {
 		get productId() {
 			return productDetailStore.state.productId;

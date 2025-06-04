@@ -50,28 +50,28 @@ if (!empty($product_id)) {
     // Get product data using Ecwid API
     $product = $ecwid_api->get_product_by_id($product_id);
 
-    if ($product) {
-        // Convert product to JSON-compatible array
-        $product_data = array(
-            'id' => $product->id,
-            'name' => $product->name,
-            'price' => $product->price,
-            'sku' => $product->sku,
-            'description' => $product->description,
-            'url' => $product->url,
-            'imageUrl' => $product->imageUrl,
-            'thumbnailUrl' => $product->thumbnailUrl,
-            'images' => isset($product->galleryImages) ? $product->galleryImages : [],
-            'categories' => isset($product->categories) ? $product->categories : [],
-            'attributes' => isset($product->attributes) ? $product->attributes : [],
-            'options' => isset($product->options) ? $product->options : [],
-        );
+if ($product) {
+		// Convert the entire product object to array for JSON response
+		// This preserves all data from Ecwid API
+		$product_data = (array) $product;
 
-        // Add additional media if available (for newer Ecwid API versions)
-        if (isset($product->media) && isset($product->media->images)) {
-            $product_data['media'] = $product->media;
-        }
-    }
+		// Ensure common fields are properly set (in case they're missing)
+		if (!isset($product_data['description'])) {
+			$product_data['description'] = '';
+		}
+		if (!isset($product_data['galleryImages'])) {
+			$product_data['galleryImages'] = array();
+		}
+		if (!isset($product_data['media'])) {
+			$product_data['media'] = null;
+		}
+		if (!isset($product_data['inStock'])) {
+			$product_data['inStock'] = true; // Default assumption
+		}
+		if (!isset($product_data['compareToPrice'])) {
+			$product_data['compareToPrice'] = null;
+		}
+	}
 }
 
 // Adds the global state with both product ID and full product data

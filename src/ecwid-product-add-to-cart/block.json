@@ -3,7 +3,7 @@
 	"apiVersion": 3,
 	"name": "peaches/ecwid-product-add-to-cart",
 	"version": "0.1.0",
-	"title": "Bootstrap ECWID Product Add to cart Template",
+	"title": "Bootstrap ECWID Product Add to cart",
 	"category": "peaches-bootstrap",
 	"ancestor": [ "peaches/ecwid-product-detail" ],
 	"description": "A dynamic ECWID product add to cart template with Bootstrap styling.",
@@ -22,17 +22,72 @@
 		"layout": false,
 		"color": {
 			"overlay": true
-		}
-	},
-	"supports": {
+		},
 		"interactivity": true
 	},
+	"usesContext": [ "peaches/testProductData" ],
 	"viewScriptModule": "file:./view.js",
 	"editorScript": "file:./index.js",
+	"style": "file:./style-index.css",
 	"attributes": {
+		"buttonThemeColor": {
+			"type": "string",
+			"default": "primary"
+		},
+		"buttonSize": {
+			"type": "string",
+			"default": "md"
+		},
+		"buttonText": {
+			"type": "string",
+			"default": "Add to Cart"
+		},
+		"outOfStockText": {
+			"type": "string",
+			"default": "Out of Stock"
+		},
+		"allowOutOfStockPurchase": {
+			"type": "boolean",
+			"default": false
+		},
+		"showQuantitySelector": {
+			"type": "boolean",
+			"default": true
+		},
+		"buttonBootstrapSettings": {
+			"type": "object",
+			"default": {
+				"xs": {},
+				"sm": {},
+				"md": {},
+				"lg": {},
+				"xl": {},
+				"xxl": {},
+				"border": {
+					"type_location": {},
+					"rounded": 0
+				},
+				"sizes": {}
+			}
+		},
+		"inputBootstrapSettings": {
+			"type": "object",
+			"default": {
+				"xs": {},
+				"sm": {},
+				"md": {},
+				"lg": {},
+				"xl": {},
+				"xxl": {},
+				"colors": {
+					"background": "light"
+				},
+				"sizes": {}
+			}
+		},
 		"xs": {
 			"type": "object",
-			"default": {}
+			"default": { "display": "inline-flex" }
 		},
 		"sm": {
 			"type": "object",
@@ -51,6 +106,26 @@
 			"default": {}
 		},
 		"xxl": {
+			"type": "object",
+			"default": {}
+		},
+		"border": {
+			"type": "object",
+			"default": {
+				"type_location": {},
+				"color": "light",
+				"rounded": 0
+			}
+		},
+		"placements": {
+			"type": "object",
+			"default": {}
+		},
+		"spacings": {
+			"type": "object",
+			"default": { "gap": 2 }
+		},
+		"sizes": {
 			"type": "object",
 			"default": {}
 		}

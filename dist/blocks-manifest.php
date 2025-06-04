@@ -144,7 +144,7 @@ return array(
 		'apiVersion' => 3,
 		'name' => 'peaches/ecwid-product-add-to-cart',
 		'version' => '0.1.0',
-		'title' => 'Bootstrap ECWID Product Add to cart Template',
+		'title' => 'Bootstrap ECWID Product Add to cart',
 		'category' => 'peaches-bootstrap',
 		'ancestor' => array(
 			'peaches/ecwid-product-detail'
@@ -161,15 +161,109 @@ return array(
 		),
 		'textdomain' => 'peaches',
 		'supports' => array(
+			'html' => false,
+			'layout' => false,
+			'color' => array(
+				'overlay' => true
+			),
 			'interactivity' => true
+		),
+		'usesContext' => array(
+			'peaches/testProductData'
 		),
 		'viewScriptModule' => 'file:./view.js',
 		'editorScript' => 'file:./index.js',
+		'style' => 'file:./style-index.css',
 		'attributes' => array(
+			'buttonThemeColor' => array(
+				'type' => 'string',
+				'default' => 'primary'
+			),
+			'buttonSize' => array(
+				'type' => 'string',
+				'default' => 'md'
+			),
+			'buttonText' => array(
+				'type' => 'string',
+				'default' => 'Add to Cart'
+			),
+			'outOfStockText' => array(
+				'type' => 'string',
+				'default' => 'Out of Stock'
+			),
+			'allowOutOfStockPurchase' => array(
+				'type' => 'boolean',
+				'default' => false
+			),
+			'showQuantitySelector' => array(
+				'type' => 'boolean',
+				'default' => true
+			),
+			'buttonBootstrapSettings' => array(
+				'type' => 'object',
+				'default' => array(
+					'xs' => array(
+						
+					),
+					'sm' => array(
+						
+					),
+					'md' => array(
+						
+					),
+					'lg' => array(
+						
+					),
+					'xl' => array(
+						
+					),
+					'xxl' => array(
+						
+					),
+					'border' => array(
+						'type_location' => array(
+							
+						),
+						'rounded' => 0
+					),
+					'sizes' => array(
+						
+					)
+				)
+			),
+			'inputBootstrapSettings' => array(
+				'type' => 'object',
+				'default' => array(
+					'xs' => array(
+						
+					),
+					'sm' => array(
+						
+					),
+					'md' => array(
+						
+					),
+					'lg' => array(
+						
+					),
+					'xl' => array(
+						
+					),
+					'xxl' => array(
+						
+					),
+					'colors' => array(
+						'background' => 'light'
+					),
+					'sizes' => array(
+						
+					)
+				)
+			),
 			'xs' => array(
 				'type' => 'object',
 				'default' => array(
-					
+					'display' => 'inline-flex'
 				)
 			),
 			'sm' => array(
@@ -201,6 +295,34 @@ return array(
 				'default' => array(
 					
 				)
+			),
+			'border' => array(
+				'type' => 'object',
+				'default' => array(
+					'type_location' => array(
+						
+					),
+					'color' => 'light',
+					'rounded' => 0
+				)
+			),
+			'placements' => array(
+				'type' => 'object',
+				'default' => array(
+					
+				)
+			),
+			'spacings' => array(
+				'type' => 'object',
+				'default' => array(
+					'gap' => 2
+				)
+			),
+			'sizes' => array(
+				'type' => 'object',
+				'default' => array(
+					
+				)
 			)
 		)
 	),
@@ -222,11 +344,27 @@ return array(
 		),
 		'textdomain' => 'peaches',
 		'supports' => array(
+			'html' => false,
+			'layout' => false,
+			'color' => array(
+				'overlay' => true
+			),
 			'interactivity' => true
+		),
+		'providesContext' => array(
+			'peaches/testProductData' => 'testProductData'
 		),
 		'editorScript' => 'file:./index.js',
 		'render' => 'file:./render.php',
 		'attributes' => array(
+			'testProductId' => array(
+				'type' => 'number',
+				'default' => 0
+			),
+			'testProductData' => array(
+				'type' => 'object',
+				'default' => null
+			),
 			'xs' => array(
 				'type' => 'object',
 				'default' => array(
@@ -293,6 +431,9 @@ return array(
 			),
 			'interactivity' => true
 		),
+		'usesContext' => array(
+			'peaches/testProductData'
+		),
 		'attributes' => array(
 			'fieldType' => array(
 				'type' => 'string',
@@ -342,6 +483,9 @@ return array(
 			),
 			'interactivity' => true
 		),
+		'usesContext' => array(
+			'peaches/testProductData'
+		),
 		'attributes' => array(
 			'selectedMediaTag' => array(
 				'type' => 'string',
@@ -390,6 +534,26 @@ return array(
 			'audioControls' => array(
 				'type' => 'boolean',
 				'default' => true
+			),
+			'border' => array(
+				'type' => 'object',
+				'default' => array(
+					'type_location' => array(
+						
+					)
+				)
+			),
+			'placements' => array(
+				'type' => 'object',
+				'default' => array(
+					
+				)
+			),
+			'sizes' => array(
+				'type' => 'object',
+				'default' => array(
+					
+				)
 			)
 		),
 		'viewScriptModule' => 'file:./view.js',
@@ -423,6 +587,9 @@ return array(
 				'overlay' => true
 			),
 			'interactivity' => true
+		),
+		'usesContext' => array(
+			'peaches/testProductData'
 		),
 		'attributes' => array(
 			'imageSize' => array(
@@ -468,6 +635,9 @@ return array(
 				'overlay' => true
 			),
 			'interactivity' => true
+		),
+		'usesContext' => array(
+			'peaches/testProductData'
 		),
 		'attributes' => array(
 			'startOpened' => array(

@@ -79,31 +79,29 @@ export default function save( { attributes } ) {
 	return (
 		<div { ...blockProps }>
 			{ /* Dynamic content container - content will be created and managed by JavaScript */ }
-			<div className="gallery-media-container w-100 h-100">
-				{ /* Loading state - will be hidden when content loads */ }
+			{ /* Loading state - will be hidden when content loads */ }
+			<div
+				className="loading-container d-flex align-items-center justify-content-center text-muted"
+				data-wp-class--d-none="!state.showLoading"
+				style={ { minHeight: '100px' } }
+			>
 				<div
-					className="loading-container d-flex align-items-center justify-content-center text-muted"
-					data-wp-class--d-none="!state.showLoading"
-					style={ { minHeight: '100px' } }
+					className="spinner-border spinner-border-sm me-2"
+					role="status"
 				>
-					<div
-						className="spinner-border spinner-border-sm me-2"
-						role="status"
-					>
-						<span className="visually-hidden">
-							{ __( 'Loading media…', 'ecwid-shopping-cart' ) }
-						</span>
-					</div>
-					{ __( 'Loading media…', 'ecwid-shopping-cart' ) }
+					<span className="visually-hidden">
+						{ __( 'Loading media…', 'ecwid-shopping-cart' ) }
+					</span>
 				</div>
-
-				{ /* Media will be inserted here by JavaScript based on media type */ }
-				{ /* The view.js will create appropriate elements: */ }
-				{ /* - <img> for images */ }
-				{ /* - <video> for videos with proper attributes */ }
-				{ /* - <audio> for audio files with controls */ }
-				{ /* - <a> or <iframe> for documents */ }
+				{ __( 'Loading media…', 'ecwid-shopping-cart' ) }
 			</div>
+
+			{ /* Media will be inserted here by JavaScript based on media type */ }
+			{ /* The view.js will create appropriate elements: */ }
+			{ /* - <img> for images */ }
+			{ /* - <video> for videos with proper attributes */ }
+			{ /* - <audio> for audio files with controls */ }
+			{ /* - <a> or <iframe> for documents */ }
 		</div>
 	);
 }

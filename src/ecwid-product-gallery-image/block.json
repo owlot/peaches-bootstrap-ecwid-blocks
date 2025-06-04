@@ -28,6 +28,7 @@
 		},
 		"interactivity": true
 	},
+	"usesContext": [ "peaches/testProductData" ],
 	"attributes": {
 		"selectedMediaTag": {
 			"type": "string",
@@ -76,6 +77,20 @@
 		"audioControls": {
 			"type": "boolean",
 			"default": true
+		},
+		"border": {
+			"type": "object",
+			"default": {
+				"type_location": {}
+			}
+		},
+		"placements": {
+			"type": "object",
+			"default": {}
+		},
+		"sizes": {
+			"type": "object",
+			"default": {}
 		}
 	},
 	"viewScriptModule": "file:./view.js",

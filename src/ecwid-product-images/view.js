@@ -33,19 +33,24 @@ const { state } = store( 'peaches-ecwid-product-images', {
 					'[data-wp-interactive="peaches-ecwid-product-images"]'
 				);
 				const imageSize =
-					element.getAttribute( 'data-image-size' ) || 'medium';
+					element?.getAttribute( 'data-image-size' ) || 'medium';
 
-				// Updated size mapping to match the actual properties in the product media object
+				// Get maxThumbnails setting from element attributes or fallback to 5
+				const maxThumbnails =
+					parseInt(
+						element?.getAttribute( 'data-max-thumbnails' )
+					) || 5;
+
+				// Size mapping to match the actual properties in the product media object
 				const sizeMapping = {
 					small: 'image160pxUrl',
 					medium: 'image400pxUrl',
 					large: 'image800pxUrl',
-					xlarge: 'image1500pxUrl',
 					original: 'imageOriginalUrl',
 				};
 
 				const imageSizeKey =
-					sizeMapping[ imageSize ] || 'image400pxUrl'; // Default to medium
+					sizeMapping[ imageSize ] || 'image400pxUrl';
 
 				// Handle media.images first (newer API structure)
 				if (
@@ -58,47 +63,74 @@ const { state } = store( 'peaches-ecwid-product-images', {
 					state.currentImage =
 						mainImage[ imageSizeKey ] || mainImage.image400pxUrl;
 
-					// Set gallery images with the correct URL properties
-					state.galleryImages = product.media.images.map(
-						( image ) => ( {
+					// Set gallery images with the correct URL properties, respecting maxThumbnails
+					state.galleryImages = product.media.images
+						.slice( 0, maxThumbnails + 1 )
+						.map( ( image ) => ( {
 							thumbnailUrl: image.image160pxUrl, // Use the smallest image for thumbnails
 							imageUrl:
 								image[ imageSizeKey ] || image.image400pxUrl,
 							isCurrent:
-								image[ imageSizeKey ] === state.currentImage,
-						} )
-					);
+								( image[ imageSizeKey ] ||
+									image.image400pxUrl ) ===
+								state.currentImage,
+						} ) );
 				}
 				// Fall back to legacy galleryImages if available
-				else if ( product.images && product.images.length > 0 ) {
-					// For backward compatibility with older product data structure
-					const fallbackSizeMapping = {
-						small: 'thumbnailUrl',
+				else if (
+					product.galleryImages &&
+					product.galleryImages.length > 0
+				) {
+					// Use main product image as current image
+					state.currentImage =
+						product.thumbnailUrl || product.imageUrl || '';
+
+					// Process legacy gallery images
+					const legacySizeMapping = {
+						small: 'smallThumbnailUrl',
 						medium: 'imageUrl',
-						large: 'largeImageUrl',
+						large: 'hdThumbnailUrl',
 						original: 'originalImageUrl',
 					};
 
-					const fallbackImageSizeKey =
-						fallbackSizeMapping[ imageSize ] || 'imageUrl';
+					const legacyImageSizeKey =
+						legacySizeMapping[ imageSize ] || 'imageUrl';
 
-					state.currentImage =
-						product.images[ 0 ][ fallbackImageSizeKey ] ||
-						product.images[ 0 ].imageUrl;
-
-					state.galleryImages = product.images.map( ( image ) => ( {
-						thumbnailUrl: image.thumbnailUrl,
+					// Add main image as first gallery item
+					const mainGalleryItem = {
+						thumbnailUrl:
+							product.thumbnailUrl || product.smallThumbnailUrl,
 						imageUrl:
-							image[ fallbackImageSizeKey ] || image.imageUrl,
-						isCurrent:
-							( image[ fallbackImageSizeKey ] ||
-								image.imageUrl ) === state.currentImage,
-					} ) );
+							product[ legacyImageSizeKey ] || product.imageUrl,
+						isCurrent: true,
+					};
+
+					// Add gallery images, respecting maxThumbnails (subtract 1 for main image)
+					const galleryItems = product.galleryImages
+						.slice( 0, maxThumbnails - 1 )
+						.map( ( image ) => ( {
+							thumbnailUrl:
+								image.thumbnailUrl || image.smallThumbnailUrl,
+							imageUrl:
+								image[ legacyImageSizeKey ] || image.imageUrl,
+							isCurrent: false,
+						} ) );
+
+					state.galleryImages = [ mainGalleryItem, ...galleryItems ];
 				}
-				// Last resort, use the main product image
-				else if ( product.imageUrl ) {
-					state.currentImage = product.imageUrl;
-					state.galleryImages = [];
+				// Last resort, use the main product image only
+				else if ( product.thumbnailUrl || product.imageUrl ) {
+					state.currentImage =
+						product.thumbnailUrl || product.imageUrl;
+					state.galleryImages = [
+						{
+							thumbnailUrl:
+								product.thumbnailUrl ||
+								product.smallThumbnailUrl,
+							imageUrl: product.imageUrl || product.thumbnailUrl,
+							isCurrent: true,
+						},
+					];
 				} else {
 					console.error( 'No images found for product' );
 					state.currentImage = ''; // Set to empty or a placeholder image URL
@@ -106,10 +138,18 @@ const { state } = store( 'peaches-ecwid-product-images', {
 				}
 
 				// Debug output to verify the image URLs
-				console.log( 'Current image set to:', state.currentImage );
-				console.log( 'Gallery images:', state.galleryImages );
+				console.log(
+					'Product Images - Current image set to:',
+					state.currentImage
+				);
+				console.log(
+					'Product Images - Gallery images (max:',
+					maxThumbnails,
+					'):',
+					state.galleryImages
+				);
 			} catch ( error ) {
-				console.error( 'Error processing product data:', error );
+				console.error( 'Error processing product images data:', error );
 			}
 		},
 	},
@@ -131,7 +171,7 @@ const { state } = store( 'peaches-ecwid-product-images', {
 		// This will be automatically called when the component is mounted via data-wp-init
 		*initProductImages() {
 			if ( ! state.productId || ! state.productData ) {
-				console.error( 'Product data not available' );
+				console.error( 'Product images - Product data not available' );
 				return;
 			}
 

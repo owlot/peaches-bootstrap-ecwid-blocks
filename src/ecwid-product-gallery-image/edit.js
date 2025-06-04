@@ -27,29 +27,47 @@ import {
 	computeClassName,
 } from '../../../peaches-bootstrap-blocks/src/utils/bootstrap_settings';
 
+// Content block settings
 const SUPPORTED_SETTINGS = {
 	responsive: {
+		sizes: {
+			ratio: true,
+			rowCols: true,
+		},
+		display: {
+			opacity: true,
+			display: true,
+		},
+		placements: {
+			zIndex: true,
+			textAlign: true,
+			justifyContent: true,
+			alignSelf: true,
+			alignItems: true,
+		},
 		spacings: {
 			margin: true,
 			padding: true,
+			gutter: true,
+		},
+	},
+	general: {
+		border: {
+			rounded: true,
+			display: true,
 		},
 		sizes: {
 			width: true,
 			height: true,
 		},
-		display: {
-			flex: true,
-			block: true,
-		},
-		placements: {
-			position: true,
-			overflow: true,
+		spacings: {
+			gaps: true,
 		},
 	},
 };
 
 /**
- * Helper Functions (defined at top to prevent lexical declaration errors)
+ * Helper Functions
  */
 
 /**
@@ -64,7 +82,6 @@ function getMediaTypeLabel( tagData ) {
 		return __( 'Unknown', 'ecwid-shopping-cart' );
 	}
 
-	// Check for different possible property names from the API
 	const mediaType =
 		tagData.expectedMediaType ||
 		tagData.expected_media_type ||
@@ -121,7 +138,7 @@ function getMediaTypeBadgeClass( mediaType ) {
 }
 
 /**
- * Get media type from tag data (helper to handle different property names)
+ * Get media type from tag data
  *
  * @param {Object} tagData - Tag data object
  *
@@ -194,7 +211,6 @@ function validateMediaType( media, expectedMediaType ) {
 	const allowedTypes = getAllowedMimeTypes( expectedMediaType );
 
 	if ( allowedTypes.length === 0 ) {
-		// If no specific types defined, allow anything
 		return {
 			isValid: true,
 			message: __( 'Media type is acceptable', 'ecwid-shopping-cart' ),
@@ -225,28 +241,217 @@ function validateMediaType( media, expectedMediaType ) {
 }
 
 /**
+ * Determine media type from URL and optional mime type
+ *
+ * @param {string} url      - Media URL
+ * @param {string} mimeType - Optional mime type
+ *
+ * @return {string} - Media type
+ */
+function determineMediaType( url, mimeType = '' ) {
+	if ( mimeType ) {
+		if ( mimeType.startsWith( 'video/' ) ) {
+			return 'video';
+		}
+		if ( mimeType.startsWith( 'audio/' ) ) {
+			return 'audio';
+		}
+		if ( mimeType.startsWith( 'image/' ) ) {
+			return 'image';
+		}
+		if (
+			mimeType === 'application/pdf' ||
+			mimeType.startsWith( 'text/' ) ||
+			mimeType.includes( 'document' ) ||
+			mimeType.includes( 'word' )
+		) {
+			return 'document';
+		}
+	}
+
+	if ( ! url ) {
+		return 'image';
+	}
+
+	const pathname = url.split( '?' )[ 0 ];
+	const extension = pathname.split( '.' ).pop().toLowerCase();
+
+	const videoExtensions = [
+		'mp4',
+		'webm',
+		'ogg',
+		'avi',
+		'mov',
+		'wmv',
+		'flv',
+		'm4v',
+		'3gp',
+		'mkv',
+	];
+	if ( videoExtensions.includes( extension ) ) {
+		return 'video';
+	}
+
+	const audioExtensions = [
+		'mp3',
+		'wav',
+		'ogg',
+		'aac',
+		'flac',
+		'm4a',
+		'wma',
+	];
+	if ( audioExtensions.includes( extension ) ) {
+		return 'audio';
+	}
+
+	const documentExtensions = [
+		'pdf',
+		'doc',
+		'docx',
+		'txt',
+		'rtf',
+		'xls',
+		'xlsx',
+		'ppt',
+		'pptx',
+	];
+	if ( documentExtensions.includes( extension ) ) {
+		return 'document';
+	}
+
+	return 'image';
+}
+
+/**
+ * Create media element for preview
+ *
+ * @param {string} mediaUrl   - Media URL
+ * @param {string} mediaAlt   - Alt text
+ * @param {string} mediaType  - Media type
+ * @param {Object} attributes - Block attributes for video/audio settings
+ *
+ * @return {JSX.Element} - Media element
+ */
+function createMediaElement( mediaUrl, mediaAlt, mediaType, attributes ) {
+	const {
+		videoAutoplay = false,
+		videoMuted = false,
+		videoLoop = false,
+		videoControls = true,
+		audioAutoplay = false,
+		audioLoop = false,
+		audioControls = true,
+	} = attributes;
+
+	switch ( mediaType ) {
+		case 'video':
+			return (
+				<video
+					className="media-element w-100 h-100"
+					style={ { objectFit: 'cover' } }
+					src={ mediaUrl }
+					autoPlay={ videoAutoplay }
+					muted={ videoMuted }
+					loop={ videoLoop }
+					controls={ videoControls }
+					preload="metadata"
+				>
+					<p>Your browser does not support the video element.</p>
+				</video>
+			);
+
+		case 'audio':
+			return (
+				<audio
+					className="media-element w-100"
+					src={ mediaUrl }
+					autoPlay={ audioAutoplay }
+					loop={ audioLoop }
+					controls={ audioControls }
+					preload="metadata"
+				>
+					<p>Your browser does not support the audio element.</p>
+				</audio>
+			);
+
+		case 'document':
+			if ( mediaUrl.toLowerCase().includes( '.pdf' ) ) {
+				return (
+					<iframe
+						className="media-element w-100 h-100"
+						src={ mediaUrl }
+						style={ { minHeight: '400px' } }
+						title={ mediaAlt || 'PDF Document' }
+					/>
+				);
+			}
+			const fileName =
+				mediaUrl.split( '/' ).pop() || mediaAlt || 'Download';
+			const fileExtension =
+				fileName.split( '.' ).pop().toUpperCase() || 'FILE';
+
+			return (
+				<div
+					className="media-element w-100 d-flex align-items-center justify-content-center"
+					style={ { minHeight: '200px' } }
+				>
+					<div className="text-center">
+						<div className="mb-3">
+							<i
+								className="dashicons dashicons-media-document"
+								style={ {
+									fontSize: '4rem',
+									color: '#666',
+								} }
+							></i>
+						</div>
+						<h5 className="mb-2">{ mediaAlt || fileName }</h5>
+						<p className="text-muted mb-3">
+							{ fileExtension } Document
+						</p>
+						<a
+							href={ mediaUrl }
+							className="btn btn-primary"
+							target="_blank"
+							rel="noopener noreferrer"
+							download
+						>
+							<i className="dashicons dashicons-download"></i>
+							Download
+						</a>
+					</div>
+				</div>
+			);
+
+		default: // image
+			return (
+				<img
+					className="media-element img-fluid w-100 h-100"
+					style={ { objectFit: 'cover' } }
+					src={ mediaUrl }
+					alt={ mediaAlt || '' }
+				/>
+			);
+	}
+}
+
+/**
  * Product Gallery Image Edit Component
- *
- * Renders the editor interface for selecting media tags and configuring display options.
- *
- * @param {Object} props - Component props
- *
- * @return {JSX.Element} - Edit component
+ * @param props
  */
 function ProductGalleryImageEdit( props ) {
-	const { attributes, setAttributes } = props;
+	const { attributes, setAttributes, context } = props;
 	const {
 		selectedMediaTag,
 		hideIfMissing,
 		fallbackType,
 		fallbackTagKey,
 		fallbackMediaId,
-		// Video-specific attributes
 		videoAutoplay = false,
 		videoMuted = false,
 		videoLoop = false,
 		videoControls = true,
-		// Audio-specific attributes
 		audioAutoplay = false,
 		audioLoop = false,
 		audioControls = true,
@@ -257,6 +462,13 @@ function ProductGalleryImageEdit( props ) {
 	const [ error, setError ] = useState( null );
 	const [ fallbackMedia, setFallbackMedia ] = useState( null );
 	const [ mediaValidation, setMediaValidation ] = useState( null );
+
+	// Preview state
+	const [ previewMedia, setPreviewMedia ] = useState( null );
+	const [ isLoadingPreview, setIsLoadingPreview ] = useState( false );
+
+	// Get test product data from parent context
+	const testProductData = context?.[ 'peaches/testProductData' ];
 
 	const className = useMemo(
 		() => computeClassName( attributes ),
@@ -270,16 +482,11 @@ function ProductGalleryImageEdit( props ) {
 
 	/**
 	 * Get selected tag information
-	 *
-	 * Retrieves detailed information about the currently selected media tag.
-	 *
-	 * @return {Object|null} - Selected tag object or null
 	 */
 	const getSelectedTagInfo = useCallback( () => {
 		if ( ! selectedMediaTag || ! mediaTags.length ) {
 			return null;
 		}
-
 		return (
 			mediaTags.find( ( tag ) => tag.key === selectedMediaTag ) || null
 		);
@@ -287,8 +494,6 @@ function ProductGalleryImageEdit( props ) {
 
 	/**
 	 * Fetch media tags from API
-	 *
-	 * Retrieves available media tags grouped by category from the REST API.
 	 */
 	useEffect( () => {
 		const fetchMediaTags = async () => {
@@ -299,9 +504,7 @@ function ProductGalleryImageEdit( props ) {
 				const response = await fetch(
 					'/wp-json/peaches/v1/media-tags',
 					{
-						headers: {
-							Accept: 'application/json',
-						},
+						headers: { Accept: 'application/json' },
 						credentials: 'same-origin',
 					}
 				);
@@ -332,15 +535,142 @@ function ProductGalleryImageEdit( props ) {
 	}, [] );
 
 	/**
+	 * Fetch media by tag using the same API as frontend
+	 */
+	const fetchMediaByTag = useCallback( async ( tagKey, productId ) => {
+		if ( ! tagKey || ! productId ) {
+			return null;
+		}
+
+		try {
+			const response = await fetch(
+				`/wp-json/peaches/v1/product-media/${ productId }/tag/${ tagKey }`,
+				{
+					headers: { Accept: 'application/json' },
+					credentials: 'same-origin',
+				}
+			);
+
+			if ( response.ok ) {
+				const data = await response.json();
+				if ( data && data.success && data.data ) {
+					return {
+						url: data.data.url,
+						alt: data.data.alt || data.data.title || '',
+						type:
+							data.data.type ||
+							determineMediaType(
+								data.data.url,
+								data.data.mime_type
+							),
+					};
+				}
+			}
+			return null;
+		} catch ( mediaError ) {
+			console.error( mediaError );
+			return null;
+		}
+	}, [] );
+
+	/**
+	 * Fetch WordPress media by ID
+	 */
+	const fetchWordPressMedia = useCallback( async ( mediaId ) => {
+		if ( ! mediaId ) {
+			return null;
+		}
+
+		try {
+			const response = await fetch( `/wp-json/wp/v2/media/${ mediaId }`, {
+				headers: { Accept: 'application/json' },
+				credentials: 'same-origin',
+			} );
+
+			if ( response.ok ) {
+				const data = await response.json();
+				if ( data && data.source_url ) {
+					return {
+						url: data.source_url,
+						alt: data.alt_text || data.title?.rendered || '',
+						type: determineMediaType(
+							data.source_url,
+							data.mime_type
+						),
+					};
+				}
+			}
+			return null;
+		} catch ( error ) {
+			return null;
+		}
+	}, [] );
+
+	/**
+	 * Load preview media when tag or product changes
+	 */
+	useEffect( () => {
+		const loadPreviewMedia = async () => {
+			if ( ! selectedMediaTag || ! testProductData?.id ) {
+				setPreviewMedia( null );
+				return;
+			}
+
+			setIsLoadingPreview( true );
+
+			try {
+				// Try to fetch primary media
+				const primaryMedia = await fetchMediaByTag(
+					selectedMediaTag,
+					testProductData.id
+				);
+
+				if ( primaryMedia ) {
+					setPreviewMedia( primaryMedia );
+				} else if ( ! hideIfMissing && fallbackType !== 'none' ) {
+					// Try fallback media
+					let fallbackMedia = null;
+
+					if ( fallbackType === 'tag' && fallbackTagKey ) {
+						fallbackMedia = await fetchMediaByTag(
+							fallbackTagKey,
+							testProductData.id
+						);
+					} else if ( fallbackType === 'media' && fallbackMediaId ) {
+						fallbackMedia =
+							await fetchWordPressMedia( fallbackMediaId );
+					}
+
+					setPreviewMedia( fallbackMedia );
+				} else {
+					setPreviewMedia( null );
+				}
+			} catch ( error ) {
+				setPreviewMedia( null );
+			} finally {
+				setIsLoadingPreview( false );
+			}
+		};
+
+		loadPreviewMedia();
+	}, [
+		selectedMediaTag,
+		testProductData?.id,
+		fallbackType,
+		fallbackTagKey,
+		fallbackMediaId,
+		hideIfMissing,
+		fetchMediaByTag,
+		fetchWordPressMedia,
+	] );
+
+	/**
 	 * Load fallback media information when fallbackMediaId changes
 	 */
 	useEffect( () => {
 		if ( fallbackMediaId && fallbackType === 'media' ) {
-			// Fetch media data from WordPress REST API
 			fetch( `/wp-json/wp/v2/media/${ fallbackMediaId }`, {
-				headers: {
-					Accept: 'application/json',
-				},
+				headers: { Accept: 'application/json' },
 				credentials: 'same-origin',
 			} )
 				.then( ( response ) => {
@@ -383,10 +713,6 @@ function ProductGalleryImageEdit( props ) {
 
 	/**
 	 * Generate grouped options for media tag selection
-	 *
-	 * Groups media tags by category for better organization in the dropdown.
-	 *
-	 * @return {Array} - Array of option objects with category grouping
 	 */
 	const getGroupedMediaTagOptions = useMemo( () => {
 		if ( ! mediaTags.length ) {
@@ -432,17 +758,14 @@ function ProductGalleryImageEdit( props ) {
 		Object.entries( categoryInfo ).forEach(
 			( [ categoryKey, categoryLabel ] ) => {
 				if ( groupedTags[ categoryKey ] ) {
-					// Add category header (disabled option)
 					options.push( {
 						label: `── ${ categoryLabel } ──`,
 						value: `category_${ categoryKey }`,
 						disabled: true,
 					} );
 
-					// Add tags in this category
 					groupedTags[ categoryKey ].forEach( ( tag ) => {
 						const mediaTypeLabel = getMediaTypeLabel( tag );
-
 						options.push( {
 							label: `    ${ tag.label } (${ mediaTypeLabel })`,
 							value: tag.key,
@@ -456,9 +779,7 @@ function ProductGalleryImageEdit( props ) {
 	}, [ mediaTags ] );
 
 	/**
-	 * Get fallback tag options (excluding the primary selected tag)
-	 *
-	 * @return {Array} - Array of fallback tag options
+	 * Get fallback tag options
 	 */
 	const getFallbackTagOptions = useMemo( () => {
 		const options = [
@@ -468,7 +789,6 @@ function ProductGalleryImageEdit( props ) {
 			},
 		];
 
-		// Filter out the currently selected tag and group by media type
 		const availableTags = mediaTags.filter(
 			( tag ) => tag.key !== selectedMediaTag
 		);
@@ -481,7 +801,6 @@ function ProductGalleryImageEdit( props ) {
 				disabled: true,
 			} );
 		} else {
-			// Group by media type for better organization
 			const groupedByType = {};
 
 			availableTags.forEach( ( tag ) => {
@@ -492,7 +811,6 @@ function ProductGalleryImageEdit( props ) {
 				groupedByType[ mediaType ].push( tag );
 			} );
 
-			// Add compatible tags first (same media type)
 			const selectedTagMediaType = getMediaTypeFromTag( selectedTagInfo );
 			if ( selectedTagInfo && groupedByType[ selectedTagMediaType ] ) {
 				options.push( {
@@ -512,7 +830,6 @@ function ProductGalleryImageEdit( props ) {
 				} );
 			}
 
-			// Add other media types
 			Object.entries( groupedByType ).forEach(
 				( [ mediaType, tags ] ) => {
 					if (
@@ -548,10 +865,7 @@ function ProductGalleryImageEdit( props ) {
 
 	/**
 	 * Handle fallback type change
-	 *
-	 * Resets fallback values when type changes.
-	 *
-	 * @param {string} newType - New fallback type
+	 * @param newType
 	 */
 	const handleFallbackTypeChange = ( newType ) => {
 		setAttributes( {
@@ -564,13 +878,11 @@ function ProductGalleryImageEdit( props ) {
 
 	/**
 	 * Handle media selection for fallback
-	 *
-	 * @param {Object} media - Selected media object
+	 * @param media
 	 */
 	const handleFallbackMediaSelect = ( media ) => {
 		setAttributes( { fallbackMediaId: media.id } );
 
-		// Validate media type
 		const selectedTagInfo = getSelectedTagInfo();
 		if ( selectedTagInfo ) {
 			const expectedMediaType = getMediaTypeFromTag( selectedTagInfo );
@@ -581,10 +893,6 @@ function ProductGalleryImageEdit( props ) {
 
 	/**
 	 * Render type-specific controls
-	 *
-	 * Shows appropriate controls based on the expected media type.
-	 *
-	 * @return {JSX.Element|null} - Type-specific controls or null
 	 */
 	const renderTypeSpecificControls = () => {
 		const selectedTagInfo = getSelectedTagInfo();
@@ -608,36 +916,21 @@ function ProductGalleryImageEdit( props ) {
 							onChange={ ( value ) =>
 								setAttributes( { videoAutoplay: value } )
 							}
-							help={ __(
-								'Start playing the video automatically when the page loads.',
-								'ecwid-shopping-cart'
-							) }
 						/>
-
 						<ToggleControl
 							label={ __( 'Muted', 'ecwid-shopping-cart' ) }
 							checked={ videoMuted }
 							onChange={ ( value ) =>
 								setAttributes( { videoMuted: value } )
 							}
-							help={ __(
-								'Start with the video muted. Required for autoplay in most browsers.',
-								'ecwid-shopping-cart'
-							) }
 						/>
-
 						<ToggleControl
 							label={ __( 'Loop', 'ecwid-shopping-cart' ) }
 							checked={ videoLoop }
 							onChange={ ( value ) =>
 								setAttributes( { videoLoop: value } )
 							}
-							help={ __(
-								'Restart the video when it reaches the end.',
-								'ecwid-shopping-cart'
-							) }
 						/>
-
 						<ToggleControl
 							label={ __(
 								'Show Controls',
@@ -647,20 +940,7 @@ function ProductGalleryImageEdit( props ) {
 							onChange={ ( value ) =>
 								setAttributes( { videoControls: value } )
 							}
-							help={ __(
-								'Display video player controls (play, pause, volume, etc.).',
-								'ecwid-shopping-cart'
-							) }
 						/>
-
-						{ videoAutoplay && ! videoMuted && (
-							<Notice status="warning" isDismissible={ false }>
-								{ __(
-									'Most browsers require videos to be muted for autoplay to work.',
-									'ecwid-shopping-cart'
-								) }
-							</Notice>
-						) }
 					</PanelBody>
 				);
 
@@ -676,24 +956,14 @@ function ProductGalleryImageEdit( props ) {
 							onChange={ ( value ) =>
 								setAttributes( { audioAutoplay: value } )
 							}
-							help={ __(
-								'Start playing the audio automatically when the page loads.',
-								'ecwid-shopping-cart'
-							) }
 						/>
-
 						<ToggleControl
 							label={ __( 'Loop', 'ecwid-shopping-cart' ) }
 							checked={ audioLoop }
 							onChange={ ( value ) =>
 								setAttributes( { audioLoop: value } )
 							}
-							help={ __(
-								'Restart the audio when it reaches the end.',
-								'ecwid-shopping-cart'
-							) }
 						/>
-
 						<ToggleControl
 							label={ __(
 								'Show Controls',
@@ -703,20 +973,7 @@ function ProductGalleryImageEdit( props ) {
 							onChange={ ( value ) =>
 								setAttributes( { audioControls: value } )
 							}
-							help={ __(
-								'Display audio player controls (play, pause, volume, etc.).',
-								'ecwid-shopping-cart'
-							) }
 						/>
-
-						{ audioAutoplay && (
-							<Notice status="info" isDismissible={ false }>
-								{ __(
-									'Browser autoplay policies may prevent audio from automatically playing.',
-									'ecwid-shopping-cart'
-								) }
-							</Notice>
-						) }
 					</PanelBody>
 				);
 
@@ -745,10 +1002,6 @@ function ProductGalleryImageEdit( props ) {
 
 	/**
 	 * Render fallback controls
-	 *
-	 * Shows appropriate controls based on current fallback type.
-	 *
-	 * @return {JSX.Element|null} - Fallback controls or null
 	 */
 	const renderFallbackControls = () => {
 		if ( hideIfMissing ) {
@@ -760,6 +1013,8 @@ function ProductGalleryImageEdit( props ) {
 		return (
 			<>
 				<SelectControl
+					__nextHasNoMarginBottom
+					__next40pxDefaultSize
 					label={ __( 'Fallback Type', 'ecwid-shopping-cart' ) }
 					value={ fallbackType }
 					options={ [
@@ -794,6 +1049,8 @@ function ProductGalleryImageEdit( props ) {
 
 				{ fallbackType === 'tag' && (
 					<SelectControl
+						__nextHasNoMarginBottom
+						__next40pxDefaultSize
 						label={ __(
 							'Fallback Media Tag',
 							'ecwid-shopping-cart'
@@ -998,7 +1255,7 @@ function ProductGalleryImageEdit( props ) {
 													{ __(
 														'Alt text:',
 														'ecwid-shopping-cart'
-													) }
+													) }{ ' ' }
 													{ fallbackMedia.alt_text }
 												</div>
 											) }
@@ -1006,7 +1263,7 @@ function ProductGalleryImageEdit( props ) {
 												{ __(
 													'Type:',
 													'ecwid-shopping-cart'
-												) }
+												) }{ ' ' }
 												{ fallbackMedia.mime_type ||
 													__(
 														'Unknown',
@@ -1017,7 +1274,7 @@ function ProductGalleryImageEdit( props ) {
 												{ __(
 													'ID:',
 													'ecwid-shopping-cart'
-												) }
+												) }{ ' ' }
 												{ fallbackMediaId }
 											</div>
 										</div>
@@ -1033,10 +1290,6 @@ function ProductGalleryImageEdit( props ) {
 
 	/**
 	 * Render preview content
-	 *
-	 * Shows a preview of how the block will appear with current settings.
-	 *
-	 * @return {JSX.Element} - Preview content
 	 */
 	const renderPreview = () => {
 		if ( ! selectedMediaTag ) {
@@ -1053,145 +1306,69 @@ function ProductGalleryImageEdit( props ) {
 		}
 
 		const selectedTagInfo = getSelectedTagInfo();
-		const mediaTypeIcon = selectedTagInfo
-			? getMediaTypeIcon( getMediaTypeFromTag( selectedTagInfo ) )
-			: 'format-image';
-		const mediaTypeLabel = selectedTagInfo
-			? getMediaTypeLabel( selectedTagInfo )
-			: '';
 		const expectedMediaType = selectedTagInfo
 			? getMediaTypeFromTag( selectedTagInfo )
-			: null;
+			: 'image';
 
-		// Show fallback info in preview
-		let fallbackInfo = '';
-		if ( ! hideIfMissing ) {
-			switch ( fallbackType ) {
-				case 'tag':
-					if ( fallbackTagKey ) {
-						const fallbackTag = mediaTags.find(
-							( tag ) => tag.key === fallbackTagKey
-						);
-						fallbackInfo =
-							__( 'Fallback:', 'ecwid-shopping-cart' ) +
-							( fallbackTag?.label || fallbackTagKey );
-					}
-					break;
-				case 'media':
-					if ( fallbackMediaId && fallbackMedia ) {
-						fallbackInfo =
-							__( 'Fallback:', 'ecwid-shopping-cart' ) +
-							( fallbackMedia.title?.rendered ||
-								fallbackMedia.slug ||
-								'Media file' );
-					}
-					break;
-				case 'none':
-					fallbackInfo = __(
-						'Fallback: Placeholder',
-						'ecwid-shopping-cart'
-					);
-					break;
-				default:
-					break;
-			}
-		}
-
-		return (
-			<div className="gallery-image-preview">
+		// Show loading state while fetching preview
+		if ( isLoadingPreview ) {
+			return (
 				<div
-					className="bg-light border border-2 border-dashed d-flex align-items-center justify-content-center"
-					style={ { minHeight: '200px' } }
+					className="loading-container d-flex align-items-center justify-content-center text-muted"
+					style={ { minHeight: '100px' } }
 				>
-					<div className="text-center text-muted">
-						<i
-							className={ `dashicons dashicons-${ mediaTypeIcon }` }
-							style={ { fontSize: '3rem' } }
-						></i>
-						<p className="mb-1">
-							{ selectedTagInfo?.label || selectedMediaTag }
-							{ selectedTagInfo && (
-								<span
-									className={ `badge ${ getMediaTypeBadgeClass(
-										getMediaTypeFromTag( selectedTagInfo )
-									) } ms-2` }
-								>
-									{ mediaTypeLabel }
-								</span>
-							) }
-						</p>
-						<small>
+					<div
+						className="spinner-border spinner-border-sm me-2"
+						role="status"
+					>
+						<span className="visually-hidden">
 							{ __(
-								'Media will be displayed here',
+								'Loading media…',
 								'ecwid-shopping-cart'
 							) }
-						</small>
-						{ hideIfMissing ? (
-							<small className="d-block mt-1 text-warning">
-								{ __(
-									'Hidden if media not found',
-									'ecwid-shopping-cart'
-								) }
-							</small>
-						) : (
-							fallbackInfo && (
-								<small className="d-block mt-1 text-info">
-									{ fallbackInfo }
-								</small>
-							)
-						) }
-
-						{ /* Show type-specific preview info */ }
-						{ selectedTagInfo && (
-							<div className="mt-2">
-								{ expectedMediaType === 'video' && (
-									<div className="text-xs text-muted">
-										{ videoAutoplay &&
-											__(
-												'▶ Autoplay',
-												'ecwid-shopping-cart'
-											) }
-										{ videoMuted &&
-											__(
-												'🔇 Muted',
-												'ecwid-shopping-cart'
-											) }
-										{ videoLoop &&
-											__(
-												'🔄 Loop',
-												'ecwid-shopping-cart'
-											) }
-										{ ! videoControls &&
-											__(
-												'🎛️ No Controls',
-												'ecwid-shopping-cart'
-											) }
-									</div>
-								) }
-								{ expectedMediaType === 'audio' && (
-									<div className="text-xs text-muted">
-										{ audioAutoplay &&
-											__(
-												'▶ Autoplay',
-												'ecwid-shopping-cart'
-											) }
-										{ audioLoop &&
-											__(
-												'🔄 Loop',
-												'ecwid-shopping-cart'
-											) }
-										{ ! audioControls &&
-											__(
-												'🎛️ No Controls',
-												'ecwid-shopping-cart'
-											) }
-									</div>
-								) }
-							</div>
-						) }
+						</span>
 					</div>
+					{ __( 'Loading media…', 'ecwid-shopping-cart' ) }
 				</div>
-			</div>
+			);
+		}
+
+		// If we have preview media, show it
+		if ( previewMedia ) {
+			return (
+				<>
+					{ createMediaElement(
+						previewMedia.url,
+						previewMedia.alt,
+						previewMedia.type,
+						attributes
+					) }
+				</>
+			);
+		}
+
+		// Show placeholder with placehold.co images
+		let placeHolderText = `${
+			expectedMediaType.charAt( 0 ).toUpperCase() +
+			expectedMediaType.slice( 1 )
+		}+Placeholder`;
+
+		// If hideIfMissing is true and no media, show hidden message
+		if ( hideIfMissing ) {
+			placeHolderText = `${
+				expectedMediaType.charAt( 0 ).toUpperCase() +
+				expectedMediaType.slice( 1 )
+			}+Placeholder\\nhidden+if+missing`;
+		}
+
+		const placeholderUrl = `https://placehold.co/400x300?text=${ placeHolderText }`;
+		return (
+			<img
+				className="media-element img-fluid w-100 h-100"
+				style={ { objectFit: 'cover' } }
+				src={ placeholderUrl }
+				alt={ __( 'Media placeholder', 'ecwid-shopping-cart' ) }
+			/>
 		);
 	};
 
@@ -1211,6 +1388,23 @@ function ProductGalleryImageEdit( props ) {
 						) }
 					</Notice>
 
+					{ testProductData ? (
+						<Notice status="success" isDismissible={ false }>
+							{ __(
+								'Using test product data:',
+								'ecwid-shopping-cart'
+							) }{ ' ' }
+							<strong>{ testProductData.name }</strong>
+						</Notice>
+					) : (
+						<Notice status="info" isDismissible={ false }>
+							{ __(
+								'Using placeholder data. Configure a test product in the parent block to preview real media.',
+								'ecwid-shopping-cart'
+							) }
+						</Notice>
+					) }
+
 					{ isLoading && (
 						<div className="d-flex align-items-center gap-2 my-3">
 							<Spinner />
@@ -1228,7 +1422,7 @@ function ProductGalleryImageEdit( props ) {
 							{ __(
 								'Error loading media tags:',
 								'ecwid-shopping-cart'
-							) }
+							) }{ ' ' }
 							{ error }
 						</Notice>
 					) }
@@ -1236,6 +1430,9 @@ function ProductGalleryImageEdit( props ) {
 					{ ! isLoading && ! error && (
 						<>
 							<SelectControl
+								__nextHasNoMarginBottom
+								__next40pxDefaultSize
+								className="mt-2"
 								label={ __(
 									'Media Tag',
 									'ecwid-shopping-cart'
@@ -1243,12 +1440,11 @@ function ProductGalleryImageEdit( props ) {
 								value={ selectedMediaTag }
 								options={ getGroupedMediaTagOptions }
 								onChange={ ( value ) => {
-									// Don't allow selection of category headers
 									if ( ! value.startsWith( 'category_' ) ) {
 										setAttributes( {
 											selectedMediaTag: value,
 										} );
-										setMediaValidation( null ); // Reset validation when tag changes
+										setMediaValidation( null );
 									}
 								} }
 								help={
@@ -1260,9 +1456,8 @@ function ProductGalleryImageEdit( props ) {
 								}
 							/>
 
-							{ /* Show selected tag info */ }
 							{ getSelectedTagInfo() && (
-								<div className="mt-2 p-3 bg-light border rounded">
+								<div className="mt-2 mb-3 p-3 bg-light border rounded">
 									<div className="d-flex align-items-center gap-2 mb-2">
 										<i
 											className={ `dashicons dashicons-${ getMediaTypeIcon(
@@ -1295,6 +1490,7 @@ function ProductGalleryImageEdit( props ) {
 							) }
 
 							<ToggleControl
+								__nextHasNoMarginBottom
 								label={ __(
 									'Hide if media missing',
 									'ecwid-shopping-cart'
@@ -1314,7 +1510,6 @@ function ProductGalleryImageEdit( props ) {
 					) }
 				</PanelBody>
 
-				{ /* Render type-specific controls based on selected tag */ }
 				{ renderTypeSpecificControls() }
 
 				<BootstrapSettingsPanels

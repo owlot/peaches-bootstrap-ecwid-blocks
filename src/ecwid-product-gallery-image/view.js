@@ -65,7 +65,7 @@ const { state, actions } = store( 'peaches-ecwid-product-gallery-image', {
 			const context = getContext();
 			context.hasMedia = false;
 			context.isLoading = false;
-			this.updateMediaDisplay();
+			actions.updateMediaDisplay();
 		},
 
 		/**
@@ -81,7 +81,7 @@ const { state, actions } = store( 'peaches-ecwid-product-gallery-image', {
 		/**
 		 * Update the media display in the DOM
 		 *
-		 * Creates the appropriate media element based on media type and inserts it into the container.
+		 * Creates the appropriate media element based on media type and inserts it into the element.
 		 *
 		 * @param {HTMLElement} element - DOM element reference
 		 */
@@ -90,16 +90,8 @@ const { state, actions } = store( 'peaches-ecwid-product-gallery-image', {
 				return;
 			}
 
-			// Find the container within the current block element
-			const container = element.querySelector(
-				'.gallery-media-container'
-			);
-			if ( ! container ) {
-				return;
-			}
-
 			// Clear any existing media content (keep loading spinner)
-			const existingMedia = container.querySelector(
+			const existingMedia = element.querySelector(
 				'.media-element, .no-media-fallback'
 			);
 			if ( existingMedia ) {
@@ -113,7 +105,7 @@ const { state, actions } = store( 'peaches-ecwid-product-gallery-image', {
 			}
 
 			// Declare variables just before they're used to avoid early return issues
-			const hasAnyMedia = this.determineMediaAvailability( context );
+			const hasAnyMedia = actions.determineMediaAvailability( context );
 
 			// No media and hideIfMissing is true - show nothing (block will be hidden)
 			if ( ! hasAnyMedia && context.hideIfMissing ) {
@@ -143,12 +135,12 @@ const { state, actions } = store( 'peaches-ecwid-product-gallery-image', {
 						<p class="mb-0">No ${ expectedType } available</p>
 					</div>
 				`;
-				container.appendChild( fallbackDiv );
+				element.appendChild( fallbackDiv );
 				return;
 			}
 
 			// Get media details just before creating the element
-			const mediaDetails = this.getMediaDetails( context );
+			const mediaDetails = actions.getMediaDetails( context );
 			const mediaElement = actions.createMediaElement(
 				mediaDetails.url,
 				mediaDetails.alt,
@@ -156,7 +148,7 @@ const { state, actions } = store( 'peaches-ecwid-product-gallery-image', {
 				context
 			);
 			if ( mediaElement ) {
-				container.appendChild( mediaElement );
+				element.appendChild( mediaElement );
 			}
 		},
 

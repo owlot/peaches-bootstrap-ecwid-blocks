@@ -54,9 +54,21 @@ const HTML_TAGS = [
 	{ label: __( 'Span', 'ecwid-shopping-cart' ), value: 'span' },
 ];
 
+/**
+ * Product Field Edit Component
+ *
+ * Displays a product field with test data when available from parent context.
+ *
+ * @param {Object} props - Component props
+ *
+ * @return {JSX.Element} - Edit component
+ */
 function ProductFieldEdit( props ) {
-	const { attributes, setAttributes } = props;
+	const { attributes, setAttributes, context } = props;
 	const { fieldType, htmlTag, customFieldKey } = attributes;
+
+	// Get test product data from parent context
+	const testProductData = context?.[ 'peaches/testProductData' ];
 
 	const className = useMemo(
 		() => computeClassName( attributes ),
@@ -68,7 +80,94 @@ function ProductFieldEdit( props ) {
 		'data-wp-interactive': 'peaches-ecwid-product-field',
 	} );
 
+	/**
+	 * Get preview text based on field type and available test data
+	 *
+	 * @return {string} - Preview text to display
+	 */
 	const getPreviewText = () => {
+		if ( testProductData ) {
+			try {
+				switch ( fieldType ) {
+					case 'title':
+						return testProductData.name || '';
+
+					case 'subtitle':
+						if ( testProductData.attributes ) {
+							const subtitleAttr =
+								testProductData.attributes.find(
+									( attr ) =>
+										attr.name === 'Ondertitel' ||
+										attr.name === 'Subtitle'
+								);
+							return (
+								subtitleAttr?.valueTranslated?.nl ||
+								subtitleAttr?.value ||
+								''
+							);
+						}
+						return '';
+
+					case 'price':
+						if ( testProductData.price ) {
+							// Check if there's a sale price
+							if (
+								testProductData.compareToPrice &&
+								testProductData.compareToPrice >
+									testProductData.price
+							) {
+								return `€ ${ testProductData.compareToPrice.toFixed(
+									2
+								) } €ht ${ testProductData.price.toFixed(
+									2
+								) }`;
+							}
+							return `€ ${ testProductData.price.toFixed( 2 ) }`;
+						}
+						return '';
+
+					case 'stock':
+						return testProductData.inStock
+							? __( 'In Stock', 'ecwid-shopping-cart' )
+							: __( 'Out of Stock', 'ecwid-shopping-cart' );
+
+					case 'description':
+						// Return HTML content for description, but we'll handle it specially
+						return testProductData.description || '';
+
+					case 'custom':
+						if ( customFieldKey && testProductData.attributes ) {
+							const customField = testProductData.attributes.find(
+								( attr ) => attr.name === customFieldKey
+							);
+							return (
+								customField?.valueTranslated?.nl ||
+								customField?.value ||
+								''
+							);
+						}
+						return customFieldKey
+							? __(
+									'Custom field not found in test product',
+									'ecwid-shopping-cart'
+							  )
+							: __(
+									'Select a custom field',
+									'ecwid-shopping-cart'
+							  );
+
+					default:
+						return '';
+				}
+			} catch ( error ) {
+				return __(
+					'Error loading test product field',
+					'ecwid-shopping-cart'
+				);
+			}
+		}
+
+		// Fallback to placeholder text when no test product is available
 		switch ( fieldType ) {
 			case 'title':
 				return __( 'Sample Product Title', 'ecwid-shopping-cart' );
@@ -103,12 +202,22 @@ function ProductFieldEdit( props ) {
 						'ecwid-shopping-cart'
 					) }
 				>
-					<Notice status="info" isDismissible={ false }>
-						{ __(
-							'This block displays a product field dynamically based on the product detail block.',
-							'ecwid-shopping-cart'
-						) }
-					</Notice>
+					{ testProductData ? (
+						<Notice status="success" isDismissible={ false }>
+							{ __(
+								'Using test product data:',
+								'ecwid-shopping-cart'
+							) }{ ' ' }
+							<strong>{ testProductData.name }</strong>
+						</Notice>
+					) : (
+						<Notice status="info" isDismissible={ false }>
+							{ __(
+								'Using placeholder data. Configure a test product in the parent block to preview real data.',
+								'ecwid-shopping-cart'
+							) }
+						</Notice>
+					) }
 
 					<SelectControl
 						label={ __( 'Field Type', 'ecwid-shopping-cart' ) }
@@ -154,7 +263,13 @@ function ProductFieldEdit( props ) {
 			</InspectorControls>
 
 			<div { ...blockProps }>
-				{ React.createElement( htmlTag, {}, getPreviewText() ) }
+				{ fieldType === 'description' && testProductData?.description
+					? React.createElement( htmlTag, {
+							dangerouslySetInnerHTML: {
+								__html: testProductData.description,
+							},
+					  } )
+					: React.createElement( htmlTag, {}, getPreviewText() ) }
 			</div>
 		</>
 	);

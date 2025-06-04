@@ -11,12 +11,15 @@ import { computeClassName } from '../../../peaches-bootstrap-blocks/src/utils/bo
 
 export default function save( { attributes } ) {
 	const { fieldType, htmlTag, customFieldKey } = attributes;
+	// Fields that contain HTML content
+	const htmlFields = [ 'description', 'price', 'stock' ];
+	const isHtmlField = htmlFields.includes( fieldType );
 
 	const blockProps = useBlockProps.save( {
 		className: computeClassName( attributes ),
+		'data-wp-init': isHtmlField ? 'callbacks.initProductField' : '',
 		'data-wp-interactive': 'peaches-ecwid-product-field',
 		'data-wp-context': `{ "fieldType": "${ fieldType }", "customFieldKey": "${ customFieldKey }", "fieldValue": "" }`,
-		'data-wp-init': 'callbacks.initProductField',
 	} );
 
 	const getEmptyContent = () => {
@@ -39,7 +42,8 @@ export default function save( { attributes } ) {
 	};
 
 	const elementProps = {
-		'data-wp-text': 'context.fieldValue', // Changed from state.fieldValue to context.fieldValue
+		'data-wp-init': isHtmlField ? '' : 'callbacks.initProductField',
+		'data-wp-text': 'context.fieldValue',
 	};
 
 	return (

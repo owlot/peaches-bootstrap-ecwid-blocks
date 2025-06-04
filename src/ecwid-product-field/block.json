@@ -24,6 +24,7 @@
 		},
 		"interactivity": true
 	},
+	"usesContext": [ "peaches/testProductData" ],
 	"attributes": {
 		"fieldType": {
 			"type": "string",

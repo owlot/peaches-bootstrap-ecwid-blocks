@@ -10,7 +10,7 @@ import { useBlockProps } from '@wordpress/block-editor';
 import { computeClassName } from '../../../peaches-bootstrap-blocks/src/utils/bootstrap_settings';
 
 export default function save( { attributes } ) {
-	const { showTitle, accordionTitle, startOpened } = attributes;
+	const { startOpened } = attributes;
 
 	const blockProps = useBlockProps.save( {
 		className: computeClassName( attributes ),

@@ -1,4 +1,4 @@
-import { store, getContext } from '@wordpress/interactivity';
+import { store, getContext, getElement } from '@wordpress/interactivity';
 
 // Access the parent product detail store
 const productDetailStore = store( 'peaches-ecwid-product-detail' );
@@ -16,6 +16,7 @@ const { state, actions } = store( 'peaches-ecwid-product-field', {
 	callbacks: {
 		*initProductField() {
 			const context = getContext();
+			const element = getElement();
 
 			if ( ! state.productId || ! state.productData ) {
 				console.error( 'Product data not available' );
@@ -25,6 +26,7 @@ const { state, actions } = store( 'peaches-ecwid-product-field', {
 			const product = state.productData;
 			const fieldType = context.fieldType;
 			let value = '';
+			let isHtml = false;
 
 			try {
 				switch ( fieldType ) {
@@ -59,6 +61,7 @@ const { state, actions } = store( 'peaches-ecwid-product-field', {
 									 <span class="sale-price text-danger">€ ${ product.price
 											.toFixed( 2 )
 											.replace( '.', ',' ) }</span>`;
+							isHtml = true;
 						} else {
 							value = `€ ${ product.price
 								.toFixed( 2 )
@@ -77,10 +80,12 @@ const { state, actions } = store( 'peaches-ecwid-product-field', {
 									'ecwid-shopping-cart'
 							  );
 						value = `<span class="${ stockClass }">${ stockText }</span>`;
+						isHtml = true;
 						break;
 
 					case 'description':
 						value = product.description || '';
+						isHtml = true; // Description contains HTML
 						break;
 
 					case 'custom':
@@ -101,8 +106,19 @@ const { state, actions } = store( 'peaches-ecwid-product-field', {
 						value = '';
 				}
 
-				// Store the value in the context instead of shared state
-				context.fieldValue = value;
+				// Handle HTML vs text content manually
+				if ( element && element.ref ) {
+					if ( isHtml ) {
+						// Set HTML content for fields that contain HTML
+						element.ref.innerHTML = value;
+					} else {
+						// Set text content for plain text fields
+						element.ref.textContent = value;
+					}
+				}
+
+				// Also store in context for consistency
+				context.fieldValue = isHtml ? '' : value; // Only store text values in context
 			} catch ( error ) {
 				console.error( 'Error processing product field:', error );
 				context.fieldValue = '';

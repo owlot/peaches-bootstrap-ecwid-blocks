@@ -7,9 +7,14 @@ import {
 	useBlockProps,
 	useInnerBlocksProps,
 } from '@wordpress/block-editor';
-const { serverSideRender: ServerSideRender } = wp;
-import { useMemo } from '@wordpress/element';
-const { PanelBody, ToggleControl, SelectControl, Notice } = wp.components;
+import { useMemo, useState, useEffect } from '@wordpress/element';
+import {
+	PanelBody,
+	Button,
+	Notice,
+	Spinner,
+	Flex,
+} from '@wordpress/components';
 
 /**
  * Internal dependencies
@@ -29,6 +34,11 @@ const SUPPORTED_SETTINGS = {
 };
 
 function ProductDetailEdit( { attributes, setAttributes } ) {
+	const { testProductId } = attributes;
+	const [ testProductData, setTestProductData ] = useState( null );
+	const [ isLoading, setIsLoading ] = useState( false );
+	const [ error, setError ] = useState( null );
+
 	const className = useMemo(
 		() => computeClassName( attributes ),
 		[ attributes ]
@@ -37,161 +47,258 @@ function ProductDetailEdit( { attributes, setAttributes } ) {
 	const blockProps = useBlockProps( { className } );
 	const innerBlocksProps = useInnerBlocksProps( blockProps, {} );
 
+	// Update context when testProductData changes
+	useEffect( () => {
+		setAttributes( { testProductData } );
+	}, [ testProductData, setAttributes ] );
+
+	/**
+	 * Fetch product data when testProductId changes
+	 */
+	useEffect( () => {
+		if ( testProductId ) {
+			setIsLoading( true );
+			setError( null );
+
+			// Use WordPress AJAX to fetch product data from server
+			window.jQuery.ajax( {
+				url: window.ajaxurl || '/wp-admin/admin-ajax.php',
+				method: 'POST',
+				dataType: 'json',
+				data: {
+					action: 'get_ecwid_product_data',
+					product_id: testProductId,
+					_ajax_nonce: window.EcwidGutenbergParams?.nonce || '',
+					security: window.EcwidGutenbergParams?.nonce || '',
+				},
+				success( response ) {
+					setIsLoading( false );
+					if ( response && response.success && response.data ) {
+						setTestProductData( response.data );
+						setError( null );
+					} else {
+						setError(
+							__(
+								'Product not found or invalid response',
+								'ecwid-shopping-cart'
+							)
+						);
+						setTestProductData( null );
+					}
+				},
+				error( xhr, status, errorThrown ) {
+					setIsLoading( false );
+					setError(
+						`${ __(
+							'Failed to fetch product data',
+							'ecwid-shopping-cart'
+						) }: ${ errorThrown }`
+					);
+					setTestProductData( null );
+				},
+			} );
+		} else {
+			setTestProductData( null );
+			setError( null );
+		}
+	}, [ testProductId ] );
+
+	/**
+	 * Handle Ecwid product selection
+	 * @param params
+	 */
+	const handleProductSelect = ( params ) => {
+		const newAttributes = {
+			testProductId: params.newProps.product.id,
+		};
+
+		// Update the global cache if it exists
+		if (
+			window.EcwidGutenbergParams &&
+			window.EcwidGutenbergParams.products
+		) {
+			window.EcwidGutenbergParams.products[ params.newProps.product.id ] =
+				{
+					name: params.newProps.product.name,
+					imageUrl: params.newProps.product.thumb,
+				};
+		}
+
+		params.originalProps.setAttributes( newAttributes );
+	};
+
+	/**
+	 * Open Ecwid product selection popup
+	 * @param popupProps
+	 */
+	const openEcwidProductPopup = ( popupProps ) => {
+		if ( typeof window.ecwid_open_product_popup === 'function' ) {
+			window.ecwid_open_product_popup( {
+				saveCallback: handleProductSelect,
+				props: popupProps,
+			} );
+		} else {
+			console.error( 'Ecwid product popup function not found' );
+		}
+	};
+
+	/**
+	 * Clear test product selection
+	 */
+	const clearTestProduct = () => {
+		setAttributes( { testProductId: 0, testProductData: null } );
+		setTestProductData( null );
+		setError( null );
+	};
+
 	return (
 		<>
 			<InspectorControls>
+				<PanelBody
+					title={ __(
+						'Test Product Configuration',
+						'ecwid-shopping-cart'
+					) }
+					initialOpen={ false }
+				>
+					<Notice status="info" isDismissible={ false }>
+						{ __(
+							'Configure a test product to preview how child blocks will display product data in the editor.',
+							'ecwid-shopping-cart'
+						) }
+					</Notice>
+
+					{ ! testProductId && (
+						<Button
+							variant="primary"
+							onClick={ () =>
+								openEcwidProductPopup( {
+									attributes,
+									setAttributes,
+								} )
+							}
+						>
+							{ __(
+								'Select Test Product',
+								'ecwid-shopping-cart'
+							) }
+						</Button>
+					) }
+
+					{ testProductId && (
+						<div className="test-product-info">
+							<div className="test-product-header">
+								<strong>
+									{ __(
+										'Test Product:',
+										'ecwid-shopping-cart'
+									) }
+								</strong>
+								<span className="test-product-id">
+									{ __( 'ID:', 'ecwid-shopping-cart' ) }{ ' ' }
+									{ testProductId }
+								</span>
+							</div>
+
+							{ isLoading && (
+								<Flex align="center" gap={ 2 }>
+									<Spinner />
+									<span>
+										{ __(
+											'Loading product data…',
+											'ecwid-shopping-cart'
+										) }
+									</span>
+								</Flex>
+							) }
+
+							{ error && (
+								<Notice status="error" isDismissible={ false }>
+									{ error }
+								</Notice>
+							) }
+
+							{ testProductData && ! isLoading && (
+								<div className="test-product-preview">
+									<div className="test-product-details">
+										<h4>{ testProductData.name }</h4>
+										{ testProductData.price && (
+											<p className="test-product-price">
+												<strong>
+													€ { testProductData.price }
+												</strong>
+											</p>
+										) }
+									</div>
+									{ testProductData.thumbnailUrl && (
+										<div className="test-product-image">
+											<img
+												src={
+													testProductData.thumbnailUrl
+												}
+												alt={ testProductData.name }
+												style={ {
+													maxWidth: '80px',
+													height: 'auto',
+													borderRadius: '4px',
+												} }
+											/>
+										</div>
+									) }
+								</div>
+							) }
+
+							<Flex gap={ 2 } style={ { marginTop: '12px' } }>
+								<Button
+									variant="secondary"
+									onClick={ () =>
+										openEcwidProductPopup( {
+											attributes,
+											setAttributes,
+										} )
+									}
+								>
+									{ __(
+										'Change Product',
+										'ecwid-shopping-cart'
+									) }
+								</Button>
+								<Button
+									variant="tertiary"
+									isDestructive
+									onClick={ clearTestProduct }
+								>
+									{ __(
+										'Clear Test Product',
+										'ecwid-shopping-cart'
+									) }
+								</Button>
+							</Flex>
+						</div>
+					) }
+				</PanelBody>
+
 				<BootstrapSettingsPanels
 					setAttributes={ setAttributes }
 					attributes={ attributes }
 					supportedSettings={ SUPPORTED_SETTINGS }
 				/>
 			</InspectorControls>
+
+			{ testProductId && testProductData && ! error && (
+				<div
+					className="test-product-indicator"
+					style={ { marginBottom: '20px' } }
+				>
+					<Notice status="success" isDismissible={ false }>
+						{ __( 'Test mode active:', 'ecwid-shopping-cart' ) }{ ' ' }
+						<strong>{ testProductData.name }</strong>
+					</Notice>
+				</div>
+			) }
 			<div { ...innerBlocksProps } />
 		</>
 	);
 }
-/*
-function ProductDetailEdit( props ) {
-	const { attributes, setAttributes } = props;
-
-	useEffect( () => {
-		setAttributes( { classes: computeClassName( attributes ) } );
-	}, [ attributes, setAttributes ] );
-
-	const setAttributesCB = ( obj ) => {
-		setAttributes( obj );
-		setAttributes( { classes: computeClassName( attributes ) } );
-	};
-
-	return (
-		<>
-			<InspectorControls>
-				<PanelBody title={ __( 'Product Detail Template Info', 'ecwid-shopping-cart' ) }>
-					<Notice status="info" isDismissible={false}>
-						{ __( 'This block creates a dynamic product detail template. The product displayed will be determined by the URL on your storefront.', 'ecwid-shopping-cart' ) }
-					</Notice>
-				</PanelBody>
-
-				<PanelBody title={ __( 'Display Options', 'ecwid-shopping-cart' ) } initialOpen={ true }>
-					<ToggleControl
-						label={ __( 'Show Title', 'ecwid-shopping-cart' ) }
-						checked={ attributes.showTitle }
-						onChange={ ( value ) => setAttributes( { showTitle: value } ) }
-					/>
-					<ToggleControl
-						label={ __( 'Show Description', 'ecwid-shopping-cart' ) }
-						checked={ attributes.showDescription }
-						onChange={ ( value ) => setAttributes( { showDescription: value } ) }
-					/>
-					<ToggleControl
-						label={ __( 'Show Price', 'ecwid-shopping-cart' ) }
-						checked={ attributes.showPrice }
-						onChange={ ( value ) => setAttributes( { showPrice: value } ) }
-					/>
-					<ToggleControl
-						label={ __( 'Show Gallery', 'ecwid-shopping-cart' ) }
-						checked={ attributes.showGallery }
-						onChange={ ( value ) => setAttributes( { showGallery: value } ) }
-					/>
-					<ToggleControl
-						label={ __( 'Show Add to Cart', 'ecwid-shopping-cart' ) }
-						checked={ attributes.showAddToCart }
-						onChange={ ( value ) => setAttributes( { showAddToCart: value } ) }
-					/>
-
-					{attributes.showGallery && (
-						<SelectControl
-							label={ __( 'Gallery Layout', 'ecwid-shopping-cart' ) }
-							value={ attributes.galleryLayout }
-							options={ [
-								{ label: __( 'Standard', 'ecwid-shopping-cart' ), value: 'standard' },
-								{ label: __( 'Thumbnails Below', 'ecwid-shopping-cart' ), value: 'thumbnails-below' },
-								{ label: __( 'Thumbnails Side', 'ecwid-shopping-cart' ), value: 'thumbnails-side' }
-							] }
-							onChange={ ( value ) => setAttributes( { galleryLayout: value } ) }
-						/>
-					)}
-				</PanelBody>
-
-				<BootstrapSettingsPanels
-					setAttributes={ setAttributesCB }
-					attributes={ attributes }
-					supportedSettings={ SUPPORTED_SETTINGS }
-				/>
-			</InspectorControls>
-
-			<div className="ecwid-product-detail-placeholder p-4 bg-light text-center">
-				<div className="container py-5">
-					<div className="row">
-						{attributes.showGallery && (
-							<div className="col-12 col-md-6 mb-4 mb-md-0">
-								<div className="placeholder-image bg-secondary bg-opacity-25 rounded" style={{height: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
-									<div className="text-muted">
-										{__('Product Gallery', 'ecwid-shopping-cart')}
-									</div>
-								</div>
-								{attributes.galleryLayout !== 'standard' && (
-									<div className="d-flex mt-2 justify-content-center">
-										{[1, 2, 3, 4].map((i) => (
-											<div key={i} className="px-1" style={{width: '60px'}}>
-												<div className="bg-secondary bg-opacity-25 rounded" style={{height: '60px'}}></div>
-											</div>
-										))}
-									</div>
-								)}
-							</div>
-						)}
-
-						<div className="col-12 col-md-6">
-							{attributes.showTitle && (
-								<>
-									<div className="h3 mb-1">{__('Sample Product Title', 'ecwid-shopping-cart')}</div>
-									<div className="text-muted mb-3">{__('Product Subtitle', 'ecwid-shopping-cart')}</div>
-								</>
-							)}
-
-							{attributes.showPrice && (
-								<div className="h4 my-3">€ 29,99</div>
-							)}
-
-							{attributes.showAddToCart && (
-								<div className="my-3">
-									<div className="d-flex align-items-center">
-										<div className="input-group me-2" style={{width: '120px'}}>
-											<button className="btn btn-outline-secondary" type="button">-</button>
-											<input type="text" className="form-control text-center" value="1" readOnly />
-											<button className="btn btn-outline-secondary" type="button">+</button>
-										</div>
-										<button className="btn btn-primary">
-											{__('Add to Cart', 'ecwid-shopping-cart')}
-										</button>
-									</div>
-									<div className="text-success mt-2">
-										{__('In Stock', 'ecwid-shopping-cart')}
-									</div>
-								</div>
-							)}
-
-							{attributes.showDescription && (
-								<div className="mt-4">
-									<h4>{__('Description', 'ecwid-shopping-cart')}</h4>
-									<div className="text-muted">
-										{__('This is a dynamic product template. The actual product details will be displayed based on the URL when viewing on the frontend.', 'ecwid-shopping-cart')}
-									</div>
-								</div>
-							)}
-						</div>
-					</div>
-				</div>
-				<div className="text-center text-muted mt-3">
-					<small>
-						{__('This is a preview. The actual product will be displayed based on the URL when viewed on the frontend.', 'ecwid-shopping-cart')}
-					</small>
-				</div>
-			</div>
-		</>
-	);
-}
-*/
 
 export default ProductDetailEdit;

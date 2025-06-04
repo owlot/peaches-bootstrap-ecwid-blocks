@@ -37,8 +37,11 @@ const IMAGE_SIZE_OPTIONS = [
 ];
 
 function ProductImagesEdit( props ) {
-	const { attributes, setAttributes } = props;
+	const { attributes, setAttributes, context } = props;
 	const { imageSize, showThumbnails, maxThumbnails } = attributes;
+
+	// Get test product data from parent context
+	const testProductData = context?.[ 'peaches/testProductData' ];
 
 	const className = useMemo(
 		() => computeClassName( attributes ),
@@ -50,6 +53,81 @@ function ProductImagesEdit( props ) {
 		'data-wp-interactive': 'peaches-ecwid-product-images',
 	} );
 
+	/**
+	 * Get preview images from test product data
+	 *
+	 * @return {Object} Object with mainImage and thumbnails
+	 */
+	const getPreviewImages = () => {
+		if ( ! testProductData ) {
+			return {
+				mainImage:
+					'https://placehold.co/600x400?text=Product+Image+Preview',
+				thumbnails: Array.from( {
+					length: Math.min( maxThumbnails, 5 ),
+				} ).map(
+					( _, i ) => `https://placehold.co/100x100?text=${ i + 1 }`
+				),
+			};
+		}
+
+		// Size mapping for different image sizes
+		const sizeMapping = {
+			small: 'image160pxUrl',
+			medium: 'image400pxUrl',
+			large: 'image800pxUrl',
+			original: 'imageOriginalUrl',
+		};
+
+		const imageSizeKey = sizeMapping[ imageSize ] || 'image400pxUrl';
+
+		let mainImage = '';
+		let thumbnails = [];
+
+		// Try new media.images structure first
+		if (
+			testProductData.media &&
+			testProductData.media.images &&
+			testProductData.media.images.length > 0
+		) {
+			// Get main image
+			const mainImageData = testProductData.media.images[ 0 ];
+			mainImage =
+				mainImageData[ imageSizeKey ] || mainImageData.image400pxUrl;
+
+			// Get thumbnails (skip the first image since it's used as main image)
+			if ( showThumbnails && testProductData.media.images.length > 1 ) {
+				thumbnails = testProductData.media.images
+					.slice( 1, maxThumbnails + 1 ) // Skip first image, get up to maxThumbnails
+					.map( ( image ) => image.image160pxUrl );
+			}
+		}
+		// Fallback to legacy galleryImages + main image
+		else {
+			// Use main product image
+			mainImage =
+				testProductData.thumbnailUrl || testProductData.imageUrl || '';
+
+			// Get gallery thumbnails (these are separate from main image)
+			if ( showThumbnails && testProductData.galleryImages ) {
+				thumbnails = testProductData.galleryImages
+					.slice( 0, maxThumbnails )
+					.map(
+						( image ) =>
+							image.thumbnailUrl || image.smallThumbnailUrl
+					);
+			}
+		}
+
+		return {
+			mainImage:
+				mainImage || 'https://placehold.co/600x400?text=No+Image',
+			thumbnails: thumbnails.length > 0 ? thumbnails : [],
+		};
+	};
+
+	const { mainImage, thumbnails } = getPreviewImages();
+
 	return (
 		<>
 			<InspectorControls>
@@ -59,12 +137,22 @@ function ProductImagesEdit( props ) {
 						'ecwid-shopping-cart'
 					) }
 				>
-					<Notice status="info" isDismissible={ false }>
-						{ __(
-							'This block displays product images dynamically based on the product detail block.',
-							'ecwid-shopping-cart'
-						) }
-					</Notice>
+					{ testProductData ? (
+						<Notice status="success" isDismissible={ false }>
+							{ __(
+								'Using test product images:',
+								'ecwid-shopping-cart'
+							) }{ ' ' }
+							<strong>{ testProductData.name }</strong>
+						</Notice>
+					) : (
+						<Notice status="info" isDismissible={ false }>
+							{ __(
+								'Using placeholder images. Configure a test product in the parent block to preview real images.',
+								'ecwid-shopping-cart'
+							) }
+						</Notice>
+					) }
 
 					<SelectControl
 						label={ __( 'Main Image Size', 'ecwid-shopping-cart' ) }
@@ -108,34 +196,29 @@ function ProductImagesEdit( props ) {
 
 			<div { ...blockProps }>
 				<div className="product-images-container">
-					<div className="main-image ratio ratio-1x1 border border-1 border-dark">
+					<div className="main-image ratio ratio-1x1">
 						<img
 							className="img-fluid"
-							src="https://placehold.co/600x400?text=Product+Image+Preview"
-							alt={ __(
-								'Product Image Preview',
-								'ecwid-shopping-cart'
-							) }
+							src={ mainImage }
+							alt={
+								testProductData?.name ||
+								__(
+									'Product Image Preview',
+									'ecwid-shopping-cart'
+								)
+							}
 						/>
 					</div>
-					{ showThumbnails && (
+					{ showThumbnails && thumbnails.length > 0 && (
 						<div className="thumbnails d-flex">
-							{ Array.from( {
-								length: Math.min( maxThumbnails, 5 ),
-							} ).map( ( _, i ) => (
-								<div
-									key={ i }
-									className="ratio ratio-1x1 border border-dark border-1"
-								>
+							{ thumbnails.map( ( thumbnail, i ) => (
+								<div key={ i } className="ratio ratio-1x1">
 									<img
-										src={ `https://placehold.co/100x100?text=${
-											i + 1
-										}` }
+										src={ thumbnail }
 										className="img-fluid"
-										alt={ __(
-											'Thumbnail',
-											'ecwid-shopping-cart'
-										) }
+										alt={ `${
+											testProductData?.name || 'Product'
+										} thumbnail ${ i + 1 }` }
 									/>
 								</div>
 							) ) }
