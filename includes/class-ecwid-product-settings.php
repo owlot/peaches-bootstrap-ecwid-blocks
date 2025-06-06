@@ -723,7 +723,7 @@ class Peaches_Ecwid_Product_Settings {
 		<?php
 	}
 
-	/**
+/**
 	 * Enqueue admin scripts and styles
 	 *
 	 * @since 0.2.0
@@ -745,9 +745,9 @@ class Peaches_Ecwid_Product_Settings {
 			PEACHES_ECWID_VERSION
 		);
 
-		// Enqueue media tags scripts and styles if on media tags tab
-		$active_tab = isset( $_GET['tab'] ) ? sanitize_key( $_GET['tab'] ) : 'product_settings';
-		if ( $active_tab === 'media_tags' && $this->media_tags_manager ) {
+		// ALWAYS enqueue media tags scripts when on the product settings page
+		// This ensures the script is available when switching tabs dynamically
+		if ( $this->media_tags_manager ) {
 			$this->media_tags_manager->enqueue_tab_scripts( $hook );
 		}
 

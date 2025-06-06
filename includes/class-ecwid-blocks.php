@@ -199,7 +199,11 @@ class Peaches_Ecwid_Blocks implements Peaches_Ecwid_Blocks_Interface {
 			'interfaces/interface-rewrite-manager.php',
 			'interfaces/interface-product-manager.php',
 			'interfaces/interface-ingredients-manager.php',
-			'interfaces/interface-block-patterns.php'
+			'interfaces/interface-block-patterns.php',
+			'interfaces/interface-media-tags-manager.php',
+			'interfaces/interface-product-media-manager.php',
+			'interfaces/interface-product-lines-manager.php',
+			'interfaces/interface-enhanced-navigation.php'
 		);
 
 		foreach ($interfaces as $interface) {
