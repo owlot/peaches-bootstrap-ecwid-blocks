@@ -1,3 +1,19 @@
 .card-footer {
 	--bs-card-cap-bg: inherit;
 }
+
+.add-to-cart::before {
+	display: inline-block;
+	content: "";
+	mask-image: url('data:image/svg+xml,<svg width="26" height="32" viewBox="0 0 26 32" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M22.2988 8.0415L24.8818 30.6587H1.12207L3.70508 8.0415H22.2988Z" stroke="white" stroke-width="2"/><path d="M18.825 8.03346C18.825 4.14899 16.4166 1 13.4457 1C10.4748 1 8.06641 4.14899 8.06641 8.03346" stroke="white" stroke-width="2"/></svg>');
+	mask-size: contain;
+	mask-position: center;
+	mask-repeat: no-repeat;
+	height: 1.5rem;
+	width: 1.5rem;
+	background-color: var(--bs-body-color);
+}
+
+.add-to-cart:hover::before {
+	mask-image: url('data:image/svg+xml,<svg width="26" height="32" viewBox="0 0 26 32" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M22.2988 8.0415L24.8818 30.6587H1.12207L3.70508 8.0415H22.2988Z" fill="white" stroke="white" stroke-width="2"/><path d="M18.825 8.03346C18.825 4.14899 16.4166 1 13.4457 1C10.4748 1 8.06641 4.14899 8.06641 8.03346" stroke="white" stroke-width="2"/></svg>');
+}

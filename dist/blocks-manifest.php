@@ -101,6 +101,10 @@ return array(
 			'id' => array(
 				'type' => 'integer'
 			),
+			'showAddToCart' => array(
+				'type' => 'boolean',
+				'default' => true
+			),
 			'xs' => array(
 				'type' => 'object',
 				'default' => array(

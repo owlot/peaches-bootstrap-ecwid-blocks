@@ -22,12 +22,7 @@ export default function save( { attributes } ) {
 	} );
 
 	return (
-		<div
-			{ ...blockProps }
-			className="card h-100 border-0"
-			data-wp-on--click="actions.navigateToProduct"
-			data-wp-bind--style--cursor="state.product ? 'pointer' : 'default'"
-		>
+		<div { ...blockProps } className="card h-100 border-0">
 			<div className="ratio ratio-1x1">
 				<img
 					className="card-img-top"
@@ -37,7 +32,12 @@ export default function save( { attributes } ) {
 				/>
 			</div>
 			<div className="card-body p-2 p-md-3 d-flex row-cols-1 flex-wrap align-content-between">
-				<h5 className="card-title" data-wp-text="state.productName">
+				<h5
+					role="button"
+					className="card-title"
+					data-wp-text="state.productName"
+					data-wp-on--click="actions.navigateToProduct"
+				>
 					Product Name
 				</h5>
 				<p
@@ -45,11 +45,19 @@ export default function save( { attributes } ) {
 					data-wp-text="state.productSubtitle"
 				></p>
 			</div>
-			<div className="card-footer border-0">
+			<div className="card-footer border-0 hstack justify-content-between">
 				<div
-					className="card-text fw-bold"
+					className="card-text fw-bold lead"
 					data-wp-text="state.productPrice"
 				></div>
+				{ attributes.showAddToCart && (
+					<button
+						title="Add to cart"
+						className="add-to-cart btn pe-0"
+						aria-label="Add to cart"
+						data-wp-on--click="actions.addToCart"
+					/>
+				) }
 			</div>
 
 			<div

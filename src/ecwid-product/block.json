@@ -24,6 +24,10 @@
 		"id": {
 			"type": "integer"
 		},
+		"showAddToCart": {
+			"type": "boolean",
+			"default": true
+		},
 		"xs": {
 			"type": "object",
 			"default": {}

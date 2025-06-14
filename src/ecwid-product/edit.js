@@ -4,6 +4,7 @@
 import { __ } from '@wordpress/i18n';
 import { useMemo, useState, useEffect } from '@wordpress/element';
 import { InspectorControls, useBlockProps } from '@wordpress/block-editor';
+import { PanelBody, ToggleControl } from '@wordpress/components';
 
 /**
  * Internal dependencies
@@ -173,7 +174,28 @@ function ProductEdit( props ) {
 						</div>
 					) }
 				</div>
-
+				<PanelBody
+					title={ __(
+						'Product Cart Settings',
+						'ecwid-shopping-cart'
+					) }
+				>
+					<ToggleControl
+						__nextHasNoMarginBottom
+						label={ __(
+							"Show 'Add to cart' button",
+							'ecwid-shopping-cart'
+						) }
+						checked={ attributes.showAddToCart }
+						onChange={ ( value ) =>
+							setAttributes( { showAddToCart: value } )
+						}
+						help={ __(
+							'Shows an icon button to instantly add the product to the cart.',
+							'ecwid-shopping-cart'
+						) }
+					/>
+				</PanelBody>
 				<BootstrapSettingsPanels
 					setAttributes={ setAttributes }
 					attributes={ attributes }
@@ -238,7 +260,7 @@ function ProductEdit( props ) {
 							) }
 						</div>
 						<div className="card-body p-2 p-md-3 d-flex row-cols-1 flex-wrap align-content-between">
-							<h5 className="card-title">
+							<h5 role="button" className="card-title">
 								{ productData?.name ||
 									( isLoading
 										? '...'
@@ -257,14 +279,17 @@ function ProductEdit( props ) {
 										  ) ) }
 							</p>
 						</div>
-						<div className="card-footer border-0">
-							<div className="card-text fw-bold">
+						<div className="card-footer border-0 hstack justify-content-between">
+							<div className="card-text fw-bold lead">
 								{ productData?.price
 									? `€ ${ productData.price }`
 									: isLoading
 									? '...'
 									: '€ --' }
 							</div>
+							{ attributes.showAddToCart && (
+								<button className="add-to-cart btn pe-0" />
+							) }
 						</div>
 					</div>
 				) }

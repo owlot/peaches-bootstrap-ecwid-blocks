@@ -92,6 +92,28 @@ const { state } = store( 'peaches-ecwid-product', {
 				window.location.href = url;
 			}
 		},
+		addToCart( e ) {
+			const context = getContext();
+			const productId = state.productId;
+
+			if ( productId ) {
+				// Check if Ecwid cart API is available
+				if ( typeof Ecwid !== 'undefined' && Ecwid.Cart ) {
+					try {
+						Ecwid.Cart.addProduct( {
+							id: productId,
+							quantity: 1,
+						} );
+					} catch ( error ) {
+						console.error( 'Error adding product to cart:', error );
+					}
+				} else {
+					console.error( 'Ecwid Cart API not available' );
+				}
+			} else {
+				console.error( 'Product ID not found' );
+			}
+		},
 	},
 
 	callbacks: {
