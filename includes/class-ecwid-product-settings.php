@@ -454,8 +454,8 @@ class Peaches_Ecwid_Product_Settings {
 					<tr>
 						<th scope="col"><?php esc_html_e( 'Name', 'peaches' ); ?></th>
 						<?php if ( $post_type === 'product_settings' ): ?>
-							<th scope="col" class="text-center"><?php esc_html_e( 'Ecwid ID', 'peaches' ); ?></th>
 							<th scope="col" class="text-center"><?php esc_html_e( 'SKU', 'peaches' ); ?></th>
+							<th scope="col" class="text-center"><?php esc_html_e( 'Ecwid ID', 'peaches' ); ?></th>
 							<th scope="col" class="text-center"><?php esc_html_e( 'Components', 'peaches' ); ?></th>
 						<?php elseif ( $post_type === 'product_ingredient' ): ?>
 							<th scope="col"><?php esc_html_e( 'Description', 'peaches' ); ?></th>
