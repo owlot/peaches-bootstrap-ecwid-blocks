@@ -724,4 +724,288 @@ class Peaches_Ecwid_API implements Peaches_Ecwid_API_Interface {
 
 		return $info;
 	}
+
+
+	/**
+	 * Get all products from Ecwid store with pagination, search, and sorting.
+	 *
+	 * @since 0.2.3
+	 *
+	 * @param array $options Search and pagination parameters
+	 *
+	 * @return array Array containing products and pagination info
+	 */
+	public function get_all_products($options = array()) {
+		$this->debug_log('Getting all products with options', $options);
+
+		// Check cache first
+		$cache_key = $this->get_cache_key('all_products', $options);
+		$cached_products = $this->get_cached_data($cache_key);
+
+		if ($cached_products !== false) {
+			$this->debug_log('Returning cached products (' . count($cached_products) . ' products)');
+			return $cached_products;
+		}
+
+		$products = array();
+
+		if (class_exists('Ecwid_Api_V3')) {
+			try {
+				$api = new Ecwid_Api_V3();
+
+				// Clean up the options to only include parameters the API actually supports
+				$api_params = array();
+
+				// Only include supported parameters
+				if (isset($options['limit'])) {
+					$api_params['limit'] = min(100, max(1, intval($options['limit'])));
+				} else {
+					$api_params['limit'] = 100;
+				}
+
+				if (isset($options['offset'])) {
+					$api_params['offset'] = max(0, intval($options['offset']));
+				}
+
+				if (isset($options['enabled'])) {
+					$api_params['enabled'] = $options['enabled'];
+				} else {
+					$api_params['enabled'] = true; // Only get enabled products by default
+				}
+
+				if (isset($options['category'])) {
+					$api_params['category'] = intval($options['category']);
+				}
+
+				if (isset($options['keyword'])) {
+					$api_params['keyword'] = sanitize_text_field($options['keyword']);
+				}
+
+				if (isset($options['sku'])) {
+					$api_params['sku'] = sanitize_text_field($options['sku']);
+				}
+
+				if (isset($options['inStock'])) {
+					$api_params['inStock'] = $options['inStock'];
+				}
+
+				// Handle sorting carefully - the API is picky about these
+				if (isset($options['sortBy']) && !empty($options['sortBy'])) {
+					$allowed_sorts = array('NAME', 'PRICE', 'UPDATED_TIME', 'CREATED_TIME', 'NAME_DESC', 'PRICE_DESC', 'UPDATED_TIME_DESC', 'CREATED_TIME_DESC');
+
+					// Convert sortBy + sortOrder to single sortBy value that API expects
+					$sort_by = strtoupper($options['sortBy']);
+					$sort_order = isset($options['sortOrder']) ? strtoupper($options['sortOrder']) : 'ASC';
+
+					if ($sort_by === 'NAME') {
+						$api_params['sortBy'] = ($sort_order === 'DESC') ? 'NAME_DESC' : 'NAME';
+					} elseif ($sort_by === 'PRICE') {
+						$api_params['sortBy'] = ($sort_order === 'DESC') ? 'PRICE_DESC' : 'PRICE';
+					} elseif ($sort_by === 'UPDATED_TIME') {
+						$api_params['sortBy'] = ($sort_order === 'DESC') ? 'UPDATED_TIME_DESC' : 'UPDATED_TIME';
+					} elseif ($sort_by === 'CREATED_TIME') {
+						$api_params['sortBy'] = ($sort_order === 'DESC') ? 'CREATED_TIME_DESC' : 'CREATED_TIME';
+					} else {
+						// If invalid sort, just omit it and let Ecwid use default
+						$this->debug_log('Invalid sortBy value, using default: ' . $sort_by);
+					}
+				}
+
+				$this->debug_log('API parameters after cleanup', $api_params);
+
+				$all_products = array();
+				$has_more = true;
+				$current_offset = $api_params['offset'];
+				$safety_counter = 0;
+
+				// Fetch all products with pagination
+				while ($has_more && $safety_counter < 100) { // Safety limit to prevent infinite loops
+					$api_params['offset'] = $current_offset;
+					$this->debug_log('Fetching products with offset: ' . $current_offset);
+
+					$result = $api->get_products($api_params);
+					$this->debug_log('API result type: ' . gettype($result));
+
+					if ($result && is_object($result) && isset($result->items) && is_array($result->items)) {
+						$this->debug_log('Received ' . count($result->items) . ' products from API');
+
+						foreach ($result->items as $product) {
+							$products[] = array(
+								'id' => $product->id,
+								'name' => $product->name,
+								'sku' => isset($product->sku) ? $product->sku : '',
+								'price' => isset($product->price) ? $product->price : 0,
+								'enabled' => isset($product->enabled) ? $product->enabled : true,
+								'url' => isset($product->url) ? $product->url : '',
+								'imageUrl' => isset($product->imageUrl) ? $product->imageUrl : '',
+								'thumbnailUrl' => isset($product->thumbnailUrl) ? $product->thumbnailUrl : '',
+								'description' => isset($product->description) ? $product->description : '',
+								'inStock' => isset($product->inStock) ? $product->inStock : false,
+								'weight' => isset($product->weight) ? $product->weight : 0,
+								'created' => isset($product->created) ? $product->created : '',
+								'updated' => isset($product->updated) ? $product->updated : ''
+							);
+						}
+
+						// Check if there are more products
+						if (isset($result->total) && isset($result->count) && isset($result->offset)) {
+							$current_offset += $result->count;
+							$has_more = ($current_offset < $result->total) && (count($result->items) > 0);
+							$this->debug_log('Pagination info - offset: ' . $current_offset . ', total: ' . $result->total . ', has_more: ' . ($has_more ? 'yes' : 'no'));
+						} else {
+							$has_more = false;
+						}
+					} else {
+						$this->debug_log('No valid result or items in API response');
+
+						// If this is the first attempt and we have sorting, try without sorting
+						if ($current_offset === $api_params['offset'] && isset($api_params['sortBy'])) {
+							$this->debug_log('Retrying without sortBy parameter');
+							unset($api_params['sortBy']);
+							$safety_counter++; // Increment counter but try again
+							continue;
+						}
+
+						$has_more = false;
+					}
+
+					$safety_counter++;
+				}
+
+				$this->debug_log('Total products fetched: ' . count($products));
+
+			} catch (Exception $e) {
+				$this->debug_log('Error fetching all products: ' . $e->getMessage());
+				return array(); // Return empty array on error, don't cache
+			}
+		} else {
+			$this->debug_log('Ecwid_Api_V3 class not available');
+			return array();
+		}
+
+		// Only cache successful results
+		if (!empty($products)) {
+			$cache_expiration = isset($options['cache_expiration']) ? $options['cache_expiration'] : (6 * HOUR_IN_SECONDS);
+			$this->set_cached_data($cache_key, $products, $cache_expiration);
+			$this->debug_log('Products cached successfully');
+		} else {
+			$this->debug_log('No products to cache - not caching empty result');
+		}
+
+		$this->debug_log('get_all_products completed, returning ' . count($products) . ' products');
+
+		return $products;
+	}
+
+	/**
+	 * Check if a WordPress post exists for the given Ecwid product.
+	 *
+	 * @since 0.2.3
+	 *
+	 * @param int    $product_id  Ecwid product ID
+	 * @param string $product_sku Ecwid product SKU
+	 *
+	 * @return bool True if post exists, false otherwise
+	 */
+	private function product_has_post( $product_id, $product_sku = '' ) {
+		global $wpdb;
+
+		// Check by product ID first
+		$post_id = $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT post_id FROM {$wpdb->postmeta}
+				WHERE meta_key = '_ecwid_product_id'
+				AND meta_value = %s
+				AND post_id IN (
+					SELECT ID FROM {$wpdb->posts}
+					WHERE post_type = 'product_settings'
+					AND post_status IN ('publish', 'draft')
+				)",
+				$product_id
+			)
+		);
+
+		if ( $post_id ) {
+			return true;
+		}
+
+		// Check by SKU if available
+		if ( ! empty( $product_sku ) ) {
+			$post_id = $wpdb->get_var(
+				$wpdb->prepare(
+					"SELECT post_id FROM {$wpdb->postmeta}
+					WHERE meta_key = '_ecwid_product_sku'
+					AND meta_value = %s
+					AND post_id IN (
+						SELECT ID FROM {$wpdb->posts}
+						WHERE post_type = 'product_settings'
+						AND post_status IN ('publish', 'draft')
+					)",
+					$product_sku
+				)
+			);
+
+			if ( $post_id ) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	 * Get WordPress post ID for the given Ecwid product.
+	 *
+	 * @since 0.2.3
+	 *
+	 * @param int    $product_id  Ecwid product ID
+	 * @param string $product_sku Ecwid product SKU
+	 *
+	 * @return int|null Post ID or null if not found
+	 */
+	public function get_product_post_id( $product_id, $product_sku = '' ) {
+		global $wpdb;
+
+		// Check by product ID first
+		$post_id = $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT post_id FROM {$wpdb->postmeta}
+				WHERE meta_key = '_ecwid_product_id'
+				AND meta_value = %s
+				AND post_id IN (
+					SELECT ID FROM {$wpdb->posts}
+					WHERE post_type = 'product_settings'
+					AND post_status IN ('publish', 'draft')
+				)",
+				$product_id
+			)
+		);
+
+		if ( $post_id ) {
+			return (int) $post_id;
+		}
+
+		// Check by SKU if available
+		if ( ! empty( $product_sku ) ) {
+			$post_id = $wpdb->get_var(
+				$wpdb->prepare(
+					"SELECT post_id FROM {$wpdb->postmeta}
+					WHERE meta_key = '_ecwid_product_sku'
+					AND meta_value = %s
+					AND post_id IN (
+						SELECT ID FROM {$wpdb->posts}
+						WHERE post_type = 'product_settings'
+						AND post_status IN ('publish', 'draft')
+					)",
+					$product_sku
+				)
+			);
+
+			if ( $post_id ) {
+				return (int) $post_id;
+			}
+		}
+
+		return null;
+	}
 }

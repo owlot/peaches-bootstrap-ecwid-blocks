@@ -168,6 +168,8 @@ class Peaches_Ecwid_Blocks implements Peaches_Ecwid_Blocks_Interface {
 			$this->maybe_migrate_database();
 			$this->initialize_components();
 			$this->init_hooks();
+
+			delete_transient('peaches_ecwid_all_products_6ed855dcb1ec6aec9d8ea36c935c6225');
 		} catch (Exception $e) {
 			error_log('Peaches Ecwid Blocks initialization error: ' . $e->getMessage());
 			add_action('admin_notices', array($this, 'show_initialization_error'));
@@ -272,14 +274,28 @@ class Peaches_Ecwid_Blocks implements Peaches_Ecwid_Blocks_Interface {
 			$this->settings_manager = Peaches_Ecwid_Settings::get_instance();
 		}
 
-		// Initialize product lines manager (replaces groups)
-		if (class_exists('Peaches_Product_Lines_Manager')) {
-			$this->product_lines_manager = new Peaches_Product_Lines_Manager();
+		// Initialize media tags manager
+		if (class_exists('Peaches_Media_Tags_Manager')) {
+			$this->media_tags_manager = new Peaches_Media_Tags_Manager();
 		}
 
 		// Initialize product media manager
 		if (class_exists('Peaches_Product_Media_Manager') && $this->ecwid_api && $this->media_tags_manager) {
 			$this->product_media_manager = new Peaches_Product_Media_Manager($this->ecwid_api, $this->media_tags_manager);
+		}
+
+		// Initialize product lines manager (replaces groups)
+		if (class_exists('Peaches_Product_Lines_Manager')) {
+			$this->product_lines_manager = new Peaches_Product_Lines_Manager();
+		}
+
+		if (class_exists('Peaches_Ingredients_Library_Manager')) {
+			$this->ingredients_library_manager = new Peaches_Ingredients_Library_Manager();
+		}
+
+		// Initialize product settings manager
+		if (class_exists('Peaches_Product_Settings_Manager') && $this->ecwid_api) {
+			$this->product_settings_manager = new Peaches_Product_Settings_Manager($this->ecwid_api, $this->product_lines_manager, $this->product_media_manager);
 		}
 
 		// Initialize other components with dependencies
@@ -291,21 +307,6 @@ class Peaches_Ecwid_Blocks implements Peaches_Ecwid_Blocks_Interface {
 			$this->product_manager = new Peaches_Product_Manager($this->ecwid_api);
 		}
 
-		// Initialize product settings manager (new) or ingredients manager (fallback)
-		if (class_exists('Peaches_Product_Settings_Manager') && $this->ecwid_api) {
-			$this->product_settings_manager = new Peaches_Product_Settings_Manager($this->ecwid_api);
-			if ($this->product_lines_manager && method_exists($this->product_settings_manager, 'set_lines_manager')) {
-				$this->product_settings_manager->set_lines_manager($this->product_lines_manager);
-			}
-		} elseif (class_exists('Peaches_Ingredients_Manager') && $this->ecwid_api) {
-			// Fallback to old ingredients manager
-			$this->product_settings_manager = new Peaches_Ingredients_Manager($this->ecwid_api);
-		}
-
-		if (class_exists('Peaches_Ingredients_Library_Manager')) {
-			$this->ingredients_library_manager = new Peaches_Ingredients_Library_Manager();
-		}
-
 		// Initialize enhanced navigation if available
 		if (class_exists('Peaches_Enhanced_Navigation')) {
 			$this->enhanced_navigation = new Peaches_Enhanced_Navigation();
@@ -314,11 +315,6 @@ class Peaches_Ecwid_Blocks implements Peaches_Ecwid_Blocks_Interface {
 		// Initialize patterns last and only if we're not in an AJAX request
 		if (!wp_doing_ajax() && class_exists('Peaches_Ecwid_Block_Patterns')) {
 			$this->block_patterns = new Peaches_Ecwid_Block_Patterns();
-		}
-
-		// Initialize media tags manager
-		if (class_exists('Peaches_Media_Tags_Manager')) {
-			$this->media_tags_manager = new Peaches_Media_Tags_Manager();
 		}
 
 		// Initialize media tags API (requires media tags manager and product settings manager)

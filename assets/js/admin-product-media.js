@@ -1,7 +1,8 @@
 /**
- * Enhanced Product Media Management JavaScript
+ * Admin Product Media JavaScript
  *
- * Handles the enhanced media interface with global Ecwid image loading.
+ * Handles media management functionality for product settings,
+ * including auto-loading of Ecwid product images on page load.
  *
  * @param $
  * @package
@@ -11,959 +12,693 @@
 ( function ( $ ) {
 	'use strict';
 
+	const mediaFrames = {};
+	let ecwidImagesLoaded = false;
+	let ecwidImagesData = []; // Store loaded images data for preview
+
 	/**
-	 * Media Management Controller
+	 * Initialize media management functionality
 	 *
-	 * Manages all aspects of product media selection and preview.
+	 * @since 0.2.1
+	 *
+	 * @return {void}
 	 */
-	const MediaManager = {
-		/**
-		 * Cached Ecwid images data
-		 */
-		ecwidImages: null,
-		ecwidProductName: '',
-		ecwidLoadingPromise: null,
+	function initMediaManagement() {
+		initMediaTypeToggles();
+		initMediaUploadHandlers();
+		initUrlHandlers();
+		initEcwidHandlers();
 
-		/**
-		 * Initialize media management functionality
-		 *
-		 * Sets up event handlers for all media types and interactions.
-		 */
-		init() {
-			this.bindEvents();
-			this.initializeExistingItems();
-			this.addGlobalEcwidLoader();
-		},
+		// Auto-load Ecwid images if enabled and post ID is available
+		if ( ProductMediaParams.autoLoadImages && ProductMediaParams.postId ) {
+			autoLoadEcwidImages();
+		}
+	}
 
-		/**
-		 * Add global Ecwid loader to the page
-		 *
-		 * Adds a single "Load Product Images" button that loads images for all tags.
-		 */
-		addGlobalEcwidLoader() {
-			// Find the media container
-			const $mediaContainer = $( '#product-media-container' );
+	/**
+	 * Auto-load Ecwid product images on page load
+	 *
+	 * @since 0.2.1
+	 *
+	 * @return {void}
+	 */
+	function autoLoadEcwidImages() {
+		// Only load once per page load
+		if ( ecwidImagesLoaded ) {
+			return;
+		}
 
-			if (
-				$mediaContainer.length &&
-				$( '.media-tag-item[data-tag-key]' ).length > 1
-			) {
-				// Add global loader before the first card
-				const globalLoaderHtml = `
-					<div class="card mb-3 border-primary" id="global-ecwid-loader">
-						<div class="card-header bg-primary text-white">
-							<h6 class="card-title mb-0">
-								<i class="dashicons dashicons-store"></i>
-								${ this.t( 'Ecwid Product Images' ) }
-							</h6>
-						</div>
-						<div class="card-body">
-							<div class="d-flex justify-content-between align-items-center">
-								<div>
-									<p class="mb-1">${ this.t(
-										'Load images from the linked Ecwid product and make them available for all media tags.'
-									) }</p>
-									<small class="text-muted">${ this.t(
-										'This will populate the Ecwid media options for all tags at once.'
-									) }</small>
-								</div>
-								<button type="button" class="btn btn-primary" id="global-load-ecwid-media">
-									<i class="dashicons dashicons-update"></i>
-									${ this.t( 'Load All Product Images' ) }
-								</button>
-							</div>
-							<div id="global-ecwid-status" class="mt-2" style="display: none;"></div>
-						</div>
-					</div>
-				`;
+		// Show loading indicator
+		$( '.ecwid-images-loading' ).show();
 
-				$mediaContainer.prepend( globalLoaderHtml );
+		loadEcwidImages( function ( success ) {
+			$( '.ecwid-images-loading' ).hide();
 
-				// Hide individual load buttons initially
-				$( '.load-ecwid-media-button' ).hide();
+			if ( success ) {
+				ecwidImagesLoaded = true;
 			}
-		},
+		} );
+	}
 
-		/**
-		 * Get translation string
-		 *
-		 * Simple translation helper function.
-		 *
-		 * @param {string} text - Text to translate
-		 *
-		 * @return {string} - Translated text
-		 */
-		t( text ) {
-			// In a real implementation, this would use WordPress i18n
-			return text;
-		},
+	/**
+	 * Initialize media type toggle functionality
+	 *
+	 * @since 0.2.1
+	 *
+	 * @return {void}
+	 */
+	function initMediaTypeToggles() {
+		$( document ).on( 'change', '.media-type-radio', function () {
+			const $container = $( this ).closest( '.media-tag-item' );
+			const selectedType = $( this ).val();
 
-		/**
-		 * Bind event handlers
-		 *
-		 * Sets up all event listeners for media management.
-		 */
-		bindEvents() {
-			// Media type selection
-			$( document ).on(
-				'change',
-				'.media-type-radio',
-				this.handleMediaTypeChange
-			);
+			// Update hidden input
+			$container.find( '.media-type-value' ).val( selectedType );
 
-			// Upload file handling
-			$( document ).on(
-				'click',
-				'.select-media-button',
-				this.handleMediaSelection
-			);
-			$( document ).on(
-				'click',
-				'.remove-media-button',
-				this.handleMediaRemoval
-			);
-
-			// URL handling
-			$( document ).on(
-				'input',
-				'.media-url-input',
-				this.handleUrlInput
-			);
-			$( document ).on(
-				'click',
-				'.preview-url-button',
-				this.handleUrlPreview
-			);
-			$( document ).on(
-				'click',
-				'.clear-url-button',
-				this.handleUrlClear
-			);
-
-			// Ecwid media handling
-			$( document ).on(
-				'click',
-				'#global-load-ecwid-media',
-				this.handleGlobalEcwidLoad
-			);
-			$( document ).on(
-				'click',
-				'.load-ecwid-media-button',
-				this.handleEcwidMediaLoad
-			);
-			$( document ).on(
-				'change',
-				'.ecwid-position-select',
-				this.handleEcwidPositionChange
-			);
-			$( document ).on(
-				'click',
-				'.clear-ecwid-button',
-				this.handleEcwidClear
-			);
-		},
-
-		/**
-		 * Initialize existing media items
-		 *
-		 * Sets up the UI state for items that already have media assigned.
-		 */
-		initializeExistingItems() {
-			$( '.media-tag-item' ).each( function () {
-				const $container = $( this );
-				const mediaType = $container.find( '.media-type-value' ).val();
-
-				if ( mediaType && mediaType !== 'none' ) {
-					MediaManager.updateControlsVisibility(
-						$container,
-						mediaType
-					);
-				}
-			} );
-		},
-
-		/**
-		 * Handle global Ecwid media loading
-		 *
-		 * Loads Ecwid images once and makes them available to all tags.
-		 *
-		 * @param {Event} e - Click event
-		 */
-		handleGlobalEcwidLoad( e ) {
-			e.preventDefault();
-
-			const $button = $( e.target ).closest( '#global-load-ecwid-media' );
-			const $statusDiv = $( '#global-ecwid-status' );
-
-			// Get product ID from page
-			const productId = $( '#ecwid_product_id' ).val();
-
-			if ( ! productId ) {
-				$statusDiv
-					.html(
-						'<div class="alert alert-warning alert-sm">Please link an Ecwid product first</div>'
-					)
-					.show();
-				return;
-			}
-
-			// Set loading state
-			MediaManager.setButtonLoading( $button, true, 'Loading Images...' );
-			$statusDiv
-				.html(
-					'<div class="alert alert-info alert-sm">Loading product images...</div>'
+			// Hide all control sections
+			$container
+				.find(
+					'.media-upload-controls, .media-url-controls, .media-ecwid-controls'
 				)
-				.show();
+				.hide();
 
-			// Store the promise so we can reuse it if multiple calls happen
-			if ( MediaManager.ecwidLoadingPromise ) {
-				return MediaManager.ecwidLoadingPromise;
+			// Show the selected type's controls
+			if ( selectedType ) {
+				$container
+					.find( '.media-' + selectedType + '-controls' )
+					.show();
+
+				// Auto-load Ecwid images when switching to Ecwid type
+				if (
+					selectedType === 'ecwid' &&
+					! ecwidImagesLoaded &&
+					ProductMediaParams.postId
+				) {
+					autoLoadEcwidImages();
+				}
 			}
 
-			MediaManager.ecwidLoadingPromise = $.post(
-				ProductMediaParams.ajaxUrl,
-				{
-					action: 'get_ecwid_product_media',
-					nonce: ProductMediaParams.nonce,
-					product_id: productId,
-				}
-			);
+			// Clear existing data when switching types
+			clearMediaData( $container, selectedType );
+		} );
+	}
 
-			MediaManager.ecwidLoadingPromise
-				.done( function ( response ) {
-					if ( response.success ) {
-						// Cache the images data
-						MediaManager.ecwidImages = response.data.images;
-						MediaManager.ecwidProductName =
-							response.data.product_name;
+	/**
+	 * Initialize media upload handlers
+	 *
+	 * @since 0.2.1
+	 *
+	 * @return {void}
+	 */
+	function initMediaUploadHandlers() {
+		$( document ).on( 'click', '.select-media-button', function ( e ) {
+			e.preventDefault();
 
-						// Update all Ecwid selects
-						MediaManager.updateAllEcwidSelects();
+			const $button = $( this );
+			const $container = $button.closest( '.media-tag-item' );
+			const tagKey = $container.data( 'tag-key' );
 
-						// Show success status
-						$statusDiv.html(
-							`<div class="alert alert-success alert-sm">
-							<strong>Success!</strong> Loaded ${ response.data.images.length } images from "${ response.data.product_name }".
-							<br><small>All Ecwid media options have been populated. You can now select images for individual tags.</small>
-						</div>`
-						);
-
-						// Show individual load buttons as "Refresh" buttons
-						$( '.load-ecwid-media-button' )
-							.show()
-							.html(
-								'<i class="dashicons dashicons-update"></i>' +
-									MediaManager.t( 'Refresh' )
-							);
-					} else {
-						$statusDiv.html(
-							`<div class="alert alert-danger alert-sm">${
-								response.data || 'Failed to load Ecwid media'
-							}</div>`
-						);
-					}
-				} )
-				.fail( function ( xhr, status, error ) {
-					$statusDiv.html(
-						`<div class="alert alert-danger alert-sm">Error loading images: ${ status } (${ xhr.status })</div>`
-					);
-				} )
-				.always( function () {
-					MediaManager.setButtonLoading( $button, false );
-					// Clear the promise so it can be called again
-					MediaManager.ecwidLoadingPromise = null;
+			if ( ! mediaFrames[ tagKey ] ) {
+				mediaFrames[ tagKey ] = wp.media( {
+					title: ProductMediaParams.selectMediaTitle,
+					button: {
+						text: ProductMediaParams.selectMediaButton,
+					},
+					multiple: false,
 				} );
-		},
 
-		/**
-		 * Update all Ecwid selects with cached data
-		 *
-		 * Populates all Ecwid position selects with the loaded images.
-		 */
-		updateAllEcwidSelects() {
-			if ( ! MediaManager.ecwidImages ) {
+				mediaFrames[ tagKey ].on( 'select', function () {
+					const attachment = mediaFrames[ tagKey ]
+						.state()
+						.get( 'selection' )
+						.first()
+						.toJSON();
+					updateMediaUpload( $container, attachment );
+				} );
+			}
+
+			mediaFrames[ tagKey ].open();
+		} );
+
+		$( document ).on( 'click', '.remove-media-button', function ( e ) {
+			e.preventDefault();
+
+			if ( confirm( ProductMediaParams.confirmRemove ) ) {
+				const $container = $( this ).closest( '.media-tag-item' );
+				clearMediaUpload( $container );
+			}
+		} );
+	}
+
+	/**
+	 * Initialize URL input handlers
+	 *
+	 * @since 0.2.1
+	 *
+	 * @return {void}
+	 */
+	function initUrlHandlers() {
+		$( document ).on( 'click', '.preview-url-button', function ( e ) {
+			e.preventDefault();
+
+			const $button = $( this );
+			const $input = $button.siblings( '.media-url-input' );
+			const url = $input.val().trim();
+
+			if ( ! url ) {
+				alert( 'Please enter a URL first' );
 				return;
 			}
 
-			$( '.ecwid-position-select' ).each( function () {
-				const $select = $( this );
-				const $container = $select.closest( '.media-tag-item' );
-				const currentValue = $select.val();
+			previewUrl( url, $button );
+		} );
 
-				MediaManager.updateEcwidMediaOptions( $container, {
-					images: MediaManager.ecwidImages,
-					product_name: MediaManager.ecwidProductName,
-				} );
-
-				// Restore selection if it still exists
-				if ( currentValue ) {
-					$select.val( currentValue );
-					if ( $select.val() === currentValue ) {
-						// Value was restored successfully, trigger change to update preview
-						MediaManager.handleEcwidPositionChange( {
-							target: $select[ 0 ],
-						} );
-					}
-				}
-			} );
-		},
-
-		/**
-		 * Handle media type change
-		 *
-		 * Updates the interface when user switches between upload/URL/Ecwid options.
-		 *
-		 * @param {Event} e - Change event
-		 */
-		handleMediaTypeChange( e ) {
-			const $radio = $( e.target );
-			const $container = $radio.closest( '.media-tag-item' );
-			const mediaType = $radio.val();
-
-			// Update hidden field
-			$container.find( '.media-type-value' ).val( mediaType );
-
-			// Clear other media data
-			MediaManager.clearOtherMediaData( $container, mediaType );
-
-			// Update controls visibility
-			MediaManager.updateControlsVisibility( $container, mediaType );
-
-			// If switching to Ecwid and we have cached images, populate immediately
-			if ( mediaType === 'ecwid' && MediaManager.ecwidImages ) {
-				MediaManager.updateEcwidMediaOptions( $container, {
-					images: MediaManager.ecwidImages,
-					product_name: MediaManager.ecwidProductName,
-				} );
-			}
-
-			// Clear preview if switching away from current media
-			MediaManager.clearPreview( $container );
-
-			MediaManager.showFeedback(
-				$container,
-				'Media type changed to ' + mediaType,
-				'info'
-			);
-		},
-
-		/**
-		 * Clear other media data when switching types
-		 *
-		 * Ensures only the selected media type has data.
-		 *
-		 * @param {jQuery} $container - Media container element
-		 * @param {string} activeType - Currently active media type
-		 */
-		clearOtherMediaData( $container, activeType ) {
-			if ( activeType !== 'upload' ) {
-				$container.find( '.media-attachment-id' ).val( '' );
-			}
-			if ( activeType !== 'url' ) {
-				$container.find( '.media-url-value' ).val( '' );
-				$container.find( '.media-url-input' ).val( '' );
-			}
-			if ( activeType !== 'ecwid' ) {
-				$container.find( '.media-ecwid-position' ).val( '' );
-				$container.find( '.ecwid-position-select' ).val( '' );
-			}
-		},
-
-		/**
-		 * Update controls visibility based on media type
-		 *
-		 * Shows/hides appropriate controls for the selected media type.
-		 *
-		 * @param {jQuery} $container - Media container element
-		 * @param {string} mediaType  - Selected media type
-		 */
-		updateControlsVisibility( $container, mediaType ) {
-			// Hide all controls first
-			$container.find( '.media-upload-controls' ).hide();
-			$container.find( '.media-url-controls' ).hide();
-			$container.find( '.media-ecwid-controls' ).hide();
-
-			// Show relevant controls
-			switch ( mediaType ) {
-				case 'upload':
-					$container.find( '.media-upload-controls' ).show();
-					break;
-				case 'url':
-					$container.find( '.media-url-controls' ).show();
-					break;
-				case 'ecwid':
-					$container.find( '.media-ecwid-controls' ).show();
-					break;
-			}
-		},
-
-		/**
-		 * Handle WordPress media selection
-		 *
-		 * Opens the WordPress media library for file selection.
-		 *
-		 * @param {Event} e - Click event
-		 */
-		handleMediaSelection( e ) {
-			e.preventDefault();
-
-			const $button = $( e.target ).closest( '.select-media-button' );
-			const $container = $button.closest( '.media-tag-item' );
-
-			// Set loading state
-			MediaManager.setButtonLoading( $button, true, 'Loading...' );
-
-			// Create media frame
-			const mediaFrame = wp.media( {
-				title:
-					ProductMediaParams.selectMediaTitle ||
-					'Select Product Media',
-				button: {
-					text:
-						ProductMediaParams.selectMediaButton ||
-						'Use this media',
-				},
-				multiple: false,
-			} );
-
-			// Handle media selection
-			mediaFrame.on( 'select', function () {
-				const attachment = mediaFrame
-					.state()
-					.get( 'selection' )
-					.first()
-					.toJSON();
-
-				MediaManager.updateUploadMedia( $container, attachment );
-
-				// Explicitly close the frame after selection
-				mediaFrame.close();
-			} );
-
-			// Handle frame close
-			mediaFrame.on( 'close', function () {
-				MediaManager.setButtonLoading( $button, false );
-			} );
-
-			mediaFrame.open();
-		},
-
-		/**
-		 * Update upload media data and preview
-		 *
-		 * Updates the interface when a WordPress media file is selected.
-		 *
-		 * @param {jQuery} $container - Media container element
-		 * @param {Object} attachment - WordPress media attachment object
-		 */
-		updateUploadMedia( $container, attachment ) {
-			// Update hidden field
-			$container.find( '.media-attachment-id' ).val( attachment.id );
-
-			// Update preview
-			const previewHtml = `
-				<img src="${
-					attachment.url
-				}" class="img-fluid rounded" style="max-height: 100px;" alt="${
-					attachment.alt || attachment.title
-				}">
-				<div class="position-absolute top-0 start-0 p-1">
-					<small class="badge bg-success">WP Media</small>
-				</div>
-			`;
-			$container.find( '.media-preview' ).html( previewHtml );
-
-			// Update button
-			const $selectBtn = $container.find( '.select-media-button' );
-			$selectBtn
-				.removeClass( 'btn-secondary' )
-				.addClass( 'btn-outline-secondary' )
-				.html(
-					'<span class="dashicons dashicons-update"></span>Change'
-				);
-
-			// Show remove button
-			let $removeBtn = $container.find( '.remove-media-button' );
-			if ( $removeBtn.length === 0 ) {
-				$removeBtn = $(
-					'<button type="button" class="btn btn-outline-danger btn-sm remove-media-button"><span class="dashicons dashicons-trash"></span>Remove</button>'
-				);
-				$selectBtn.after( $removeBtn );
-			}
-			$removeBtn.show();
-
-			MediaManager.showFeedback(
-				$container,
-				'Media selected successfully!',
-				'success'
-			);
-		},
-
-		/**
-		 * Handle media removal
-		 *
-		 * Removes the selected WordPress media file.
-		 *
-		 * @param {Event} e - Click event
-		 */
-		handleMediaRemoval( e ) {
-			e.preventDefault();
-
-			const $button = $( e.target ).closest( '.remove-media-button' );
-			const $container = $button.closest( '.media-tag-item' );
-
-			if ( ! confirm( 'Are you sure you want to remove this media?' ) ) {
-				return;
-			}
-
-			// Clear data
-			$container.find( '.media-attachment-id' ).val( '' );
-
-			// Update button
-			const $selectBtn = $container.find( '.select-media-button' );
-			$selectBtn
-				.removeClass( 'btn-outline-secondary' )
-				.addClass( 'btn-secondary' )
-				.html(
-					'<span class="dashicons dashicons-plus-alt2"></span>Select'
-				);
-
-			// Hide remove button
-			$button.hide();
-
-			// Clear preview
-			MediaManager.clearPreview( $container );
-
-			MediaManager.showFeedback(
-				$container,
-				'Media removed successfully!',
-				'info'
-			);
-		},
-
-		/**
-		 * Handle URL input
-		 *
-		 * Updates the hidden field and validates URL format.
-		 *
-		 * @param {Event} e - Input event
-		 */
-		handleUrlInput( e ) {
-			const $input = $( e.target );
+		$( document ).on( 'blur', '.media-url-input', function () {
+			const $input = $( this );
 			const $container = $input.closest( '.media-tag-item' );
 			const url = $input.val().trim();
 
-			// Update hidden field
-			$container.find( '.media-url-value' ).val( url );
+			if ( url ) {
+				updateMediaUrl( $container, url );
+			}
+		} );
 
-			// Validate URL
-			if ( url && ! MediaManager.isValidUrl( url ) ) {
-				$input.addClass( 'is-invalid' );
-				MediaManager.showFeedback(
-					$container,
-					'Please enter a valid URL',
-					'warning'
-				);
-			} else {
-				$input.removeClass( 'is-invalid' );
+		$( document ).on( 'click', '.clear-url-button', function ( e ) {
+			e.preventDefault();
 
-				if ( url ) {
-					// Auto-preview if URL looks valid
-					setTimeout( () => {
-						MediaManager.updateUrlPreview( $container, url );
-					}, 500 );
+			const $container = $( this ).closest( '.media-tag-item' );
+			clearMediaUrl( $container );
+		} );
+	}
 
-					// Show/update clear button
-					let $clearBtn = $container.find( '.clear-url-button' );
-					if ( $clearBtn.length === 0 ) {
-						$clearBtn = $(
-							'<button type="button" class="btn btn-outline-danger btn-sm w-100 mt-1 clear-url-button"><span class="dashicons dashicons-trash"></span>Clear URL</button>'
-						);
-						$input
-							.closest( '.media-url-controls' )
-							.append( $clearBtn );
+	/**
+	 * Initialize Ecwid media handlers
+	 *
+	 * @since 0.2.1
+	 *
+	 * @return {void}
+	 */
+	function initEcwidHandlers() {
+		$( document ).on( 'change', '.ecwid-position-select', function () {
+			const $select = $( this );
+			const $container = $select.closest( '.media-tag-item' );
+			const position = $select.val();
+
+			if ( position !== '' ) {
+				updateEcwidSelection( $container, position );
+			}
+		} );
+
+		$( document ).on( 'click', '.clear-ecwid-button', function ( e ) {
+			e.preventDefault();
+
+			const $container = $( this ).closest( '.media-tag-item' );
+			clearEcwidSelection( $container );
+		} );
+	}
+
+	/**
+	 * Load Ecwid product images via AJAX
+	 *
+	 * @since 0.2.1
+	 *
+	 * @param {Function} callback Callback function to execute after loading
+	 *
+	 * @return {void}
+	 */
+	function loadEcwidImages( callback = null ) {
+		if ( ! ProductMediaParams.postId ) {
+			if ( callback ) {
+				callback( false );
+			}
+			return;
+		}
+
+		$.ajax( {
+			url: ProductMediaParams.ajaxUrl,
+			type: 'POST',
+			data: {
+				action: 'load_ecwid_media',
+				nonce: ProductMediaParams.nonce,
+				post_id: ProductMediaParams.postId,
+			},
+			success( response ) {
+				if ( response.success && response.data.images ) {
+					populateEcwidOptions( response.data.images );
+					if ( callback ) {
+						callback( true );
 					}
-					$clearBtn.show();
+				} else {
+					console.error(
+						'Failed to load Ecwid images:',
+						response.data
+					);
+					if ( callback ) {
+						callback( false );
+					}
 				}
-			}
-		},
+			},
+			error( xhr, status, error ) {
+				console.error( 'AJAX error loading Ecwid images:', error );
+				if ( callback ) {
+					callback( false );
+				}
+			},
+		} );
+	}
 
-		/**
-		 * Handle URL preview
-		 *
-		 * Manually triggers URL preview when preview button is clicked.
-		 *
-		 * @param {Event} e - Click event
-		 */
-		handleUrlPreview( e ) {
-			e.preventDefault();
+	/**
+	 * Populate Ecwid position select options with loaded images
+	 *
+	 * @since 0.2.1
+	 *
+	 * @param {Array} images Array of image objects
+	 *
+	 * @return {void}
+	 */
+	function populateEcwidOptions( images ) {
+		// Store images data for preview functionality
+		ecwidImagesData = images;
 
-			const $button = $( e.target ).closest( '.preview-url-button' );
-			const $container = $button.closest( '.media-tag-item' );
-			const url = $container.find( '.media-url-input' ).val().trim();
-
-			if ( ! url ) {
-				MediaManager.showFeedback(
-					$container,
-					'Please enter a URL first',
-					'warning'
-				);
-				return;
-			}
-
-			if ( ! MediaManager.isValidUrl( url ) ) {
-				MediaManager.showFeedback(
-					$container,
-					'Please enter a valid URL',
-					'warning'
-				);
-				return;
-			}
-
-			MediaManager.setButtonLoading( $button, true, 'Loading...' );
-
-			MediaManager.updateUrlPreview( $container, url );
-
-			setTimeout( () => {
-				MediaManager.setButtonLoading( $button, false );
-			}, 1000 );
-		},
-
-		/**
-		 * Update URL preview
-		 *
-		 * Updates the preview area with the URL content.
-		 *
-		 * @param {jQuery} $container - Media container element
-		 * @param {string} url        - URL to preview
-		 */
-		updateUrlPreview( $container, url ) {
-			let previewHtml = '';
-
-			if ( MediaManager.isVideoUrl( url ) ) {
-				previewHtml = `
-					<div class="video-preview-placeholder bg-dark text-white d-flex align-items-center justify-content-center rounded" style="width: 100px; height: 100px;">
-						<i class="fas fa-play fa-2x"></i>
-					</div>
-					<div class="position-absolute top-0 start-0 p-1">
-						<small class="badge bg-info">External</small>
-					</div>
-				`;
-			} else {
-				previewHtml = `
-					<img src="${ url }" class="img-fluid rounded" style="max-height: 100px;"
-						 alt="External media"
-						 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-					<div class="error-placeholder bg-warning text-dark d-flex align-items-center justify-content-center rounded" style="width: 100px; height: 100px; display: none;">
-						<i class="fas fa-exclamation-triangle"></i>
-					</div>
-					<div class="position-absolute top-0 start-0 p-1">
-						<small class="badge bg-info">External</small>
-					</div>
-				`;
-			}
-
-			$container.find( '.media-preview' ).html( previewHtml );
-			MediaManager.showFeedback(
-				$container,
-				'URL preview updated!',
-				'success'
-			);
-		},
-
-		/**
-		 * Handle URL clear
-		 *
-		 * Clears the URL input and preview.
-		 *
-		 * @param {Event} e - Click event
-		 */
-		handleUrlClear( e ) {
-			e.preventDefault();
-
-			const $button = $( e.target ).closest( '.clear-url-button' );
-			const $container = $button.closest( '.media-tag-item' );
-
-			// Clear input and hidden field
-			$container.find( '.media-url-input' ).val( '' );
-			$container.find( '.media-url-value' ).val( '' );
-
-			// Hide clear button
-			$button.hide();
-
-			// Clear preview
-			MediaManager.clearPreview( $container );
-
-			MediaManager.showFeedback( $container, 'URL cleared!', 'info' );
-		},
-
-		/**
-		 * Handle individual Ecwid media loading (fallback/refresh)
-		 *
-		 * Loads available images from the linked Ecwid product for a single tag.
-		 *
-		 * @param {Event} e - Click event
-		 */
-		handleEcwidMediaLoad( e ) {
-			e.preventDefault();
-
-			// If we already have cached images, just update this container
-			if ( MediaManager.ecwidImages ) {
-				const $container = $( e.target ).closest( '.media-tag-item' );
-				MediaManager.updateEcwidMediaOptions( $container, {
-					images: MediaManager.ecwidImages,
-					product_name: MediaManager.ecwidProductName,
-				} );
-				MediaManager.showFeedback(
-					$container,
-					'Images refreshed!',
-					'success'
-				);
-				return;
-			}
-
-			// Otherwise, trigger the global load
-			$( '#global-load-ecwid-media' ).trigger( 'click' );
-		},
-
-		/**
-		 * Update Ecwid media options
-		 *
-		 * Populates the position selector with available Ecwid images.
-		 *
-		 * @param {jQuery} $container - Media container element
-		 * @param {Object} data       - Response data with images
-		 */
-		updateEcwidMediaOptions( $container, data ) {
-			const $select = $container.find( '.ecwid-position-select' );
+		$( '.ecwid-position-select' ).each( function () {
+			const $select = $( this );
 			const currentValue = $select.val();
 
-			// Clear existing options except first
+			// First, populate the original select with all options
+			// Clear existing options except the first placeholder
 			$select.find( 'option:not(:first)' ).remove();
 
-			// Add new options
-			data.images.forEach( function ( image ) {
+			// Add all image options to the original select
+			images.forEach( function ( image ) {
 				const $option = $( '<option></option>' )
 					.val( image.position )
-					.text( image.label )
-					.data( 'url', image.url );
+					.text( image.label );
+
+				if ( image.position.toString() === currentValue ) {
+					$option.prop( 'selected', true );
+				}
 
 				$select.append( $option );
 			} );
 
-			// Restore selection if it still exists
-			if ( currentValue ) {
-				$select.val( currentValue );
-				if ( $select.val() === currentValue ) {
-					MediaManager.handleEcwidPositionChange( {
-						target: $select[ 0 ],
-					} );
-				}
+			// Then convert to Bootstrap dropdown with thumbnails
+			convertToBootstrapDropdown( $select, images, currentValue );
+		} );
+	}
+
+	/**
+	 * Convert select element to Bootstrap dropdown with thumbnails
+	 *
+	 * @since 0.2.1
+	 *
+	 * @param {jQuery} $select      Select element to convert
+	 * @param {Array}  images       Array of image objects
+	 * @param {string} currentValue Currently selected value
+	 *
+	 * @return {void}
+	 */
+	function convertToBootstrapDropdown( $select, images, currentValue ) {
+		// Only convert if not already converted
+		if ( $select.hasClass( 'bootstrap-converted' ) ) {
+			return;
+		}
+
+		$select.addClass( 'bootstrap-converted' );
+
+		// Hide the original select
+		$select.hide();
+
+		// Find the current selection for button text
+		let buttonText = 'Select image...';
+		let buttonImage = null;
+
+		if ( currentValue ) {
+			const selectedImage = images.find(
+				( img ) => img.position.toString() === currentValue
+			);
+			if ( selectedImage ) {
+				buttonText = selectedImage.label;
+				buttonImage = selectedImage.url;
 			}
-		},
+		}
 
-		/**
-		 * Handle Ecwid position change
-		 *
-		 * Updates preview when a different Ecwid image position is selected.
-		 *
-		 * @param {Event} e - Change event
-		 */
-		handleEcwidPositionChange( e ) {
-			const $select = $( e.target );
-			const $container = $select.closest( '.media-tag-item' );
-			const position = $select.val();
+		// Create Bootstrap dropdown structure
+		const dropdownHtml = `
+			<div class="dropdown w-100">
+				<button class="btn btn-sm btn-outline-secondary dropdown-toggle w-100" type="button" data-bs-toggle="dropdown">
+					<span class="dropdown-text me-2">${ buttonText }</span>
+				</button>
+				<ul class="dropdown-menu">
+					<li><h6 class="dropdown-header text-primary">Ecwid Product Image</h6></li>
+					<li><hr class="dropdown-divider"></li>
+				</ul>
+			</div>
+		`;
 
-			// Update hidden field
-			$container.find( '.media-ecwid-position' ).val( position );
+		// Insert dropdown after the select
+		$select.after( dropdownHtml );
+		const $dropdown = $select.next( '.dropdown' );
+		const $dropdownMenu = $dropdown.find( '.dropdown-menu' );
+		const $dropdownBtn = $dropdown.find( '.dropdown-toggle' );
 
-			if ( position !== '' ) {
-				// Get image URL from option data
-				const imageUrl = $select
-					.find( 'option:selected' )
-					.data( 'url' );
+		// Add image options
+		images.forEach( function ( image ) {
+			const isSelected = image.position.toString() === currentValue;
+			const itemHtml = `
+				<li>
+					<a class="dropdown-item ${ isSelected ? 'active' : '' }"
+					   href="#"
+					   data-value="${ image.position }">
+						<img src="${ image.url }" alt="${
+							image.label
+						}" width="50" class="img-thumbnail me-2">
+						<span>${ image.label }</span>
+					</a>
+				</li>
+			`;
+			$dropdownMenu.append( itemHtml );
+		} );
 
-				if ( imageUrl ) {
-					// Update preview
-					const previewHtml = `
-						<img src="${ imageUrl }" class="img-fluid rounded" style="max-height: 100px;" alt="Ecwid media">
-						<div class="position-absolute top-0 start-0 p-1">
-							<small class="badge bg-warning text-dark">Ecwid</small>
-						</div>
-					`;
-					$container.find( '.media-preview' ).html( previewHtml );
-
-					// Show clear button
-					let $clearBtn = $container.find( '.clear-ecwid-button' );
-					if ( $clearBtn.length === 0 ) {
-						$clearBtn = $(
-							'<button type="button" class="btn btn-outline-danger btn-sm w-100 mt-1 clear-ecwid-button"><span class="dashicons dashicons-trash"></span>Clear Selection</button>'
-						);
-						$container
-							.find( '.media-ecwid-controls' )
-							.append( $clearBtn );
-					}
-					$clearBtn.show();
-
-					MediaManager.showFeedback(
-						$container,
-						'Ecwid image selected!',
-						'success'
-					);
-				}
-			} else {
-				MediaManager.clearPreview( $container );
-			}
-		},
-
-		/**
-		 * Handle Ecwid clear
-		 *
-		 * Clears the Ecwid media selection.
-		 *
-		 * @param {Event} e - Click event
-		 */
-		handleEcwidClear( e ) {
+		// Handle dropdown item clicks
+		$dropdownMenu.on( 'click', '.dropdown-item', function ( e ) {
 			e.preventDefault();
 
-			const $button = $( e.target ).closest( '.clear-ecwid-button' );
-			const $container = $button.closest( '.media-tag-item' );
+			const $item = $( this );
+			const selectedValue = $item.attr( 'data-value' );
+			const selectedText = $item.find( 'span' ).text();
+			const selectedImage = $item.find( 'img' ).attr( 'src' );
 
-			// Clear selection and hidden field
-			$container.find( '.ecwid-position-select' ).val( '' );
-			$container.find( '.media-ecwid-position' ).val( '' );
-
-			// Hide clear button
-			$button.hide();
-
-			// Clear preview
-			MediaManager.clearPreview( $container );
-
-			MediaManager.showFeedback(
-				$container,
-				'Ecwid selection cleared!',
-				'info'
+			// Verify the option exists in the original select
+			const $targetOption = $select.find(
+				`option[value="${ selectedValue }"]`
 			);
-		},
-
-		/**
-		 * Clear media preview
-		 *
-		 * Resets the preview area to the default state.
-		 *
-		 * @param {jQuery} $container - Media container element
-		 */
-		clearPreview( $container ) {
-			$container
-				.find( '.media-preview' )
-				.html( '<i class="fas fa-image fa-2x text-muted"></i>' );
-		},
-
-		/**
-		 * Check if URL is valid
-		 *
-		 * Validates URL format.
-		 *
-		 * @param {string} url - URL to validate
-		 *
-		 * @return {boolean} - True if valid URL
-		 */
-		isValidUrl( url ) {
-			try {
-				new URL( url );
-				return true;
-			} catch {
-				return false;
-			}
-		},
-
-		/**
-		 * Check if URL is a video URL
-		 *
-		 * Determines if the URL points to a video resource.
-		 *
-		 * @param {string} url - URL to check
-		 *
-		 * @return {boolean} - True if video URL
-		 */
-		isVideoUrl( url ) {
-			const videoPatterns = [
-				/youtube\.com\/watch\?v=/,
-				/youtu\.be\//,
-				/vimeo\.com\//,
-				/wistia\.com\//,
-				/\.mp4$/i,
-				/\.webm$/i,
-				/\.ogg$/i,
-				/\.mov$/i,
-			];
-
-			return videoPatterns.some( ( pattern ) => pattern.test( url ) );
-		},
-
-		/**
-		 * Set button loading state
-		 *
-		 * Shows/hides loading spinner on buttons.
-		 *
-		 * @param {jQuery}  $button     - Button element
-		 * @param {boolean} isLoading   - Whether to show loading state
-		 * @param {string}  loadingText - Optional loading text
-		 */
-		setButtonLoading( $button, isLoading, loadingText = 'Loading...' ) {
-			if ( isLoading ) {
-				$button.data( 'original-html', $button.html() );
-				$button.html(
-					`<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>${ loadingText }`
+			if ( $targetOption.length === 0 && selectedValue !== '' ) {
+				console.error(
+					'Option not found in original select:',
+					selectedValue
 				);
-				$button.prop( 'disabled', true );
-			} else {
-				const originalHtml = $button.data( 'original-html' );
-				if ( originalHtml ) {
-					$button.html( originalHtml );
-				}
-				$button.prop( 'disabled', false );
+				return;
 			}
-		},
 
-		/**
-		 * Show feedback message
-		 *
-		 * Displays a temporary feedback message.
-		 *
-		 * @param {jQuery} $container - Container element
-		 * @param {string} message    - Feedback message
-		 * @param {string} type       - Message type (success, info, warning, danger)
-		 */
-		showFeedback( $container, message, type ) {
-			// Remove existing feedback
-			$container.find( '.media-feedback' ).remove();
+			// Update the original select value
+			$select.val( selectedValue );
 
-			// Create feedback element
-			const $feedback = $(
-				`<div class="media-feedback alert alert-${ type } alert-sm mt-2 mb-0">${ message }</div>`
-			);
+			// Update button appearance
+			$dropdownBtn.find( '.dropdown-text' ).text( selectedText );
 
-			// Add feedback
-			$container.append( $feedback );
+			// Update active state
+			$dropdownMenu.find( '.dropdown-item' ).removeClass( 'active' );
+			$item.addClass( 'active' );
 
-			// Auto-remove after 3 seconds
-			setTimeout( function () {
-				$feedback.fadeOut( 300, function () {
-					$( this ).remove();
-				} );
-			}, 3000 );
-		},
-	};
+			// Trigger change event on original select
+			$select.trigger( 'change' );
+		} );
+	}
+
+	/**
+	 * Update media upload display
+	 *
+	 * @since 0.2.1
+	 *
+	 * @param {jQuery} $container Media container element
+	 * @param {Object} attachment Attachment object
+	 *
+	 * @return {void}
+	 */
+	function updateMediaUpload( $container, attachment ) {
+		const $preview = $container.find( '.media-preview' );
+		const $input = $container.find( '.media-attachment-id' );
+		const $button = $container.find( '.select-media-button' );
+
+		// Update hidden input
+		$input.val( attachment.id );
+
+		// Update preview
+		let previewHtml = '';
+		if ( attachment.type === 'image' ) {
+			const thumbnailUrl =
+				attachment.sizes && attachment.sizes.thumbnail
+					? attachment.sizes.thumbnail.url
+					: attachment.url;
+			previewHtml = `<img src="${ thumbnailUrl }" alt="${ attachment.alt }" class="img-thumbnail">`;
+		} else {
+			previewHtml = `<div class="media-file-preview">
+				<span class="dashicons dashicons-media-default"></span>
+				<span>${ attachment.filename }</span>
+			</div>`;
+		}
+
+		$preview.html( previewHtml ).show();
+
+		// Update button text
+		$button.find( 'span:last-child' ).text( 'Change' );
+
+		// Show remove button
+		$container.find( '.remove-media-button' ).show();
+	}
+
+	/**
+	 * Clear media upload data
+	 *
+	 * @since 0.2.1
+	 *
+	 * @param {jQuery} $container Media container element
+	 *
+	 * @return {void}
+	 */
+	function clearMediaUpload( $container ) {
+		const $preview = $container.find( '.media-preview' );
+		const $input = $container.find( '.media-attachment-id' );
+		const $button = $container.find( '.select-media-button' );
+
+		// Clear hidden input
+		$input.val( '' );
+
+		// Clear preview
+		$preview.hide().empty();
+
+		// Update button text
+		$button.find( 'span:last-child' ).text( 'Select' );
+
+		// Hide remove button
+		$container.find( '.remove-media-button' ).hide();
+	}
+
+	/**
+	 * Preview URL functionality
+	 *
+	 * @since 0.2.1
+	 *
+	 * @param {string} url     URL to preview
+	 * @param {jQuery} $button Button element that was clicked
+	 *
+	 * @return {void}
+	 */
+	function previewUrl( url, $button ) {
+		const originalText = $button.html();
+		$button
+			.html( '<i class="dashicons dashicons-update-alt"></i>' )
+			.prop( 'disabled', true );
+
+		$.ajax( {
+			url: ProductMediaParams.ajaxUrl,
+			type: 'POST',
+			data: {
+				action: 'preview_media_url',
+				nonce: ProductMediaParams.nonce,
+				url,
+			},
+			success( response ) {
+				if ( response.success ) {
+					alert(
+						`URL is valid!\nContent Type: ${
+							response.data.content_type
+						}\nIs Image: ${ response.data.is_image ? 'Yes' : 'No' }`
+					);
+				} else {
+					alert( `URL validation failed: ${ response.data }` );
+				}
+			},
+			error() {
+				alert( 'Error validating URL' );
+			},
+			complete() {
+				$button.html( originalText ).prop( 'disabled', false );
+			},
+		} );
+	}
+
+	/**
+	 * Update media URL data
+	 *
+	 * @since 0.2.1
+	 *
+	 * @param {jQuery} $container Media container element
+	 * @param {string} url        Media URL
+	 *
+	 * @return {void}
+	 */
+	function updateMediaUrl( $container, url ) {
+		const $input = $container.find( '.media-url-value' );
+		const $preview = $container.find( '.media-preview' );
+
+		// Update hidden input
+		$input.val( url );
+
+		// Update preview if it's an image URL
+		if ( isImageUrl( url ) ) {
+			const previewHtml = `<img src="${ url }" alt="URL Preview" class="img-thumbnail">`;
+			$preview.html( previewHtml ).show();
+		} else {
+			const previewHtml = `<div class="media-url-preview">
+				<span class="dashicons dashicons-admin-links"></span>
+				<span>URL: ${ url }</span>
+			</div>`;
+			$preview.html( previewHtml ).show();
+		}
+
+		// Show clear button
+		$container.find( '.clear-url-button' ).show();
+	}
+
+	/**
+	 * Clear media URL data
+	 *
+	 * @since 0.2.1
+	 *
+	 * @param {jQuery} $container Media container element
+	 *
+	 * @return {void}
+	 */
+	function clearMediaUrl( $container ) {
+		const $input = $container.find( '.media-url-value' );
+		const $urlInput = $container.find( '.media-url-input' );
+		const $preview = $container.find( '.media-preview' );
+
+		// Clear inputs
+		$input.val( '' );
+		$urlInput.val( '' );
+
+		// Clear preview
+		$preview.hide().empty();
+
+		// Hide clear button
+		$container.find( '.clear-url-button' ).hide();
+	}
+
+	/**
+	 * Update Ecwid selection
+	 *
+	 * @since 0.2.1
+	 *
+	 * @param {jQuery} $container Media container element
+	 * @param {string} position   Image position
+	 *
+	 * @return {void}
+	 */
+	function updateEcwidSelection( $container, position ) {
+		const $input = $container.find( '.media-ecwid-position' );
+		const $preview = $container.find( '.media-preview' );
+		const $select = $container.find( '.ecwid-position-select' );
+
+		// Update hidden input
+		$input.val( position );
+
+		// Find the selected image data
+		const selectedImage = ecwidImagesData.find(
+			( img ) => img.position.toString() === position.toString()
+		);
+
+		if ( selectedImage && selectedImage.url ) {
+			// Show actual image preview
+			const previewHtml = `<img src="${ selectedImage.url }" alt="${ selectedImage.label }" class="img-thumbnail">`;
+			$preview.html( previewHtml ).show();
+		} else {
+			// Fallback to text preview
+			const selectedText = $select.find( 'option:selected' ).text();
+			const previewHtml = `<div class="ecwid-selection-preview">
+				<span class="dashicons dashicons-format-image"></span>
+				<span>${ selectedText }</span>
+			</div>`;
+			$preview.html( previewHtml ).show();
+		}
+
+		// Show clear button
+		$container.find( '.clear-ecwid-button' ).show();
+	}
+
+	/**
+	 * Clear Ecwid selection
+	 *
+	 * @since 0.2.1
+	 *
+	 * @param {jQuery} $container Media container element
+	 *
+	 * @return {void}
+	 */
+	function clearEcwidSelection( $container ) {
+		const $input = $container.find( '.media-ecwid-position' );
+		const $select = $container.find( '.ecwid-position-select' );
+		const $preview = $container.find( '.media-preview' );
+
+		// Clear inputs
+		$input.val( '' );
+		$select.val( '' );
+
+		// Clear preview
+		$preview.hide().empty();
+
+		// Hide clear button
+		$container.find( '.clear-ecwid-button' ).hide();
+	}
+
+	/**
+	 * Clear media data when switching types
+	 *
+	 * @since 0.2.1
+	 *
+	 * @param {jQuery} $container Media container element
+	 * @param {string} keepType   Type to keep (don't clear)
+	 *
+	 * @return {void}
+	 */
+	function clearMediaData( $container, keepType ) {
+		if ( keepType !== 'upload' ) {
+			clearMediaUpload( $container );
+		}
+		if ( keepType !== 'url' ) {
+			clearMediaUrl( $container );
+		}
+		if ( keepType !== 'ecwid' ) {
+			clearEcwidSelection( $container );
+		}
+	}
+
+	/**
+	 * Check if URL appears to be an image
+	 *
+	 * @since 0.2.1
+	 *
+	 * @param {string} url URL to check
+	 *
+	 * @return {boolean} Whether URL appears to be an image
+	 */
+	function isImageUrl( url ) {
+		const imageExtensions = [
+			'.jpg',
+			'.jpeg',
+			'.png',
+			'.gif',
+			'.webp',
+			'.svg',
+			'.bmp',
+		];
+		const lowerUrl = url.toLowerCase();
+		return imageExtensions.some( ( ext ) => lowerUrl.includes( ext ) );
+	}
 
 	// Initialize when document is ready
 	$( document ).ready( function () {
-		// Check if this is the product_settings post type
-		if (
-			typeof pagenow !== 'undefined' &&
-			pagenow === 'product_settings'
-		) {
-			MediaManager.init();
-		}
+		initMediaManagement();
 	} );
 } )( jQuery );
