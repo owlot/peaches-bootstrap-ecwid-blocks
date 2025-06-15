@@ -1322,10 +1322,7 @@ function ProductGalleryImageEdit( props ) {
 						role="status"
 					>
 						<span className="visually-hidden">
-							{ __(
-								'Loading media…',
-								'ecwid-shopping-cart'
-							) }
+							{ __( 'Loading media…', 'ecwid-shopping-cart' ) }
 						</span>
 					</div>
 					{ __( 'Loading media…', 'ecwid-shopping-cart' ) }
