@@ -53,4 +53,37 @@ interface Peaches_Product_Settings_Manager_Interface {
 	 * @return array Array of media organized by tag key
 	 */
 	public function get_product_media_by_tags($product_id);
+
+	/**
+	 * Get product descriptions by product ID
+	 *
+	 * @since 0.2.4
+	 *
+	 * @param int $product_id Ecwid product ID
+	 *
+	 * @return array Array of descriptions or empty array
+	 */
+	public function get_product_descriptions($product_id);
+
+	/**
+	 * Get a specific product description by type
+	 *
+	 * @since 0.2.4
+	 *
+	 * @param int    $product_id Ecwid product ID
+	 * @param string $type       Description type (usage, ingredients, care, etc.)
+	 *
+	 * @return array|null Description data or null if not found
+	 */
+	public function get_product_description_by_type($product_id, $type);
+
+	/**
+	 * Get all available description types
+	 *
+	 * @since 0.2.4
+	 *
+	 * @return array Array of description types with labels
+	 */
+	public function get_description_types();
+
 }

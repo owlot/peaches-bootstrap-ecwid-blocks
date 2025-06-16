@@ -1,0 +1,58 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "peaches/ecwid-product-description",
+	"version": "0.1.0",
+	"title": "Bootstrap ECWID Product Description",
+	"category": "peaches-bootstrap",
+	"ancestor": [ "peaches/ecwid-product-detail" ],
+	"description": "Display additional product descriptions like usage instructions or care information with Bootstrap styling.",
+	"keywords": [
+		"bootstrap",
+		"product",
+		"description",
+		"peaches",
+		"ecwid",
+		"usage",
+		"care",
+		"instructions"
+	],
+	"textdomain": "peaches",
+	"supports": {
+		"html": false,
+		"layout": false,
+		"color": {
+			"overlay": true
+		},
+		"interactivity": true
+	},
+	"usesContext": [ "peaches/testProductData" ],
+	"attributes": {
+		"descriptionType": {
+			"type": "string",
+			"default": "usage"
+		},
+		"showTitle": {
+			"type": "boolean",
+			"default": true
+		},
+		"titleTag": {
+			"type": "string",
+			"default": "h3"
+		},
+		"customTitle": {
+			"type": "string",
+			"default": ""
+		},
+		"collapseInitially": {
+			"type": "boolean",
+			"default": false
+		},
+		"productId": {
+			"type": "number",
+			"default": 0
+		}
+	},
+	"viewScriptModule": "file:./view.js",
+	"editorScript": "file:./index.js"
+}

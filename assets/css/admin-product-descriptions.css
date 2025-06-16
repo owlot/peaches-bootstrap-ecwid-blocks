@@ -1,0 +1,118 @@
+/**
+ * Product Descriptions Admin Styles
+ *
+ * Minimal overrides for Bootstrap accordion integration.
+ *
+ * @package PeachesEcwidBlocks
+ * @since   0.2.4
+ */
+
+/* ==========================================================================
+   Custom Content Integration (only necessary overrides)
+   ========================================================================== */
+
+.descriptions-container.accordion .accordion-button {
+	background-color: var(--bs-light);
+	color: var(--bs-dark);
+	border: none;
+	box-shadow: none;
+}
+.descriptions-container.accordion .accordion-button:after {
+	background-image: none;
+	mask-image: var(--bs-accordion-btn-active-icon);
+	mask-position: left;
+	mask-repeat: no-repeat;
+	min-height: 100%;
+	background-color: var(--bs-body-color);
+}
+
+/* ==========================================================================
+   Custom Button Styling (for drag/remove/toggle buttons)
+   ========================================================================== */
+
+.description-drag-handle,
+.description-remove-handle,
+.description-toggle-handle {
+	transition: all 0.2s ease;
+}
+
+.description-drag-handle {
+	cursor: move !important;
+}
+
+.description-drag-handle:hover {
+	border-color: #6c757d !important;
+	background-color: #f8f9fa !important;
+	color: #495057 !important;
+}
+
+.description-remove-handle:hover {
+	border-color: #dc3545 !important;
+	background-color: #dc3545 !important;
+	color: #fff !important;
+}
+
+.description-toggle-handle:hover {
+	border-color: #0d6efd !important;
+	background-color: #0d6efd !important;
+	color: #fff !important;
+}
+
+/* ==========================================================================
+   Sortable Functionality
+   ========================================================================== */
+
+.sortable-placeholder {
+	height: 100px;
+	background-color: rgba(13, 110, 253, 0.1);
+	border: 2px dashed #0d6efd;
+	border-radius: 0.375rem;
+	margin-bottom: 1rem;
+	position: relative;
+}
+
+.sortable-placeholder::before {
+	content: "Drop here";
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	color: #0d6efd;
+	font-weight: 500;
+	font-size: 14px;
+}
+
+.description-header.ui-sortable-helper {
+	box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+	z-index: 1000;
+}
+
+/* ==========================================================================
+   Editor Adjustments
+   ========================================================================== */
+
+.description-content .wp-editor-area {
+	min-height: 150px;
+}
+
+/* ==========================================================================
+   Responsive Adjustments
+   ========================================================================== */
+
+@media (max-width: 768px) {
+	.description-header .d-flex {
+		flex-wrap: wrap;
+		gap: 0.5rem;
+	}
+
+	.description-header select,
+	.description-header input {
+		max-width: 100% !important;
+		width: 100% !important;
+	}
+
+	.description-header .d-flex.align-items-center:first-child {
+		width: 100%;
+		margin-bottom: 0.5rem;
+	}
+}

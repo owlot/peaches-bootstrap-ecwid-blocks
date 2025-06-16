@@ -68,6 +68,8 @@ class Peaches_Product_Manager implements Peaches_Product_Manager_Interface {
 		add_action('wp_ajax_nopriv_get_ecwid_product_data', array($this, 'ajax_get_product_data'));
 		add_action('wp_ajax_get_ecwid_categories', array($this, 'ajax_get_categories'));
 		add_action('wp_ajax_nopriv_get_ecwid_categories', array($this, 'ajax_get_categories'));
+		add_action('wp_ajax_get_ecwid_product_descriptions', array($this, 'ajax_get_product_descriptions'));
+		add_action('wp_ajax_nopriv_get_ecwid_product_descriptions', array($this, 'ajax_get_product_descriptions'));
 	}
 
 	/**
@@ -86,6 +88,7 @@ class Peaches_Product_Manager implements Peaches_Product_Manager_Interface {
 		register_block_type_from_metadata(PEACHES_ECWID_PLUGIN_DIR . 'build/ecwid-product');
 		register_block_type_from_metadata(PEACHES_ECWID_PLUGIN_DIR . 'build/ecwid-category');
 		register_block_type_from_metadata(PEACHES_ECWID_PLUGIN_DIR . 'build/ecwid-product-detail/');
+		register_block_type_from_metadata(PEACHES_ECWID_PLUGIN_DIR . 'build/ecwid-product-description/');
 		register_block_type_from_metadata(PEACHES_ECWID_PLUGIN_DIR . 'build/ecwid-product-field/');
 		register_block_type_from_metadata(PEACHES_ECWID_PLUGIN_DIR . 'build/ecwid-product-add-to-cart/');
 		register_block_type_from_metadata(PEACHES_ECWID_PLUGIN_DIR . 'build/ecwid-product-images/');
@@ -412,4 +415,50 @@ class Peaches_Product_Manager implements Peaches_Product_Manager_Interface {
 <?php
 		return ob_get_clean();
 	}
+
+/**
+ * AJAX handler to get product descriptions
+ *
+ * @since 0.2.4
+ *
+ * @return void
+ */
+public function ajax_get_product_descriptions() {
+	// Check nonce
+	$nonce = isset($_POST['nonce']) ? $_POST['nonce'] : '';
+	if (!wp_verify_nonce($nonce, 'get_ecwid_product_data')) {
+		wp_send_json_error('Invalid nonce');
+		return;
+	}
+
+	$product_id = isset($_POST['product_id']) ? intval($_POST['product_id']) : 0;
+
+	if (!$product_id) {
+		wp_send_json_error('Product ID is required');
+		return;
+	}
+
+	try {
+		// Get the plugin instance and settings manager
+		$plugin = Peaches_Ecwid_Blocks::get_instance();
+		if (!$plugin) {
+			wp_send_json_error('Plugin instance not available');
+			return;
+		}
+
+		$settings_manager = $plugin->get_product_settings_manager();
+		if (!$settings_manager) {
+			wp_send_json_error('Product settings manager not available');
+			return;
+		}
+
+		$descriptions = $settings_manager->get_product_descriptions($product_id);
+
+		wp_send_json_success($descriptions);
+
+	} catch (Exception $e) {
+		error_log('Peaches: Error in ajax_get_product_descriptions: ' . $e->getMessage());
+		wp_send_json_error('Error retrieving product descriptions');
+	}
+}
 }
