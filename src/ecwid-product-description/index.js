@@ -4,7 +4,7 @@
  * @see https://developer.wordpress.org/block-editor/reference-guides/block-api/block-registration/
  */
 import { registerBlockType } from '@wordpress/blocks';
-import { formatAside as icon } from '@wordpress/icons';
+import { box as icon } from '@wordpress/icons';
 
 /**
  * Internal dependencies

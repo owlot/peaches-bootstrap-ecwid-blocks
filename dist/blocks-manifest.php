@@ -330,6 +330,90 @@ return array(
 			)
 		)
 	),
+	'ecwid-product-description' => array(
+		'$schema' => 'https://schemas.wp.org/trunk/block.json',
+		'apiVersion' => 3,
+		'name' => 'peaches/ecwid-product-description',
+		'version' => '0.1.0',
+		'title' => 'Bootstrap ECWID Product Description',
+		'category' => 'peaches-bootstrap',
+		'ancestor' => array(
+			'peaches/ecwid-product-detail'
+		),
+		'description' => 'Display product descriptions with Bootstrap styling.',
+		'keywords' => array(
+			'bootstrap',
+			'product',
+			'description',
+			'peaches',
+			'ecwid',
+			'template'
+		),
+		'textdomain' => 'peaches',
+		'supports' => array(
+			'html' => false,
+			'layout' => false,
+			'color' => array(
+				'overlay' => true
+			),
+			'interactivity' => true
+		),
+		'usesContext' => array(
+			'peaches/testProductData'
+		),
+		'attributes' => array(
+			'descriptionType' => array(
+				'type' => 'string',
+				'default' => 'usage'
+			),
+			'displayTitle' => array(
+				'type' => 'boolean',
+				'default' => true
+			),
+			'customTitle' => array(
+				'type' => 'string',
+				'default' => ''
+			),
+			'xs' => array(
+				'type' => 'object',
+				'default' => array(
+					
+				)
+			),
+			'sm' => array(
+				'type' => 'object',
+				'default' => array(
+					
+				)
+			),
+			'md' => array(
+				'type' => 'object',
+				'default' => array(
+					
+				)
+			),
+			'lg' => array(
+				'type' => 'object',
+				'default' => array(
+					
+				)
+			),
+			'xl' => array(
+				'type' => 'object',
+				'default' => array(
+					
+				)
+			),
+			'xxl' => array(
+				'type' => 'object',
+				'default' => array(
+					
+				)
+			)
+		),
+		'viewScriptModule' => 'file:./view.js',
+		'editorScript' => 'file:./index.js'
+	),
 	'ecwid-product-detail' => array(
 		'$schema' => 'https://schemas.wp.org/trunk/block.json',
 		'apiVersion' => 3,

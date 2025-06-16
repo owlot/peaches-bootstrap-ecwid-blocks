@@ -12,9 +12,6 @@ if (!defined('ABSPATH')) {
 	exit;
 }
 
-// Include the interface
-require_once PEACHES_ECWID_INCLUDES_DIR . 'interfaces/interface-ecwid-blocks.php';
-
 /**
  * Class Peaches_Ecwid_Blocks
  *
@@ -23,7 +20,7 @@ require_once PEACHES_ECWID_INCLUDES_DIR . 'interfaces/interface-ecwid-blocks.php
  * @package PeachesEcwidBlocks
  * @since   0.2.0
  */
-class Peaches_Ecwid_Blocks implements Peaches_Ecwid_Blocks_Interface {
+class Peaches_Ecwid_Blocks {
 	/**
 	 * Singleton instance of the class.
 	 *
@@ -133,13 +130,13 @@ class Peaches_Ecwid_Blocks implements Peaches_Ecwid_Blocks_Interface {
 	private $media_tags_manager;
 
 	/**
-	 * Media Tags API instance.
+	 * REST API instance.
 	 *
-	 * @since  0.2.0
+	 * @since  0.2.5
 	 * @access private
-	 * @var    Peaches_Media_Tags_API
+	 * @var    Peaches_REST_API
 	 */
-	private $media_tags_api;
+	private $rest_api;
 
 	/**
 	 * Get singleton instance of the class.
@@ -234,7 +231,7 @@ class Peaches_Ecwid_Blocks implements Peaches_Ecwid_Blocks_Interface {
 			'class-product-media-manager.php',
 			'class-ingredients-manager.php',
 			'class-media-tags-manager.php',
-			'class-media-tags-api.php',
+			'class-rest-api.php', // Consolidated REST API endpoints
 		);
 
 		foreach ($classes as $class_file) {
@@ -317,9 +314,9 @@ class Peaches_Ecwid_Blocks implements Peaches_Ecwid_Blocks_Interface {
 			$this->block_patterns = new Peaches_Ecwid_Block_Patterns();
 		}
 
-		// Initialize media tags API (requires media tags manager and product settings manager)
-		if (class_exists('Peaches_Media_Tags_API') && $this->media_tags_manager && $this->product_settings_manager) {
-			$this->media_tags_api = new Peaches_Media_Tags_API($this->media_tags_manager, $this->product_settings_manager);
+		// Initialize REST API (consolidates all REST endpoints)
+		if (class_exists('Peaches_REST_API') && $this->product_settings_manager && $this->media_tags_manager) {
+			$this->rest_api = new Peaches_REST_API($this->product_settings_manager, $this->media_tags_manager);
 		}
 	}
 
@@ -329,209 +326,117 @@ class Peaches_Ecwid_Blocks implements Peaches_Ecwid_Blocks_Interface {
 	 * @since 0.2.0
 	 */
 	private function init_hooks() {
-		// Plugin core hooks
-		add_action('plugins_loaded', array($this, 'load_textdomain'));
-		add_action('admin_init', array($this, 'check_ecwid_plugin'));
-		add_filter('plugin_action_links_' . plugin_basename(PEACHES_ECWID_PLUGIN_DIR . 'peaches-bootstrap-ecwid-blocks.php'), array($this, 'add_settings_link'));
+		add_action('wp_enqueue_scripts', array($this, 'enqueue_frontend_scripts'));
 		add_action('admin_enqueue_scripts', array($this, 'enqueue_admin_scripts'));
 
-		// Only add media hooks if we have the new functionality
-		if (method_exists($this, 'filter_media_library')) {
-			add_action('pre_get_posts', array($this, 'filter_media_library'));
-			add_filter('attachment_fields_to_edit', array($this, 'add_product_media_field'), 10, 2);
-			add_filter('attachment_fields_to_save', array($this, 'save_product_media_field'), 10, 2);
-			add_action('wp_ajax_mark_product_media', array($this, 'ajax_mark_product_media'));
-		}
+		// Add AJAX handlers
+		add_action('wp_ajax_search_ecwid_products', array($this, 'ajax_search_products'));
+		add_action('wp_ajax_get_ecwid_product_data', array($this, 'ajax_get_product_data'));
+		add_action('wp_ajax_mark_product_media', array($this, 'ajax_mark_product_media'));
+
+		// Plugin activation and deactivation
+		add_action('activate_plugin', array($this, 'activate'));
+		add_action('deactivate_plugin', array($this, 'deactivate'));
 	}
 
 	/**
-	 * Enqueue admin scripts.
-	 *
-	 * Loads necessary CSS for the admin pages.
+	 * Enqueue frontend scripts and styles.
 	 *
 	 * @since 0.2.0
 	 */
-	public function enqueue_admin_scripts() {
-		// Enqueue editor-specific styles
-		wp_enqueue_style(
-			'peaches-bootstrap-ecwid-admin',
-			PEACHES_ECWID_PLUGIN_URL . 'assets/css/admin.css',
-			array(),
+	public function enqueue_frontend_scripts() {
+		// Only on frontend
+		if (is_admin()) return;
+
+		// Ensure required scripts are enqueued
+		wp_enqueue_script('wp-interactivity');
+
+		// Get the shop path segment using the utility function
+		$shop_path_segment = Peaches_Ecwid_Utilities::get_shop_path(true, true); // Include parents, with trailing slash
+
+		// Get the store page ID
+		$store_page_id = get_option('ecwid_store_page_id');
+
+		// Get the correct store URL
+		$store_url = $store_page_id ? get_permalink($store_page_id) : home_url();
+
+		// Localize script with AJAX data for frontend
+		wp_add_inline_script(
+			'wp-interactivity',
+			'window.EcwidSettings = window.EcwidSettings || {};
+			window.EcwidSettings.ajaxUrl = "' . admin_url('admin-ajax.php') . '";
+			window.EcwidSettings.ajaxNonce = "' . wp_create_nonce('get_ecwid_product_data') . '";
+			window.EcwidSettings.categoryNonce = "' . wp_create_nonce('get_ecwid_categories') . '";
+			window.EcwidSettings.storePageId = "' . $store_page_id . '";
+			window.EcwidSettings.storeUrl = "' . $store_url . '";
+			window.EcwidSettings.shopPath = "' . esc_js($shop_path_segment) . '";',
+			'before'
 		);
 	}
 
 	/**
-	 * Plugin activation hook.
+	 * Enqueue admin scripts and styles.
 	 *
 	 * @since 0.2.0
-	 */
-	public function activate() {
-		// Run database migration
-		$this->maybe_migrate_database();
-
-		// Create the product detail page if needed
-		if ($this->rewrite_manager) {
-			$this->rewrite_manager->register_product_template();
-		}
-
-		// Flush rewrite rules
-		flush_rewrite_rules(true);
-
-		// Store activation timestamp for cache busting
-		update_option('peaches_ecwid_activated', time());
-	}
-
-	/**
-	 * Plugin deactivation hook.
 	 *
-	 * @since 0.2.0
+	 * @param string $hook Current admin page.
 	 */
-	public function deactivate() {
-		// Flush rewrite rules to remove our custom ones
-		flush_rewrite_rules(true);
-	}
+	public function enqueue_admin_scripts($hook) {
+		// Get the current screen
+		$screen = get_current_screen();
 
-	/**
-	 * Load plugin text domain for translations.
-	 *
-	 * @since 0.2.0
-	 */
-	public function load_textdomain() {
-		load_plugin_textdomain('peaches', false, dirname(plugin_basename(PEACHES_ECWID_PLUGIN_DIR)) . '/languages');
-	}
+		// Only on block editor
+		if ($screen && $screen->is_block_editor) {
+			// Create a nonce specifically for product data and ensure it's properly generated
+			$product_data_nonce = wp_create_nonce('get_ecwid_product_data');
 
-	/**
-	 * Check if Ecwid plugin is active.
-	 *
-	 * @since 0.2.0
-	 */
-	public function check_ecwid_plugin() {
-		if (!class_exists('Ecwid_Store_Page') && !class_exists('EcwidPlatform')) {
-			add_action('admin_notices', function() {
-?>
-	<div class="notice notice-error">
-	<p><?php _e('Peaches Ecwid Custom Product Pages requires the Ecwid Ecommerce Shopping Cart plugin to be installed and activated.', 'peaches'); ?></p>
-	</div>
-<?php
-			});
-			return false;
-		}
-		return true;
-	}
-
-	/**
-	 * Add settings link to plugin page.
-	 *
-	 * @since 0.2.0
-	 * @param array $links Current plugin links.
-	 * @return array Modified plugin links.
-	 */
-	public function add_settings_link($links) {
-		$settings_link = '<a href="' . admin_url('admin.php?page=' . Peaches_Ecwid_Settings::PAGE_SLUG) . '">' . __('Settings', 'peaches') . '</a>';
-		array_unshift($links, $settings_link);
-		return $links;
-	}
-
-	/**
-	 * Filter media library to show product media.
-	 *
-	 * @since 0.2.0
-	 * @param WP_Query $query The query object.
-	 */
-	public function filter_media_library($query) {
-		if (!is_admin() || !$query->is_main_query()) {
-			return;
-		}
-
-		// Check if we're in the media library and filtering for product media
-		if (isset($_GET['product_media_filter']) && $_GET['product_media_filter'] === '1') {
-			$query->set('meta_query', array(
-				array(
-					'key' => '_peaches_product_media',
-					'value' => true,
-					'compare' => '='
-				)
-			));
+			// Ensure our nonce is available globally
+			wp_add_inline_script(
+				'wp-blocks',
+				'window.EcwidGutenbergParams = window.EcwidGutenbergParams || {};
+			window.EcwidGutenbergParams.nonce = "' . $product_data_nonce . '";
+			window.EcwidGutenbergParams.ajaxUrl = "' . admin_url('admin-ajax.php') . '";
+			window.EcwidGutenbergParams.chooseProduct = "' . __('Choose Product', 'peaches') . '";
+			window.EcwidGutenbergParams.products = {};',
+				'before'
+			);
 		}
 	}
 
 	/**
-	 * Add product media field to attachment edit screen.
+	 * AJAX handler to search products.
 	 *
 	 * @since 0.2.0
-	 * @param array   $form_fields Form fields array.
-	 * @param WP_Post $post        Attachment post object.
-	 * @return array Modified form fields.
 	 */
-	public function add_product_media_field($form_fields, $post) {
-		$is_product_media = get_post_meta($post->ID, '_peaches_product_media', true);
-		$is_line_media = get_post_meta($post->ID, '_peaches_line_media', true);
-		$media_tag = get_post_meta($post->ID, '_peaches_product_media_tag', true);
-		$line_media_tag = get_post_meta($post->ID, '_peaches_line_media_tag', true);
+	public function ajax_search_products() {
+		check_ajax_referer('search_ecwid_products', 'nonce');
 
-		$form_fields['peaches_product_media'] = array(
-			'label' => __('Product Media', 'peaches'),
-			'input' => 'html',
-			'html' => '
-				<label>
-					<input type="checkbox" name="attachments[' . $post->ID . '][peaches_product_media]" value="1" ' . checked($is_product_media, true, false) . ' />
-					' . __('This is product media', 'peaches') . '
-				</label>
-				<br><br>
-				<label for="attachments[' . $post->ID . '][peaches_product_media_tag]">' . __('Product Media Tag:', 'peaches') . '</label>
-				<input type="text" name="attachments[' . $post->ID . '][peaches_product_media_tag]" value="' . esc_attr($media_tag) . '" class="widefat" />
-				<div class="description">' . __('Tag name for targeting this media in blocks.', 'peaches') . '</div>
-				<br><br>
-				<label>
-					<input type="checkbox" name="attachments[' . $post->ID . '][peaches_line_media]" value="1" ' . checked($is_line_media, true, false) . ' />
-					' . __('This is line media', 'peaches') . '
-				</label>
-				<br><br>
-				<label for="attachments[' . $post->ID . '][peaches_line_media_tag]">' . __('Line Media Tag:', 'peaches') . '</label>
-				<input type="text" name="attachments[' . $post->ID . '][peaches_line_media_tag]" value="' . esc_attr($line_media_tag) . '" class="widefat" />
-				<div class="description">' . __('Tag name for targeting this line media in blocks.', 'peaches') . '</div>
-			'
-		);
+		$search_term = sanitize_text_field($_POST['search_term']);
+		$products = $this->ecwid_api->search_products($search_term);
 
-		return $form_fields;
+		wp_send_json_success($products);
 	}
 
 	/**
-	 * Save product media field.
+	 * AJAX handler to get product data.
 	 *
 	 * @since 0.2.0
-	 * @param array $post       Post data array.
-	 * @param array $attachment Attachment data array.
-	 * @return array Modified post data.
 	 */
-	public function save_product_media_field($post, $attachment) {
-		// Save product media
-		if (isset($attachment['peaches_product_media'])) {
-			update_post_meta($post['ID'], '_peaches_product_media', true);
+	public function ajax_get_product_data() {
+		check_ajax_referer('get_ecwid_product_data', 'nonce');
+
+		$product_id = absint($_POST['product_id']);
+		$product = $this->ecwid_api->get_product($product_id);
+
+		if ($product) {
+			wp_send_json_success($product);
 		} else {
-			delete_post_meta($post['ID'], '_peaches_product_media');
+			wp_send_json_error('Product not found');
 		}
-
-		if (isset($attachment['peaches_product_media_tag'])) {
-			update_post_meta($post['ID'], '_peaches_product_media_tag', sanitize_text_field($attachment['peaches_product_media_tag']));
-		}
-
-		// Save line media
-		if (isset($attachment['peaches_line_media'])) {
-			update_post_meta($post['ID'], '_peaches_line_media', true);
-		} else {
-			delete_post_meta($post['ID'], '_peaches_line_media');
-		}
-
-		if (isset($attachment['peaches_line_media_tag'])) {
-			update_post_meta($post['ID'], '_peaches_line_media_tag', sanitize_text_field($attachment['peaches_line_media_tag']));
-		}
-
-		return $post;
 	}
 
 	/**
-	 * AJAX handler to mark attachment as product media.
+	 * AJAX handler to mark product media.
 	 *
 	 * @since 0.2.0
 	 */
@@ -546,6 +451,28 @@ class Peaches_Ecwid_Blocks implements Peaches_Ecwid_Blocks_Interface {
 		} else {
 			wp_send_json_error();
 		}
+	}
+
+	/**
+	 * Plugin activation handler.
+	 *
+	 * @since 0.2.0
+	 */
+	public function activate() {
+		// Flush rewrite rules on activation
+		if ($this->rewrite_manager) {
+			flush_rewrite_rules();
+		}
+	}
+
+	/**
+	 * Plugin deactivation handler.
+	 *
+	 * @since 0.2.0
+	 */
+	public function deactivate() {
+		// Flush rewrite rules on deactivation
+		flush_rewrite_rules();
 	}
 
 	// Getter methods with null checks
@@ -607,11 +534,12 @@ class Peaches_Ecwid_Blocks implements Peaches_Ecwid_Blocks_Interface {
 	}
 
 	/**
-	 * Get Media Tags API instance.
+	 * Get REST API instance.
 	 *
-	 * @return Peaches_Media_Tags_API|null
+	 * @since 0.2.5
+	 * @return Peaches_REST_API|null
 	 */
-	public function get_media_tags_api() {
-		return $this->media_tags_api;
+	public function get_rest_api() {
+		return $this->rest_api;
 	}
 }

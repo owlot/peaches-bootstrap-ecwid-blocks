@@ -146,15 +146,20 @@ function getMediaTypeBadgeClass( mediaType ) {
  */
 function getMediaTypeFromTag( tagData ) {
 	if ( ! tagData ) {
-		return null;
+		return 'image'; // Always return a valid default
 	}
 
-	return (
+	// Try multiple property names for compatibility
+	const mediaType =
 		tagData.expectedMediaType ||
 		tagData.expected_media_type ||
 		tagData.mediaType ||
-		null
-	);
+		tagData.expected_type ||
+		'image'; // Always fallback to 'image'
+
+	// Ensure we return a valid media type
+	const validTypes = [ 'image', 'video', 'audio', 'document' ];
+	return validTypes.includes( mediaType ) ? mediaType : 'image';
 }
 
 /**

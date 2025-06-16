@@ -6,16 +6,14 @@
 	"title": "Bootstrap ECWID Product Description",
 	"category": "peaches-bootstrap",
 	"ancestor": [ "peaches/ecwid-product-detail" ],
-	"description": "Display additional product descriptions like usage instructions or care information with Bootstrap styling.",
+	"description": "Display product descriptions with Bootstrap styling.",
 	"keywords": [
 		"bootstrap",
 		"product",
 		"description",
 		"peaches",
 		"ecwid",
-		"usage",
-		"care",
-		"instructions"
+		"template"
 	],
 	"textdomain": "peaches",
 	"supports": {
@@ -32,25 +30,37 @@
 			"type": "string",
 			"default": "usage"
 		},
-		"showTitle": {
+		"displayTitle": {
 			"type": "boolean",
 			"default": true
-		},
-		"titleTag": {
-			"type": "string",
-			"default": "h3"
 		},
 		"customTitle": {
 			"type": "string",
 			"default": ""
 		},
-		"collapseInitially": {
-			"type": "boolean",
-			"default": false
+		"xs": {
+			"type": "object",
+			"default": {}
 		},
-		"productId": {
-			"type": "number",
-			"default": 0
+		"sm": {
+			"type": "object",
+			"default": {}
+		},
+		"md": {
+			"type": "object",
+			"default": {}
+		},
+		"lg": {
+			"type": "object",
+			"default": {}
+		},
+		"xl": {
+			"type": "object",
+			"default": {}
+		},
+		"xxl": {
+			"type": "object",
+			"default": {}
 		}
 	},
 	"viewScriptModule": "file:./view.js",

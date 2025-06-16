@@ -3,7 +3,7 @@ import { store, getContext, getElement } from '@wordpress/interactivity';
 // Access the parent product detail store
 const productDetailStore = store( 'peaches-ecwid-product-detail' );
 
-const { state, actions } = store( 'peaches-ecwid-product-description', {
+const { state } = store( 'peaches-ecwid-product-description', {
 	state: {
 		get productId() {
 			return productDetailStore.state.productId;
@@ -13,89 +13,139 @@ const { state, actions } = store( 'peaches-ecwid-product-description', {
 		},
 	},
 
-	actions: {
-		*toggleCollapse() {
-			const context = getContext();
-			context.isCollapsed = !context.isCollapsed;
-		},
-	},
-
 	callbacks: {
 		*initProductDescription() {
 			const context = getContext();
-			const element = getElement();
-
-			// Use product ID from context or fallback to block attribute
-			const productId = state.productId || context.productId;
+			const productId = state.productId;
 
 			if ( ! productId ) {
-				console.error( 'Product ID not available for description block' );
-				context.isLoading = false;
-				context.hasError = true;
-				context.errorMessage = wp.i18n.__( 'Product ID not available', 'peaches' );
+				console.error( 'Product ID not found for product description' );
 				return;
 			}
 
-			context.isLoading = true;
-			context.hasError = false;
+			const descriptionType = context.descriptionType;
+			if ( ! descriptionType ) {
+				console.error( 'Description type not specified' );
+				return;
+			}
 
 			try {
-				// Fetch descriptions from the server
-				const response = yield fetch( window.EcwidSettings?.ajaxUrl || ajaxurl, {
-					method: 'POST',
-					headers: {
-						'Content-Type': 'application/x-www-form-urlencoded',
-					},
-					body: new URLSearchParams({
-						action: 'get_ecwid_product_descriptions',
-						product_id: productId,
-						nonce: window.EcwidSettings?.ajaxNonce || ''
-					})
-				});
+				console.log(
+					`Fetching description for product ${ productId }, type: ${ descriptionType }`
+				);
+
+				// Fetch specific description type from unified API
+				const response = yield window.fetch(
+					`/wp-json/peaches/v1/product-descriptions/${ productId }/type/${ descriptionType }`,
+					{
+						headers: {
+							Accept: 'application/json',
+						},
+						credentials: 'same-origin',
+					}
+				);
+
+				if ( response.status === 404 ) {
+					// Description not found for this type - hide the entire block
+					console.log(
+						`No description found for type: ${ descriptionType }`
+					);
+
+					// Get the element and hide it
+					try {
+						const element = getElement();
+						if ( element && element.ref ) {
+							element.ref.style.display = 'none';
+						}
+					} catch ( e ) {
+						// Fallback if element access fails
+						console.log(
+							'Could not hide element, description not found'
+						);
+					}
+					return;
+				}
+
+				if ( ! response.ok ) {
+					throw new Error(
+						`HTTP error! status: ${ response.status }`
+					);
+				}
 
 				const data = yield response.json();
 
-				if ( data.success && data.data ) {
-					const descriptions = data.data;
+				if ( data && data.success && data.description ) {
+					console.log(
+						`Description loaded for type: ${ descriptionType }`,
+						data.description
+					);
 
-					// Find the description for the specified type
-					const description = descriptions.find( desc => desc.type === context.descriptionType );
+					// Get the element reference like product-field does
+					const element = getElement();
+					if ( element && element.ref ) {
+						// Find title and content elements
+						const titleElement = element.ref.querySelector(
+							'.product-description-title'
+						);
+						const contentElement = element.ref.querySelector(
+							'.product-description-content'
+						);
 
-					if ( description ) {
-						context.description = description;
+						// Handle title
+						if ( titleElement && context.displayTitle ) {
+							if ( context.customTitle ) {
+								titleElement.textContent = context.customTitle;
+							} else if ( data.description.title ) {
+								titleElement.textContent =
+									data.description.title;
+							} else {
+								titleElement.style.display = 'none';
+							}
+						} else if ( titleElement ) {
+							titleElement.style.display = 'none';
+						}
 
-						// Set the display title
-						context.displayTitle = context.customTitle || description.title || '';
+						// Handle content - use innerHTML for rich content like product-field does
+						if ( contentElement && data.description.content ) {
+							contentElement.innerHTML = data.description.content;
+						}
 
-						context.isLoading = false;
-						context.hasError = false;
-					} else {
-						// No description found for this type
-						context.description = null;
-						context.isLoading = false;
-						context.hasError = false;
+						// Show the block
+						element.ref.style.display = '';
 					}
+
+					// Store in context for consistency
+					context.descriptionContent = data.description.content || '';
+					context.descriptionTitle = data.description.title || '';
 				} else {
-					console.error( 'Failed to load product descriptions:', data );
-					context.isLoading = false;
-					context.hasError = true;
-					context.errorMessage = data.data || wp.i18n.__( 'Failed to load description', 'peaches' );
+					// No description data - hide the block
+					console.log(
+						`No description data for type: ${ descriptionType }`
+					);
+
+					try {
+						const element = getElement();
+						if ( element && element.ref ) {
+							element.ref.style.display = 'none';
+						}
+					} catch ( e ) {
+						console.log(
+							'Could not hide element, no description data'
+						);
+					}
 				}
 			} catch ( error ) {
-				console.error( 'Error loading product descriptions:', error );
-				context.isLoading = false;
-				context.hasError = true;
-				context.errorMessage = wp.i18n.__( 'Error loading description', 'peaches' );
-			}
-		},
+				console.error( 'Error fetching product description:', error );
 
-		*setDescriptionContent() {
-			const context = getContext();
-			const element = getElement();
-
-			if ( context.description && context.description.content && element.ref ) {
-				// Set the HTML content for the description
-				element.ref.innerHTML = context.description.content;
+				// Hide the block on error
+				try {
+					const element = getElement();
+					if ( element && element.ref ) {
+						element.ref.style.display = 'none';
+					}
+				} catch ( e ) {
+					console.log( 'Could not hide element on error' );
+				}
 			}
 		},
 	},
