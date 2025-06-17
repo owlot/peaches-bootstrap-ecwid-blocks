@@ -1,4 +1,3 @@
-// src/ecwid-product/view.js - Updated version
 import { store, getContext } from '@wordpress/interactivity';
 
 const { state } = store( 'peaches-ecwid-product', {
@@ -30,7 +29,11 @@ const { state } = store( 'peaches-ecwid-product', {
 			}
 
 			const subtitleAttribute = product.attributes.find(
-				( attr ) => attr.name === 'Ondertitel'
+				( attr ) =>
+					attr.name.toLowerCase().includes( 'ondertitel' ) ||
+					attr.name.toLowerCase().includes( 'subtitle' ) ||
+					attr.name.toLowerCase().includes( 'sub-title' ) ||
+					attr.name.toLowerCase().includes( 'tagline' )
 			);
 
 			return (
@@ -119,7 +122,11 @@ const { state } = store( 'peaches-ecwid-product', {
 	callbacks: {
 		*initProduct() {
 			const context = getContext();
-			const productId = context.productId;
+
+			// Get product ID from context or data attribute
+			const productId =
+				context.productId ||
+				getElement().getAttribute( 'data-product-id' );
 
 			if ( ! productId ) {
 				context.isLoading = false;
@@ -140,29 +147,32 @@ const { state } = store( 'peaches-ecwid-product', {
 					currentLang = htmlLang ? htmlLang.split( '-' )[ 0 ] : '';
 				}
 
-				// Determine the AJAX URL and nonce
-				let ajaxUrl = '/wp-admin/admin-ajax.php';
-				let ajaxNonce = '';
+				// Use REST API instead of AJAX
+				const restUrl = `/wp-json/peaches/v1/products/${ productId }`;
+				const searchParams = new URLSearchParams();
 
-				// Try to get settings from global EcwidSettings variable
-				if ( window.EcwidSettings ) {
-					ajaxUrl = window.EcwidSettings.ajaxUrl || ajaxUrl;
-					ajaxNonce = window.EcwidSettings.ajaxNonce || ajaxNonce;
+				// Add language parameter if available
+				if ( currentLang ) {
+					searchParams.append( 'lang', currentLang );
 				}
 
-				// Fetch product data
-				const response = yield fetch( ajaxUrl, {
-					method: 'POST',
+				const fullUrl = searchParams.toString()
+					? `${ restUrl }?${ searchParams.toString() }`
+					: restUrl;
+
+				// Fetch product data using REST API
+				const response = yield fetch( fullUrl, {
 					headers: {
-						'Content-Type': 'application/x-www-form-urlencoded',
+						Accept: 'application/json',
 					},
-					body: new URLSearchParams( {
-						action: 'get_ecwid_product_data',
-						product_id: productId,
-						nonce: ajaxNonce,
-						lang: currentLang,
-					} ),
+					credentials: 'same-origin',
 				} );
+
+				if ( ! response.ok ) {
+					throw new Error(
+						`HTTP error! status: ${ response.status }`
+					);
+				}
 
 				const data = yield response.json();
 
@@ -172,7 +182,7 @@ const { state } = store( 'peaches-ecwid-product', {
 				} else {
 					throw new Error(
 						'Failed to fetch product data: ' +
-							( data?.data || 'Unknown error' )
+							( data?.message || 'Invalid response format' )
 					);
 				}
 			} catch ( error ) {

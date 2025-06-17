@@ -53,28 +53,50 @@ function ProductDetailEdit( { attributes, setAttributes } ) {
 	}, [ testProductData, setAttributes ] );
 
 	/**
-	 * Fetch product data when testProductId changes
+	 * Fetch product data when testProductId changes - using REST API instead of AJAX
 	 */
 	useEffect( () => {
 		if ( testProductId ) {
 			setIsLoading( true );
 			setError( null );
 
-			// Use WordPress AJAX to fetch product data from server
-			window.jQuery.ajax( {
-				url: window.ajaxurl || '/wp-admin/admin-ajax.php',
-				method: 'POST',
-				dataType: 'json',
-				data: {
-					action: 'get_ecwid_product_data',
-					product_id: testProductId,
-					_ajax_nonce: window.EcwidGutenbergParams?.nonce || '',
-					security: window.EcwidGutenbergParams?.nonce || '',
+			// Use REST API directly - works in both editor and frontend
+			fetch( `/wp-json/peaches/v1/products/${ testProductId }`, {
+				headers: {
+					'X-WP-Nonce': wpApiSettings?.nonce || '',
+					Accept: 'application/json',
 				},
-				success( response ) {
+				credentials: 'same-origin',
+			} )
+				.then( ( response ) => {
+					if ( response.status === 404 ) {
+						setError(
+							__(
+								'Product not found or invalid response',
+								'ecwid-shopping-cart'
+							)
+						);
+						setTestProductData( null );
+						setIsLoading( false );
+						return null;
+					}
+
+					if ( ! response.ok ) {
+						throw new Error(
+							`HTTP error! status: ${ response.status }`
+						);
+					}
+
+					return response.json();
+				} )
+				.then( ( responseData ) => {
 					setIsLoading( false );
-					if ( response && response.success && response.data ) {
-						setTestProductData( response.data );
+					if (
+						responseData &&
+						responseData.success &&
+						responseData.data
+					) {
+						setTestProductData( responseData.data );
 						setError( null );
 					} else {
 						setError(
@@ -85,18 +107,17 @@ function ProductDetailEdit( { attributes, setAttributes } ) {
 						);
 						setTestProductData( null );
 					}
-				},
-				error( xhr, status, errorThrown ) {
+				} )
+				.catch( ( fetchError ) => {
 					setIsLoading( false );
 					setError(
 						`${ __(
 							'Failed to fetch product data',
 							'ecwid-shopping-cart'
-						) }: ${ errorThrown }`
+						) }: ${ fetchError.message }`
 					);
 					setTestProductData( null );
-				},
-			} );
+				} );
 		} else {
 			setTestProductData( null );
 			setError( null );
@@ -218,84 +239,36 @@ function ProductDetailEdit( { attributes, setAttributes } ) {
 								</Notice>
 							) }
 
-							{ testProductData && ! isLoading && (
-								<div className="test-product-preview">
-									<div className="test-product-details">
-										<h4>{ testProductData.name }</h4>
-										{ testProductData.price && (
-											<p className="test-product-price">
-												<strong>
-													€ { testProductData.price }
-												</strong>
-											</p>
+							{ testProductData && ! isLoading && ! error && (
+								<div className="test-product-details">
+									<p>
+										<strong>
+											{ testProductData.name }
+										</strong>
+									</p>
+									<Button
+										variant="secondary"
+										isSmall
+										onClick={ clearTestProduct }
+									>
+										{ __(
+											'Clear Selection',
+											'ecwid-shopping-cart'
 										) }
-									</div>
-									{ testProductData.thumbnailUrl && (
-										<div className="test-product-image">
-											<img
-												src={
-													testProductData.thumbnailUrl
-												}
-												alt={ testProductData.name }
-												style={ {
-													maxWidth: '80px',
-													height: 'auto',
-													borderRadius: '4px',
-												} }
-											/>
-										</div>
-									) }
+									</Button>
 								</div>
 							) }
-
-							<Flex gap={ 2 } style={ { marginTop: '12px' } }>
-								<Button
-									variant="secondary"
-									onClick={ () =>
-										openEcwidProductPopup( {
-											attributes,
-											setAttributes,
-										} )
-									}
-								>
-									{ __(
-										'Change Product',
-										'ecwid-shopping-cart'
-									) }
-								</Button>
-								<Button
-									variant="tertiary"
-									isDestructive
-									onClick={ clearTestProduct }
-								>
-									{ __(
-										'Clear Test Product',
-										'ecwid-shopping-cart'
-									) }
-								</Button>
-							</Flex>
 						</div>
 					) }
 				</PanelBody>
 
 				<BootstrapSettingsPanels
-					setAttributes={ setAttributes }
 					attributes={ attributes }
+					setAttributes={ setAttributes }
 					supportedSettings={ SUPPORTED_SETTINGS }
 				/>
 			</InspectorControls>
 
-			{ testProductId && testProductData && ! error && (
-				<div
-					className="test-product-indicator"
-					style={ { marginBottom: '20px' } }
-				>
-					<Notice status="success" isDismissible={ false }>
-						{ __( 'Test mode active:', 'ecwid-shopping-cart' ) }{ ' ' }
-						<strong>{ testProductData.name }</strong>
-					</Notice>
-				</div>
-			) }
 			<div { ...innerBlocksProps } />
 		</>
 	);

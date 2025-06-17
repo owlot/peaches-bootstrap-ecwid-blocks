@@ -51,39 +51,45 @@ function CategoryEdit( props ) {
 		'data-wp-interactive': 'peaches-ecwid-category',
 	} );
 
-	// Fetch categories data when component mounts
+	// Fetch categories data when component mounts - using REST API instead of AJAX
 	useEffect( () => {
 		setIsLoading( true );
 
-		// Use WordPress AJAX to fetch categories data from server
-		window.jQuery.ajax( {
-			url: window.ajaxurl || '/wp-admin/admin-ajax.php',
-			method: 'POST',
-			dataType: 'json',
-			data: {
-				action: 'get_ecwid_categories',
-				_ajax_nonce: window.EcwidGutenbergParams?.nonce || '',
-				nonce: window.EcwidGutenbergParams?.nonce || '',
-				security: window.EcwidGutenbergParams?.nonce || '',
+		// Use REST API directly - works in both editor and frontend
+		fetch( '/wp-json/peaches/v1/categories', {
+			headers: {
+				'X-WP-Nonce': wpApiSettings?.nonce || '',
+				Accept: 'application/json',
 			},
-			success( response ) {
-				setIsLoading( false );
-				if ( response && response.success && response.data ) {
-					setCategories( response.data );
-				} else {
-					console.error( 'Categories not found:', response );
+			credentials: 'same-origin',
+		} )
+			.then( ( response ) => {
+				if ( ! response.ok ) {
+					throw new Error(
+						`HTTP error! status: ${ response.status }`
+					);
 				}
-			},
-			error( xhr, status, error ) {
+
+				return response.json();
+			} )
+			.then( ( responseData ) => {
 				setIsLoading( false );
-				console.error( 'AJAX Error:', {
-					status,
-					error,
-					responseText: xhr.responseText,
-					statusCode: xhr.status,
+				if (
+					responseData &&
+					responseData.success &&
+					responseData.data
+				) {
+					setCategories( responseData.data );
+				} else {
+					console.error( 'Categories not found:', responseData );
+				}
+			} )
+			.catch( ( error ) => {
+				setIsLoading( false );
+				console.error( 'REST API Error:', {
+					error: error.message,
 				} );
-			},
-		} );
+			} );
 	}, [] );
 
 	return (
@@ -122,39 +128,37 @@ function CategoryEdit( props ) {
 					</div>
 				) }
 
-				{ ! isLoading && categories.length > 0 && (
-					<>
-						{ categories.map( ( category ) => (
-							<div key={ category.id } className="col">
-								<div className="card h-100 border-0">
-									<div className="ratio ratio-1x1">
-										{ category.thumbnailUrl ? (
-											<img
-												className="card-img-top"
-												src={ category.thumbnailUrl }
-												alt={ category.name }
-											/>
-										) : (
-											<div className="card-img-top bg-light d-flex align-items-center justify-content-center">
-												<span className="text-muted">
-													{ __(
-														'Category Image',
-														'ecwid-shopping-cart'
-													) }
-												</span>
-											</div>
-										) }
-									</div>
-									<div className="card-body p-2 p-md-3">
-										<h5 className="card-title">
-											{ category.name }
-										</h5>
-									</div>
+				{ ! isLoading &&
+					categories.length > 0 &&
+					categories.map( ( category ) => (
+						<div key={ category.id } className="col">
+							<div className="card h-100 border-0">
+								<div className="ratio ratio-1x1">
+									{ category.thumbnailUrl ? (
+										<img
+											className="card-img-top"
+											src={ category.thumbnailUrl }
+											alt={ category.name }
+										/>
+									) : (
+										<div className="card-img-top bg-light d-flex align-items-center justify-content-center">
+											<span className="text-muted">
+												{ __(
+													'Category Image',
+													'ecwid-shopping-cart'
+												) }
+											</span>
+										</div>
+									) }
+								</div>
+								<div className="card-body p-2 p-md-3 text-center">
+									<h5 className="card-title">
+										{ category.name }
+									</h5>
 								</div>
 							</div>
-						) ) }
-					</>
-				) }
+						</div>
+					) ) }
 			</div>
 		</>
 	);

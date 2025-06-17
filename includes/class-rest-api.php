@@ -44,16 +44,26 @@ class Peaches_REST_API {
 	private $media_tags_manager;
 
 	/**
+	 * Ecwid API instance.
+	 *
+	 * @since 0.2.6
+	 * @var Peaches_Ecwid_API
+	 */
+	private $ecwid_api;
+
+	/**
 	 * Constructor.
 	 *
-	 * @since 0.2.5
+	 * @since 0.2.6
 	 *
 	 * @param Peaches_Product_Settings_Manager $product_settings_manager Product Settings Manager instance.
 	 * @param Peaches_Media_Tags_Manager       $media_tags_manager       Media Tags Manager instance.
+	 * @param Peaches_Ecwid_API                $ecwid_api                Ecwid API instance.
 	 */
-	public function __construct($product_settings_manager, $media_tags_manager) {
+	public function __construct($product_settings_manager, $media_tags_manager, $ecwid_api = null) {
 		$this->product_settings_manager = $product_settings_manager;
 		$this->media_tags_manager = $media_tags_manager;
+		$this->ecwid_api = $ecwid_api;
 
 		$this->init_hooks();
 	}
@@ -198,6 +208,69 @@ class Peaches_REST_API {
 				'methods'             => WP_REST_Server::READABLE,
 				'callback'            => array($this, 'get_description_types'),
 				'permission_callback' => array($this, 'check_public_permissions'),
+			)
+		);
+
+		// Related products endpoint
+		register_rest_route(
+			self::NAMESPACE,
+			'/related-products/(?P<product_id>\d+)',
+			array(
+				'methods'             => WP_REST_Server::READABLE,
+				'callback'            => array($this, 'get_related_products'),
+				'permission_callback' => array($this, 'check_public_permissions'),
+				'args'                => array(
+					'product_id' => array(
+						'description' => __('Ecwid product ID.', 'peaches'),
+						'type'        => 'integer',
+						'required'    => true,
+						'minimum'     => 1,
+					),
+				),
+			)
+		);
+
+		// Product data endpoint (replaces AJAX get_ecwid_product_data)
+		register_rest_route(
+			self::NAMESPACE,
+			'/products/(?P<product_id>\d+)',
+			array(
+				'methods'             => WP_REST_Server::READABLE,
+				'callback'            => array($this, 'get_product_data'),
+				'permission_callback' => array($this, 'check_public_permissions'),
+				'args'                => array(
+					'product_id' => array(
+						'description' => __('Ecwid product ID.', 'peaches'),
+						'type'        => 'integer',
+						'required'    => true,
+						'minimum'     => 1,
+					),
+				),
+			)
+		);
+
+		// Categories endpoint (replaces AJAX get_ecwid_categories)
+		register_rest_route(
+			self::NAMESPACE,
+			'/categories',
+			array(
+				'methods'             => WP_REST_Server::READABLE,
+				'callback'            => array($this, 'get_categories'),
+				'permission_callback' => array($this, 'check_public_permissions'),
+				'args'                => array(
+					'parent' => array(
+						'description' => __('Parent category ID.', 'peaches'),
+						'type'        => 'integer',
+						'required'    => false,
+						'minimum'     => 0,
+					),
+					'enabled' => array(
+						'description' => __('Filter enabled categories only.', 'peaches'),
+						'type'        => 'boolean',
+						'required'    => false,
+						'default'     => true,
+					),
+				),
 			)
 		);
 	}
@@ -606,6 +679,212 @@ class Peaches_REST_API {
 
 		} catch (Exception $e) {
 			error_log('Peaches API: Error getting description types: ' . $e->getMessage());
+			return new WP_Error(
+				'server_error',
+				__('Internal server error.', 'peaches'),
+				array('status' => 500)
+			);
+		}
+	}
+
+	/**
+	 * Get related products for a specific product.
+	 *
+	 * @since 0.2.6
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 *
+	 * @return WP_REST_Response|WP_Error Response object or error.
+	 */
+	public function get_related_products($request) {
+		try {
+			$product_id = $request->get_param('product_id');
+
+			if (!$product_id || !is_numeric($product_id)) {
+				return new WP_Error(
+					'invalid_product_id',
+					__('Invalid product ID provided.', 'peaches'),
+					array('status' => 400)
+				);
+			}
+
+			// Get Ecwid API instance if not injected
+			if (!$this->ecwid_api) {
+				$ecwid_blocks = Peaches_Ecwid_Blocks::get_instance();
+				$this->ecwid_api = $ecwid_blocks->get_ecwid_api();
+			}
+
+			if (!$this->ecwid_api) {
+				return new WP_Error(
+					'api_unavailable',
+					__('Ecwid API is not available.', 'peaches'),
+					array('status' => 500)
+				);
+			}
+
+			// Get the main product
+			$product = $this->ecwid_api->get_product_by_id($product_id);
+
+			if (!$product) {
+				return new WP_Error(
+					'product_not_found',
+					__('Product not found.', 'peaches'),
+					array('status' => 404)
+				);
+			}
+
+			// Get related product IDs
+			$related_ids = $this->ecwid_api->get_related_product_ids($product);
+
+			if (empty($related_ids)) {
+				return new WP_Error(
+					'no_related_products',
+					__('No related products found.', 'peaches'),
+					array('status' => 404)
+				);
+			}
+
+			return new WP_REST_Response(
+				array(
+					'success'        => true,
+					'product_id'     => (int) $product_id,
+					'related_products' => $related_ids,
+					'count'          => count($related_ids),
+				),
+				200
+			);
+
+		} catch (Exception $e) {
+			error_log('Peaches API: Error getting related products: ' . $e->getMessage());
+
+			return new WP_Error(
+				'server_error',
+				__('Internal server error.', 'peaches'),
+				array('status' => 500)
+			);
+		}
+	}
+
+	/**
+	 * Get product data for a specific product.
+	 *
+	 * @since 0.2.6
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 *
+	 * @return WP_REST_Response|WP_Error Response object or error.
+	 */
+	public function get_product_data($request) {
+		try {
+			$product_id = $request->get_param('product_id');
+
+			if (!$product_id || !is_numeric($product_id)) {
+				return new WP_Error(
+					'invalid_product_id',
+					__('Invalid product ID provided.', 'peaches'),
+					array('status' => 400)
+				);
+			}
+
+			// Get Ecwid API instance if not injected
+			if (!$this->ecwid_api) {
+				$ecwid_blocks = Peaches_Ecwid_Blocks::get_instance();
+				$this->ecwid_api = $ecwid_blocks->get_ecwid_api();
+			}
+
+			if (!$this->ecwid_api) {
+				return new WP_Error(
+					'api_unavailable',
+					__('Ecwid API is not available.', 'peaches'),
+					array('status' => 500)
+				);
+			}
+
+			// Get the product data
+			$product = $this->ecwid_api->get_product_by_id($product_id);
+
+			if (!$product) {
+				return new WP_Error(
+					'product_not_found',
+					__('Product not found.', 'peaches'),
+					array('status' => 404)
+				);
+			}
+
+			return new WP_REST_Response(
+				array(
+					'success' => true,
+					'data'    => $product,
+				),
+				200
+			);
+
+		} catch (Exception $e) {
+			error_log('Peaches API: Error getting product data: ' . $e->getMessage());
+
+			return new WP_Error(
+				'server_error',
+				__('Internal server error.', 'peaches'),
+				array('status' => 500)
+			);
+		}
+	}
+
+	/**
+	 * Get categories from Ecwid store.
+	 *
+	 * @since 0.2.6
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 *
+	 * @return WP_REST_Response|WP_Error Response object or error.
+	 */
+	public function get_categories($request) {
+		try {
+			$parent = $request->get_param('parent');
+			$enabled_only = $request->get_param('enabled');
+
+			// Get Ecwid API instance if not injected
+			if (!$this->ecwid_api) {
+				$ecwid_blocks = Peaches_Ecwid_Blocks::get_instance();
+				$this->ecwid_api = $ecwid_blocks->get_ecwid_api();
+			}
+
+			if (!$this->ecwid_api) {
+				return new WP_Error(
+					'api_unavailable',
+					__('Ecwid API is not available.', 'peaches'),
+					array('status' => 500)
+				);
+			}
+
+			// Prepare options for API call
+			$options = array();
+
+			if (!is_null($parent)) {
+				$options['parent'] = $parent;
+			}
+
+			if ($enabled_only) {
+				$options['enabled'] = true;
+			}
+
+			// Get categories from API
+			$categories = $this->ecwid_api->get_categories($options);
+
+			return new WP_REST_Response(
+				array(
+					'success'    => true,
+					'data'       => $categories,
+					'count'      => count($categories),
+					'options'    => $options,
+				),
+				200
+			);
+
+		} catch (Exception $e) {
+			error_log('Peaches API: Error getting categories: ' . $e->getMessage());
+
 			return new WP_Error(
 				'server_error',
 				__('Internal server error.', 'peaches'),

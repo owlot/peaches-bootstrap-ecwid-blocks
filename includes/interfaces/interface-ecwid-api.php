@@ -57,11 +57,14 @@ interface Peaches_Ecwid_API_Interface {
 	public function get_categories($options = array());
 
 	/**
-	 * Get related products for a specific product.
+	 * Get related product IDs from a product object.
 	 *
-	 * @since 0.1.2
-	 * @param object $product The product object.
-	 * @return string HTML for related products or empty string.
+	 * Extracts related product IDs from Ecwid product data using both
+	 * explicit product IDs and category-based related products.
+	 *
+	 * @since 0.2.6
+	 * @param object $product Product object from Ecwid API.
+	 * @return array Array of related product IDs.
 	 */
-	public function get_related_products($product);
+	public function get_related_product_ids($product);
 }

@@ -97,6 +97,7 @@ return array(
 		),
 		'style' => 'file:./style-index.css',
 		'viewScriptModule' => 'file:./view.js',
+		'render' => 'file:./render.php',
 		'attributes' => array(
 			'id' => array(
 				'type' => 'integer'
@@ -104,6 +105,10 @@ return array(
 			'showAddToCart' => array(
 				'type' => 'boolean',
 				'default' => true
+			),
+			'computedClassName' => array(
+				'type' => 'string',
+				'default' => ''
 			),
 			'xs' => array(
 				'type' => 'object',
@@ -734,6 +739,102 @@ return array(
 			)
 		),
 		'viewScriptModule' => 'file:./view.js',
+		'editorScript' => 'file:./index.js'
+	),
+	'ecwid-product-related-products' => array(
+		'$schema' => 'https://schemas.wp.org/trunk/block.json',
+		'apiVersion' => 3,
+		'name' => 'peaches/ecwid-product-related-products',
+		'version' => '0.1.0',
+		'title' => 'Bootstrap ECWID Product Related Products',
+		'category' => 'peaches-bootstrap',
+		'ancestor' => array(
+			'peaches/ecwid-product-detail'
+		),
+		'description' => 'Display related products for ECWID products using existing product blocks.',
+		'keywords' => array(
+			'bootstrap',
+			'product',
+			'related',
+			'peaches',
+			'ecwid',
+			'template'
+		),
+		'textdomain' => 'peaches',
+		'supports' => array(
+			'html' => false,
+			'layout' => false,
+			'color' => array(
+				'overlay' => true
+			),
+			'interactivity' => true
+		),
+		'usesContext' => array(
+			'peaches/testProductData'
+		),
+		'attributes' => array(
+			'showTitle' => array(
+				'type' => 'boolean',
+				'default' => true
+			),
+			'customTitle' => array(
+				'type' => 'string',
+				'default' => ''
+			),
+			'maxProducts' => array(
+				'type' => 'number',
+				'default' => 4
+			),
+			'showAddToCart' => array(
+				'type' => 'boolean',
+				'default' => true
+			),
+			'computedClassName' => array(
+				'type' => 'string',
+				'default' => ''
+			),
+			'isInCarousel' => array(
+				'type' => 'boolean',
+				'default' => false
+			),
+			'xs' => array(
+				'type' => 'object',
+				'default' => array(
+					
+				)
+			),
+			'sm' => array(
+				'type' => 'object',
+				'default' => array(
+					
+				)
+			),
+			'md' => array(
+				'type' => 'object',
+				'default' => array(
+					
+				)
+			),
+			'lg' => array(
+				'type' => 'object',
+				'default' => array(
+					
+				)
+			),
+			'xl' => array(
+				'type' => 'object',
+				'default' => array(
+					
+				)
+			),
+			'xxl' => array(
+				'type' => 'object',
+				'default' => array(
+					
+				)
+			)
+		),
+		'render' => 'file:./render.php',
 		'editorScript' => 'file:./index.js'
 	)
 );

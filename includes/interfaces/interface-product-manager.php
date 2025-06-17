@@ -53,22 +53,6 @@ interface Peaches_Product_Manager_Interface {
 	public function enqueue_frontend_scripts();
 
 	/**
-	 * AJAX handler to get product data.
-	 *
-	 * @since 0.1.2
-	 * @return void
-	 */
-	public function ajax_get_product_data();
-
-	/**
-	 * AJAX handler to get categories.
-	 *
-	 * @since 0.1.2
-	 * @return void
-	 */
-	public function ajax_get_categories();
-
-	/**
 	 * Generate breadcrumb navigation for product detail page.
 	 *
 	 * @since 0.1.2

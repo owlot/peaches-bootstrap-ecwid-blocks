@@ -1,12 +1,20 @@
 {
 	"$schema": "https://schemas.wp.org/trunk/block.json",
 	"apiVersion": 3,
-	"name": "peaches/ecwid-product",
+	"name": "peaches/ecwid-product-related-products",
 	"version": "0.1.0",
-	"title": "Bootstrap ECWID product",
+	"title": "Bootstrap ECWID Product Related Products",
 	"category": "peaches-bootstrap",
-	"description": "A ECWID product bootstrap themed block.",
-	"keywords": [ "bootstrap", "grid", "peaches", "product", "ecwid" ],
+	"ancestor": [ "peaches/ecwid-product-detail" ],
+	"description": "Display related products for ECWID products using existing product blocks.",
+	"keywords": [
+		"bootstrap",
+		"product",
+		"related",
+		"peaches",
+		"ecwid",
+		"template"
+	],
 	"textdomain": "peaches",
 	"supports": {
 		"html": false,
@@ -16,14 +24,19 @@
 		},
 		"interactivity": true
 	},
-	"editorScript": "file:./index.js",
-	"editorStyle": [ "file:./index.css" ],
-	"style": "file:./style-index.css",
-	"viewScriptModule": "file:./view.js",
-	"render": "file:./render.php",
+	"usesContext": [ "peaches/testProductData" ],
 	"attributes": {
-		"id": {
-			"type": "integer"
+		"showTitle": {
+			"type": "boolean",
+			"default": true
+		},
+		"customTitle": {
+			"type": "string",
+			"default": ""
+		},
+		"maxProducts": {
+			"type": "number",
+			"default": 4
 		},
 		"showAddToCart": {
 			"type": "boolean",
@@ -32,6 +45,10 @@
 		"computedClassName": {
 			"type": "string",
 			"default": ""
+		},
+		"isInCarousel": {
+			"type": "boolean",
+			"default": false
 		},
 		"xs": {
 			"type": "object",
@@ -57,5 +74,7 @@
 			"type": "object",
 			"default": {}
 		}
-	}
+	},
+	"render": "file:./render.php",
+	"editorScript": "file:./index.js"
 }

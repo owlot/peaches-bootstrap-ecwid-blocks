@@ -64,10 +64,6 @@ class Peaches_Product_Manager implements Peaches_Product_Manager_Interface {
 	 */
 	public function init_ajax_handlers() {
 		// AJAX handlers
-		add_action('wp_ajax_get_ecwid_product_data', array($this, 'ajax_get_product_data'));
-		add_action('wp_ajax_nopriv_get_ecwid_product_data', array($this, 'ajax_get_product_data'));
-		add_action('wp_ajax_get_ecwid_categories', array($this, 'ajax_get_categories'));
-		add_action('wp_ajax_nopriv_get_ecwid_categories', array($this, 'ajax_get_categories'));
 		add_action('wp_ajax_get_ecwid_product_descriptions', array($this, 'ajax_get_product_descriptions'));
 		add_action('wp_ajax_nopriv_get_ecwid_product_descriptions', array($this, 'ajax_get_product_descriptions'));
 	}
@@ -94,6 +90,7 @@ class Peaches_Product_Manager implements Peaches_Product_Manager_Interface {
 		register_block_type_from_metadata(PEACHES_ECWID_PLUGIN_DIR . 'build/ecwid-product-images/');
 		register_block_type_from_metadata(PEACHES_ECWID_PLUGIN_DIR . 'build/ecwid-product-ingredients/');
 		register_block_type_from_metadata(PEACHES_ECWID_PLUGIN_DIR . 'build/ecwid-product-gallery-image/');
+		register_block_type_from_metadata(PEACHES_ECWID_PLUGIN_DIR . 'build/ecwid-product-related-products/');
 	}
 
 	/**
@@ -108,21 +105,42 @@ class Peaches_Product_Manager implements Peaches_Product_Manager_Interface {
 
 		// Only on block editor
 		if ($screen && $screen->is_block_editor) {
-			// Create a nonce specifically for product data and ensure it's properly generated
-			$product_data_nonce = wp_create_nonce('get_ecwid_product_data');
+			// Enqueue wp-api-fetch for REST API calls
+			wp_enqueue_script('wp-api-fetch');
 
-			// For debugging only
-			error_log('Generating product data nonce: ' . $product_data_nonce);
+			// Enqueue wp-api for REST API functionality
+			wp_enqueue_script('wp-api');
 
-			// Ensure our nonce is available globally
+			// Create REST API nonce
+			$rest_nonce = wp_create_nonce('wp_rest');
+
+			// Provide REST API settings for blocks
+			wp_add_inline_script(
+				'wp-api-fetch',
+				'window.wpApiSettings = window.wpApiSettings || {};
+				window.wpApiSettings.root = "' . esc_url_raw(rest_url()) . '";
+				window.wpApiSettings.nonce = "' . $rest_nonce . '";
+
+				// Initialize wp.apiFetch with the settings
+				if (window.wp && window.wp.apiFetch) {
+					window.wp.apiFetch.use(window.wp.apiFetch.createNonceMiddleware("' . $rest_nonce . '"));
+					window.wp.apiFetch.use(window.wp.apiFetch.createRootURLMiddleware("' . esc_url_raw(rest_url()) . '"));
+				}
+
+				console.log("REST API settings initialized:", window.wpApiSettings);',
+				'after'
+			);
+
+			// Keep legacy settings for backward compatibility (product popup, etc.)
 			wp_add_inline_script(
 				'wp-blocks',
 				'window.EcwidGutenbergParams = window.EcwidGutenbergParams || {};
-			window.EcwidGutenbergParams.nonce = "' . $product_data_nonce . '";
-			window.EcwidGutenbergParams.ajaxUrl = "' . admin_url('admin-ajax.php') . '";
-			window.EcwidGutenbergParams.chooseProduct = "' . __('Choose Product', 'peaches') . '";
-			window.EcwidGutenbergParams.products = {};
-			console.log("Ecwid params initialized with nonce:", "' . $product_data_nonce . '");',
+				window.EcwidGutenbergParams.restUrl = "' . esc_url_raw(rest_url('peaches/v1/')) . '";
+				window.EcwidGutenbergParams.restNonce = "' . $rest_nonce . '";
+				window.EcwidGutenbergParams.chooseProduct = "' . __('Choose Product', 'peaches') . '";
+				window.EcwidGutenbergParams.products = {};
+
+				console.log("Ecwid REST params initialized");',
 				'before'
 			);
 		}
@@ -149,110 +167,23 @@ class Peaches_Product_Manager implements Peaches_Product_Manager_Interface {
 		// Get the correct store URL
 		$store_url = $store_page_id ? get_permalink($store_page_id) : home_url();
 
-		// Localize script with AJAX data for frontend
+		// Provide REST API settings for frontend blocks
 		wp_add_inline_script(
 			'wp-interactivity',
 			'window.EcwidSettings = window.EcwidSettings || {};
+			window.EcwidSettings.restUrl = "' . esc_url_raw(rest_url('peaches/v1/')) . '";
+			window.EcwidSettings.restRoot = "' . esc_url_raw(rest_url()) . '";
+			window.EcwidSettings.storePageId = "' . $store_page_id . '";
+			window.EcwidSettings.storeUrl = "' . esc_url_raw($store_url) . '";
+			window.EcwidSettings.shopPathSegment = "' . esc_js($shop_path_segment) . '";
+
+			// Keep legacy AJAX settings for backward compatibility (if needed by other parts)
 			window.EcwidSettings.ajaxUrl = "' . admin_url('admin-ajax.php') . '";
 			window.EcwidSettings.ajaxNonce = "' . wp_create_nonce('get_ecwid_product_data') . '";
-			window.EcwidSettings.categoryNonce = "' . wp_create_nonce('get_ecwid_categories') . '";
-			window.EcwidSettings.storePageId = "' . $store_page_id . '";
-			window.EcwidSettings.storeUrl = "' . $store_url . '";
-			window.EcwidSettings.shopPathSegment = "' . $shop_path_segment . '";',
+
+			console.log("Frontend REST API settings loaded:", window.EcwidSettings);',
 			'before'
 		);
-	}
-
-	/**
-	 * AJAX handler to get product data.
-	 *
-	 * @since 0.1.2
-	 */
-	public function ajax_get_product_data() {
-		// Check nonce from various possible field names
-		$nonce = '';
-
-		if (isset($_POST['nonce'])) {
-			$nonce = $_POST['nonce'];
-		} elseif (isset($_POST['_ajax_nonce'])) {
-			$nonce = $_POST['_ajax_nonce'];
-		} elseif (isset($_POST['security'])) {
-			$nonce = $_POST['security'];
-		}
-
-		// For debugging only - log nonce information
-		error_log('AJAX get_ecwid_product_data called with nonce: ' . $nonce);
-
-		// Skip nonce verification for now as it might be causing issues
-		// We'll implement proper nonce verification after fixing the immediate issue
-
-		$product_id = isset($_POST['product_id']) ? intval($_POST['product_id']) : 0;
-
-		if (!$product_id) {
-			wp_send_json_error('Product ID is required');
-			return;
-		}
-
-		// Get language from request if available
-		$lang = isset($_POST['lang']) ? sanitize_text_field($_POST['lang']) : '';
-
-		// Set the language for the current request if provided
-		if (!empty($lang)) {
-			// Polylang support
-			if (function_exists('pll_set_language')) {
-				pll_set_language($lang);
-			}
-			// WPML support
-			elseif (defined('ICL_LANGUAGE_CODE') && class_exists('SitePress')) {
-				global $sitepress;
-				if ($sitepress) {
-					$sitepress->switch_lang($lang);
-				}
-			}
-		}
-
-		// Log product ID
-		error_log('Fetching product with ID: ' . $product_id);
-
-		$product = $this->ecwid_api->get_product_by_id($product_id);
-
-		if ($product) {
-			// Log success
-			error_log('Product found: ' . $product->name);
-
-			// Get the proper shop URL for this product including language
-			$product_url = $this->build_product_url($product, $lang);
-
-			// Convert the entire product object to array for JSON response
-			// This preserves all data from Ecwid API while adding our custom URL
-			$product_data = (array) $product;
-
-			// Add our custom URL field
-			$product_data['url'] = $product_url;
-
-			// Ensure common fields are properly set (in case they're missing)
-			if (!isset($product_data['description'])) {
-				$product_data['description'] = '';
-			}
-			if (!isset($product_data['galleryImages'])) {
-				$product_data['galleryImages'] = array();
-			}
-			if (!isset($product_data['media'])) {
-				$product_data['media'] = null;
-			}
-			if (!isset($product_data['inStock'])) {
-				$product_data['inStock'] = true; // Default assumption
-			}
-			if (!isset($product_data['compareToPrice'])) {
-				$product_data['compareToPrice'] = null;
-			}
-
-			wp_send_json_success($product_data);
-		} else {
-			// Log error
-			error_log('Product not found for ID: ' . $product_id);
-			wp_send_json_error('Product not found');
-		}
 	}
 
 	/**
@@ -318,45 +249,6 @@ class Peaches_Product_Manager implements Peaches_Product_Manager_Interface {
 		$url = $base_url . $shop_path . $product->autogeneratedSlug . '/';
 
 		return $url;
-	}
-
-	/**
-	 * AJAX handler to get categories.
-	 *
-	 * @since 0.1.2
-	 */
-	public function ajax_get_categories() {
-		// Check nonce from various possible field names
-		$nonce = false;
-		if (isset($_POST['nonce'])) {
-			$nonce = $_POST['nonce'];
-		} elseif (isset($_POST['_ajax_nonce'])) {
-			$nonce = $_POST['_ajax_nonce'];
-		} elseif (isset($_POST['security'])) {
-			$nonce = $_POST['security'];
-		}
-
-		if ($nonce && !wp_verify_nonce($nonce, 'get_ecwid_categories')) {
-			error_log('Nonce verification failed');
-			wp_send_json_error('Invalid nonce');
-		}
-
-		$categories = $this->ecwid_api->get_categories();
-
-		if (!empty($categories)) {
-			$categories_data = array();
-			foreach($categories as $category) {
-				$categories_data[] = array(
-					'id' => $category->id,
-					'name' => $category->name,
-					'thumbnailUrl' => $category->thumbnailUrl,
-				);
-			}
-
-			wp_send_json_success($categories_data);
-		} else {
-			wp_send_json_success(array());
-		}
 	}
 
 	/**

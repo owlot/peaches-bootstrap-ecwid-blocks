@@ -4,7 +4,13 @@
 import { __ } from '@wordpress/i18n';
 import { useMemo, useState, useEffect } from '@wordpress/element';
 import { InspectorControls, useBlockProps } from '@wordpress/block-editor';
-import { PanelBody, ToggleControl } from '@wordpress/components';
+import {
+	PanelBody,
+	Button,
+	ToggleControl,
+	Notice,
+	Spinner,
+} from '@wordpress/components';
 
 /**
  * Internal dependencies
@@ -15,10 +21,7 @@ import {
 } from '../../../peaches-bootstrap-blocks/src/utils/bootstrap_settings';
 
 /**
- * Lets webpack process CSS, SASS or SCSS files referenced in JavaScript files.
- * Those files can contain any CSS code that gets applied to the editor.
- *
- * @see https://www.npmjs.com/package/@wordpress/scripts#using-css
+ * Styles
  */
 import './editor.scss';
 
@@ -35,53 +38,92 @@ function ProductEdit( props ) {
 	const { attributes, setAttributes } = props;
 	const [ productData, setProductData ] = useState( null );
 	const [ isLoading, setIsLoading ] = useState( false );
+	const [ error, setError ] = useState( null );
 
-	const className = useMemo(
-		() => computeClassName( attributes ),
-		[ attributes ]
-	);
+	/**
+	 * Compute className from Bootstrap attributes and store it
+	 */
+	const computedClassName = useMemo( () => {
+		return computeClassName( attributes );
+	}, [ attributes ] );
 
-	const blockProps = useBlockProps( { className } );
-
-	// Fetch product data when ID changes using the WordPress AJAX endpoint
+	const blockProps = useBlockProps( { className: computedClassName } );
+	/**
+	 * Update the computedClassName attribute when it changes
+	 */
 	useEffect( () => {
-		if ( attributes.id ) {
-			setIsLoading( true );
-
-			// Use WordPress AJAX to fetch product data from server
-			window.jQuery.ajax( {
-				url: window.ajaxurl || '/wp-admin/admin-ajax.php',
-				method: 'POST',
-				dataType: 'json',
-				data: {
-					action: 'get_ecwid_product_data',
-					product_id: attributes.id,
-					_ajax_nonce: window.EcwidGutenbergParams?.nonce || '',
-					security: window.EcwidGutenbergParams?.nonce || '',
-				},
-				success( response ) {
-					setIsLoading( false );
-					if ( response && response.success && response.data ) {
-						setProductData( response.data );
-					} else {
-						console.error( 'Product not found:', response );
-					}
-				},
-				error( xhr, status, error ) {
-					setIsLoading( false );
-					console.error( 'AJAX Error:', {
-						status,
-						error,
-						responseText: xhr.responseText,
-						statusCode: xhr.status,
-					} );
-				},
-			} );
-		} else {
-			setProductData( null );
+		if ( attributes.computedClassName !== computedClassName ) {
+			setAttributes( { computedClassName } );
 		}
+	}, [ computedClassName, attributes.computedClassName, setAttributes ] );
+
+	/**
+	 * Fetch product data when ID changes using REST API
+	 */
+	useEffect( () => {
+		if ( ! attributes.id ) {
+			setProductData( null );
+			setError( null );
+			return;
+		}
+
+		setIsLoading( true );
+		setError( null );
+
+		// Use REST API directly - works in both editor and frontend
+		fetch( `/wp-json/peaches/v1/products/${ attributes.id }`, {
+			headers: {
+				'X-WP-Nonce': wpApiSettings?.nonce || '',
+				Accept: 'application/json',
+			},
+			credentials: 'same-origin',
+		} )
+			.then( ( response ) => {
+				if ( response.status === 404 ) {
+					setError(
+						__( 'Product not found', 'ecwid-shopping-cart' )
+					);
+					setProductData( null );
+					setIsLoading( false );
+					return null;
+				}
+
+				if ( ! response.ok ) {
+					throw new Error(
+						`HTTP error! status: ${ response.status }`
+					);
+				}
+
+				return response.json();
+			} )
+			.then( ( responseData ) => {
+				if (
+					responseData &&
+					responseData.success &&
+					responseData.data
+				) {
+					setProductData( responseData.data );
+					setError( null );
+				}
+				setIsLoading( false );
+			} )
+			.catch( ( fetchError ) => {
+				setIsLoading( false );
+				console.error( 'Fetch Error:', {
+					error: fetchError.message,
+					productId: attributes.id,
+				} );
+				setError(
+					__( 'Failed to load product data', 'ecwid-shopping-cart' )
+				);
+			} );
 	}, [ attributes.id ] );
 
+	/**
+	 * Handle Ecwid product selection
+	 *
+	 * @param {Object} params - Selection parameters
+	 */
 	const saveCallback = function ( params ) {
 		const newAttributes = {
 			id: params.newProps.product.id,
@@ -102,6 +144,11 @@ function ProductEdit( props ) {
 		params.originalProps.setAttributes( newAttributes );
 	};
 
+	/**
+	 * Open Ecwid product selection popup
+	 *
+	 * @param {Object} popupProps - Popup properties
+	 */
 	function openEcwidProductPopup( popupProps ) {
 		if ( typeof window.ecwid_open_product_popup === 'function' ) {
 			window.ecwid_open_product_popup( {
@@ -113,89 +160,110 @@ function ProductEdit( props ) {
 		}
 	}
 
-	// Extract subtitle from product attributes
+	/**
+	 * Extract subtitle from product attributes
+	 *
+	 * @return {string} Product subtitle
+	 */
 	const getProductSubtitle = () => {
 		if ( ! productData || ! productData.attributes ) {
 			return '';
 		}
 
-		const subtitleAttribute = productData.attributes.find(
-			( attr ) => attr.name === 'Ondertitel'
+		// Look for subtitle in product attributes
+		const subtitleAttr = productData.attributes.find(
+			( attr ) =>
+				attr.name.toLowerCase().includes( 'ondertitel' ) ||
+				attr.name.toLowerCase().includes( 'subtitle' ) ||
+				attr.name.toLowerCase().includes( 'sub-title' ) ||
+				attr.name.toLowerCase().includes( 'tagline' )
 		);
 
-		return (
-			subtitleAttribute?.valueTranslated?.nl ||
-			subtitleAttribute?.value ||
-			''
-		);
+		return subtitleAttr ? subtitleAttr.value : '';
+	};
+
+	/**
+	 * Format product price
+	 *
+	 * @return {string} Formatted price
+	 */
+	const formatPrice = () => {
+		if ( ! productData || typeof productData.price === 'undefined' ) {
+			return __( 'Price not available', 'ecwid-shopping-cart' );
+		}
+
+		// Simple formatting - you might want to add currency symbols
+		return `€ ${ parseFloat( productData.price ).toFixed( 2 ) }`;
 	};
 
 	return (
 		<>
 			<InspectorControls>
-				<div className="block-editor-block-card">
+				<PanelBody
+					title={ __( 'Product Settings', 'ecwid-shopping-cart' ) }
+					initialOpen={ true }
+				>
+					{ ! attributes.id && (
+						<Button
+							variant="primary"
+							onClick={ () =>
+								openEcwidProductPopup( {
+									attributes,
+									setAttributes,
+								} )
+							}
+						>
+							{ __( 'Choose Product', 'ecwid-shopping-cart' ) }
+						</Button>
+					) }
+
 					{ attributes.id && (
-						<div>
-							<div className="ec-store-inspector-row">
-								<label className="ec-store-inspector-subheader">
+						<div className="product-info">
+							<p>
+								<strong>
 									{ __(
-										'Displayed product',
+										'Product ID:',
 										'ecwid-shopping-cart'
 									) }
-								</label>
-							</div>
-							<div className="ec-store-inspector-row">
-								{ productData?.name && (
-									<label>{ productData.name }</label>
-								) }
-
-								<button
-									className="button"
-									onClick={ () =>
-										openEcwidProductPopup( props )
-									}
-								>
-									{ __( 'Change', 'ecwid-shopping-cart' ) }
-								</button>
-							</div>
-						</div>
-					) }
-					{ ! attributes.id && (
-						<div className="ec-store-inspector-row">
-							<button
-								className="button"
-								onClick={ () => openEcwidProductPopup( props ) }
+								</strong>{ ' ' }
+								{ attributes.id }
+							</p>
+							{ productData && (
+								<p>
+									<strong>{ productData.name }</strong>
+								</p>
+							) }
+							<Button
+								variant="secondary"
+								onClick={ () =>
+									openEcwidProductPopup( {
+										attributes,
+										setAttributes,
+									} )
+								}
 							>
 								{ __(
-									'Choose product',
+									'Change Product',
 									'ecwid-shopping-cart'
 								) }
-							</button>
+							</Button>
 						</div>
 					) }
-				</div>
-				<PanelBody
-					title={ __(
-						'Product Cart Settings',
-						'ecwid-shopping-cart'
-					) }
-				>
+
 					<ToggleControl
-						__nextHasNoMarginBottom
 						label={ __(
-							"Show 'Add to cart' button",
+							'Show Add to Cart',
 							'ecwid-shopping-cart'
 						) }
 						checked={ attributes.showAddToCart }
 						onChange={ ( value ) =>
 							setAttributes( { showAddToCart: value } )
 						}
-						help={ __(
-							'Shows an icon button to instantly add the product to the cart.',
-							'ecwid-shopping-cart'
-						) }
+						__next40pxDefaultSize
+						__nextHasNoMarginBottom
 					/>
 				</PanelBody>
+
 				<BootstrapSettingsPanels
 					setAttributes={ setAttributes }
 					attributes={ attributes }
@@ -204,91 +272,73 @@ function ProductEdit( props ) {
 			</InspectorControls>
 
 			<div { ...blockProps }>
-				{ ! attributes.id && (
-					<div className="ratio ratio-1x1 text-center">
-						<button
-							className="btn btn-primary"
-							onClick={ () => {
-								const params = {
-									saveCallback,
-									props,
-								};
-								openEcwidProductPopup( params );
-							} }
-						>
-							{ window.EcwidGutenbergParams?.chooseProduct ||
-								__( 'Choose Product', 'ecwid-shopping-cart' ) }
-						</button>
+				{ isLoading && (
+					<div className="text-center my-3">
+						<Spinner />
+						<p>
+							{ __( 'Loading product…', 'ecwid-shopping-cart' ) }
+						</p>
 					</div>
 				) }
-				{ attributes.id && (
-					<div className="card h-100 border-0">
-						{ isLoading && (
-							<div className="position-absolute top-50 start-50 translate-middle">
-								<div
-									className="spinner-border text-primary"
-									role="status"
-								>
-									<span className="visually-hidden">
-										{ __(
-											'Loading product…',
-											'ecwid-shopping-cart'
-										) }
-									</span>
-								</div>
-							</div>
-						) }
 
-						<div className="ratio ratio-1x1">
-							{ productData?.thumbnailUrl ? (
+				{ error && (
+					<Notice status="error" isDismissible={ false }>
+						{ error }
+					</Notice>
+				) }
+
+				{ ! attributes.id && ! isLoading && (
+					<div className="product-placeholder">
+						<p>
+							{ __(
+								'Please select a product to display.',
+								'ecwid-shopping-cart'
+							) }
+						</p>
+					</div>
+				) }
+
+				{ productData && ! isLoading && ! error && (
+					<div className="card h-100 border-0 shadow-sm">
+						{ productData.thumbnailUrl && (
+							<div className="card-img-top ratio ratio-1x1">
 								<img
-									className="card-img-top"
 									src={ productData.thumbnailUrl }
 									alt={ productData.name }
+									className="object-fit-cover"
 								/>
-							) : (
-								<div className="card-img-top bg-light d-flex align-items-center justify-content-center">
-									<span className="text-muted">
-										{ isLoading
-											? __( '…', 'ecwid-shopping-cart' )
-											: __(
-													'Product Image',
-													'ecwid-shopping-cart'
-											  ) }
-									</span>
-								</div>
-							) }
-						</div>
-						<div className="card-body p-2 p-md-3 d-flex row-cols-1 flex-wrap align-content-between">
-							<h5 role="button" className="card-title">
-								{ productData?.name ||
-									( isLoading
-										? '...'
-										: __(
-												'Product Name',
-												'ecwid-shopping-cart'
-										  ) ) }
+							</div>
+						) }
+						<div className="card-body p-2 p-md-3 d-flex flex-wrap align-content-between">
+							<h5
+								role="button"
+								className="card-title"
+								data-wp-text="state.productName"
+								data-wp-on--click="actions.navigateToProduct"
+							>
+								{ productData.name }
 							</h5>
-							<p className="card-text text-muted">
-								{ getProductSubtitle() ||
-									( isLoading
-										? '...'
-										: __(
-												'Product Subtitle',
-												'ecwid-shopping-cart'
-										  ) ) }
+							<p
+								className="card-subtitle mb-2 text-muted"
+								data-wp-text="state.productSubtitle"
+							>
+								{ getProductSubtitle() }
 							</p>
 						</div>
 						<div className="card-footer border-0 hstack justify-content-between">
-							<div className="card-text fw-bold lead">
-								{ productData?.price
-									? `€ ${ productData.price }`
-									: isLoading
-									? '...'
-									: '€ --' }
+							<div
+								className="card-text fw-bold lead"
+								data-wp-text="state.productPrice"
+							>
+								{ formatPrice() }
 							</div>
 							{ attributes.showAddToCart && (
-								<button className="add-to-cart btn pe-0" />
+								<button
+									title="Add to cart"
+									className="add-to-cart btn pe-0"
+									aria-label="Add to cart"
+									data-wp-on--click="actions.addToCart"
+								></button>
 							) }
 						</div>
 					</div>

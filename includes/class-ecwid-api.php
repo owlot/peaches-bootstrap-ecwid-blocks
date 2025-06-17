@@ -507,116 +507,6 @@ class Peaches_Ecwid_API implements Peaches_Ecwid_API_Interface {
 	}
 
 	/**
-	 * Get related products for a specific product.
-	 *
-	 * @since 0.1.2
-	 * @param object $product The product object.
-	 * @return string HTML for related products or empty string.
-	 */
-	public function get_related_products($product) {
-		if (!$product || empty($product->relatedProducts)) {
-			$this->debug_log('No related products data available');
-			return '';
-		}
-
-		$this->debug_log('Getting related products for product ID: ' . $product->id);
-
-		// Check cache first
-		$cache_key = $this->get_cache_key('related', $product->id);
-		$cached_html = $this->get_cached_data($cache_key);
-
-		if ($cached_html !== false) {
-			$this->debug_log('Returning cached related products HTML');
-			return $cached_html;
-		}
-
-		$api = new Ecwid_Api_V3();
-		$related_products = [];
-
-		if(isset($product->relatedProducts->productIds) && is_array($product->relatedProducts->productIds)) {
-			$related_products = $api->get_products([
-				'productId' => join(',', $product->relatedProducts->productIds)
-			]);
-
-			if (!$related_products || !isset($related_products->items) || count($related_products->items) <= 1) {
-				$this->debug_log('Not enough related products by ID');
-				return '';
-			}
-		}
-
-		if(isset($product->relatedProducts->relatedCategory) && $product->relatedProducts->relatedCategory->enabled) {
-			$related_category = $product->relatedProducts->relatedCategory;
-
-			$filter = [
-				'visibleInStorefront' => true,
-				'enabled' => true,
-				'limit' => $related_category->productCount + 1 // Get one extra to exclude current product
-			];
-
-			if(isset($related_category->categoryId)) {
-				$filter['category'] = $related_category->categoryId;
-			}
-
-			$related_products = $api->get_products($filter);
-
-			if (!$related_products || !isset($related_products->items) || count($related_products->items) <= 1) {
-				$this->debug_log('Not enough related products by category');
-				return '';
-			}
-
-			// Filter out current product
-			$filtered_products = array_filter($related_products->items, function($item) use ($product) {
-				return $item->id != $product->id;
-			});
-
-			// Get only the needed number of products
-			$related_products = array_slice($filtered_products, 0, $related_category->productCount);
-
-			// If after filtering we have no products, return empty
-			if (!$related_products || !isset($related_products->items) || count($related_products->items) <= 1) {
-				$this->debug_log('No valid related products after filtering');
-				return '';
-			}
-		}
-
-		// Build HTML output (this could be moved to a template)
-		ob_start();
-?>
-	<div class="related-products my-5">
-	<h3><?php echo __('Related Products', 'peaches'); ?></h3>
-	<div class="row row-cols-2 row-cols-md-4 g-4">
-<?php
-		// Loop through related products
-		foreach ($related_products->items as $related) {
-			// This should be replaced with a proper rendering function
-			echo '<div class="col">';
-			echo '<div class="card h-100 border-0">';
-			echo '<div class="ratio ratio-1x1">';
-			echo '<img src="' . esc_url($related->thumbnailUrl) . '" class="card-img-top" alt="' . esc_attr($related->name) . '">';
-			echo '</div>';
-			echo '<div class="card-body p-2 p-md-3">';
-			echo '<h5 class="card-title">' . esc_html($related->name) . '</h5>';
-			echo '</div>';
-			echo '<div class="card-footer border-0">';
-			echo '<div class="card-text fw-bold">€ ' . number_format($related->price, 2, ',', '.') . '</div>';
-			echo '</div>';
-			echo '</div>';
-			echo '</div>';
-		}
-?>
-	</div>
-	</div>
-<?php
-		$html = ob_get_clean();
-
-		// Cache the HTML
-		$this->set_cached_data($cache_key, $html);
-		$this->debug_log('Generated and cached related products HTML');
-
-		return $html;
-	}
-
-	/**
 	 * Clear all cached data
 	 *
 	 * @since 0.2.0
@@ -1007,5 +897,115 @@ class Peaches_Ecwid_API implements Peaches_Ecwid_API_Interface {
 		}
 
 		return null;
+	}
+
+	/**
+	 * Get related product IDs from a product object.
+	 *
+	 * Extracts related product IDs from Ecwid product data using both
+	 * explicit product IDs and category-based related products.
+	 *
+	 * @since 0.2.6
+	 *
+	 * @param object $product Product object from Ecwid API.
+	 *
+	 * @return array Array of related product IDs.
+	 */
+	public function get_related_product_ids($product) {
+		$related_ids = array();
+
+		if (!$product || empty($product->relatedProducts)) {
+			return $related_ids;
+		}
+
+		// Method 1: Get related products by explicit product IDs
+		if (isset($product->relatedProducts->productIds) &&
+			is_array($product->relatedProducts->productIds)) {
+
+			$related_ids = array_merge($related_ids, $product->relatedProducts->productIds);
+		}
+
+		// Method 2: Get related products by category
+		if (isset($product->relatedProducts->relatedCategory) &&
+			$product->relatedProducts->relatedCategory->enabled) {
+
+			$related_category = $product->relatedProducts->relatedCategory;
+			$category_related_ids = $this->get_related_products_by_category(
+				$product,
+				$related_category
+			);
+
+			$related_ids = array_merge($related_ids, $category_related_ids);
+		}
+
+		// Remove duplicates and the current product ID
+		$related_ids = array_unique($related_ids);
+		$related_ids = array_filter($related_ids, function($id) use ($product) {
+			return $id != $product->id;
+		});
+
+		// Convert to integers and reindex array
+		$related_ids = array_values(array_map('intval', $related_ids));
+
+		return $related_ids;
+	}
+
+	/**
+	 * Get related products by category.
+	 *
+	 * @since 0.2.6
+	 *
+	 * @param object $product         Current product object.
+	 * @param object $related_category Related category configuration.
+	 *
+	 * @return array Array of related product IDs.
+	 */
+	private function get_related_products_by_category($product, $related_category) {
+		$related_ids = array();
+
+		try {
+			// Determine which category to search in
+			$category_id = null;
+
+			if (isset($related_category->categoryId)) {
+				$category_id = $related_category->categoryId;
+			} elseif (isset($product->categoryIds) && !empty($product->categoryIds)) {
+				// Use the first category of the current product
+				$category_id = $product->categoryIds[0];
+			}
+
+			if (!$category_id) {
+				return $related_ids;
+			}
+
+			// Set up search parameters
+			$search_params = array(
+				'category' => $category_id,
+				'enabled' => true,
+				'limit' => isset($related_category->productCount) ?
+					$related_category->productCount + 1 : 5, // Get one extra to exclude current
+			);
+
+			// Search for products in the category
+			$category_products = $this->search_products('', $search_params);
+
+			if (!empty($category_products)) {
+				foreach ($category_products as $cat_product) {
+					if (isset($cat_product['id']) && $cat_product['id'] != $product->id) {
+						$related_ids[] = $cat_product['id'];
+					}
+				}
+			}
+
+			// Limit to the requested count
+			if (isset($related_category->productCount)) {
+				$related_ids = array_slice($related_ids, 0, $related_category->productCount);
+			}
+
+		} catch (Exception $e) {
+			error_log('Peaches API: Error fetching related products by category: ' . $e->getMessage());
+		}
+
+		return $related_ids;
 	}
 }

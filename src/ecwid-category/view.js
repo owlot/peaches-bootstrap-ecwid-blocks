@@ -29,23 +29,27 @@ const { state } = store( 'peaches-ecwid-category', {
 			context.isLoading = true;
 
 			try {
-				const ajaxUrl =
-					window.EcwidSettings?.ajaxUrl || '/wp-admin/admin-ajax.php';
-				const response = yield fetch( ajaxUrl, {
-					method: 'POST',
-					headers: {
-						'Content-Type': 'application/x-www-form-urlencoded',
-					},
-					body: new URLSearchParams( {
-						action: 'get_ecwid_categories',
-						nonce: window.EcwidSettings?.ajaxNonce || '',
-					} ),
-				} );
+				// Use REST API instead of AJAX
+				const response = yield fetch(
+					'/wp-json/peaches/v1/categories',
+					{
+						headers: {
+							Accept: 'application/json',
+						},
+						credentials: 'same-origin',
+					}
+				);
+
+				if ( ! response.ok ) {
+					throw new Error(
+						`HTTP error! status: ${ response.status }`
+					);
+				}
 
 				const data = yield response.json();
 
 				if ( data && data.success && data.data ) {
-					// Map categories with URLs
+					// Map categories with URLs (preserve original logic)
 					const storePageId = window.EcwidSettings?.storePageId;
 					const storeUrl = storePageId
 						? window.EcwidSettings.storeUrl
@@ -62,7 +66,7 @@ const { state } = store( 'peaches-ecwid-category', {
 				} else {
 					throw new Error(
 						'Failed to fetch categories: ' +
-							( data?.data || 'Unknown error' )
+							( data?.message || 'Invalid response format' )
 					);
 				}
 			} catch ( error ) {
