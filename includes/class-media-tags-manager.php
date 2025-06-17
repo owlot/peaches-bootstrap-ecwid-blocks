@@ -53,47 +53,45 @@ class Peaches_Media_Tags_Manager implements Peaches_Media_Tags_Manager_Interface
 	 */
 	const DEFAULT_TAGS = array(
 		'hero_image' => array(
-			'label' => 'Hero Image',
-			'description' => 'Main featured image for the product',
-			'category' => 'primary',
-			'expected_media_type' => 'image'
-		),
-		'size_chart' => array(
-			'label' => 'Size Chart',
-			'description' => 'Product sizing information',
-			'category' => 'reference',
-			'expected_media_type' => 'image'
-		),
-		'product_video' => array(
-			'label' => 'Product Video',
-			'description' => 'Video demonstrating the product',
-			'category' => 'media',
-			'expected_media_type' => 'video'
+			'name'               => 'Hero Image',
+			'label'              => 'Hero Image',
+			'description'        => 'Main product showcase image',
+			'category'           => 'primary',
+			'expectedMediaType'  => 'image',
+			'required'           => false,
 		),
 		'ingredients_image' => array(
-			'label' => 'Ingredients Image',
-			'description' => 'Visual ingredients list or nutrition facts',
-			'category' => 'reference',
-			'expected_media_type' => 'image'
+			'name'               => 'Ingredients Image',
+			'label'              => 'Ingredients Image',
+			'description'        => 'Image showing product ingredients or composition',
+			'category'           => 'reference',
+			'expectedMediaType'  => 'image',
+			'required'           => false,
 		),
-		'packaging_image' => array(
-			'label' => 'Packaging Image',
-			'description' => 'Product packaging or box image',
-			'category' => 'secondary',
-			'expected_media_type' => 'image'
+		'size_chart' => array(
+			'name'               => 'Size Chart',
+			'label'              => 'Size Chart',
+			'description'        => 'Product sizing information and measurements',
+			'category'           => 'reference',
+			'expectedMediaType'  => 'image',
+			'required'           => false,
 		),
-		'product_audio' => array(
-			'label' => 'Product Audio',
-			'description' => 'Audio content related to the product',
-			'category' => 'media',
-			'expected_media_type' => 'audio'
+		'demo_video' => array(
+			'name'               => 'Demo Video',
+			'label'              => 'Demo Video',
+			'description'        => 'Product demonstration or usage video',
+			'category'           => 'media',
+			'expectedMediaType'  => 'video',
+			'required'           => false,
 		),
-		'instruction_manual' => array(
-			'label' => 'Instruction Manual',
-			'description' => 'Product instruction manual or guide',
-			'category' => 'reference',
-			'expected_media_type' => 'document'
-		)
+		'user_manual' => array(
+			'name'               => 'User Manual',
+			'label'              => 'User Manual',
+			'description'        => 'Downloadable user manual or instructions',
+			'category'           => 'reference',
+			'expectedMediaType'  => 'document',
+			'required'           => false,
+		),
 	);
 
 	/**
@@ -142,18 +140,25 @@ class Peaches_Media_Tags_Manager implements Peaches_Media_Tags_Manager_Interface
 				update_option(self::TAGS_OPTION, self::DEFAULT_TAGS);
 				$this->log_info('Default media tags initialized');
 			} else {
-				// Update existing tags with missing expected_media_type field
+				// Update existing tags to use new field name
 				$updated = false;
 				foreach ($existing_tags as $key => $tag_data) {
-					if (!isset($tag_data['expected_media_type'])) {
-						$existing_tags[$key]['expected_media_type'] = $this->guess_media_type_from_tag($key, $tag_data);
+					// Migrate old field name to new field name
+					if (isset($tag_data['expected_media_type']) && !isset($tag_data['expectedMediaType'])) {
+						$existing_tags[$key]['expectedMediaType'] = $tag_data['expected_media_type'];
+						unset($existing_tags[$key]['expected_media_type']); // Remove old field
+						$updated = true;
+					}
+					// If neither field exists, add default
+					if (!isset($tag_data['expectedMediaType'])) {
+						$existing_tags[$key]['expectedMediaType'] = $this->guess_media_type_from_tag($key, $tag_data);
 						$updated = true;
 					}
 				}
 
 				if ($updated) {
 					update_option(self::TAGS_OPTION, $existing_tags);
-					$this->log_info('Updated existing media tags with expected_media_type field');
+					$this->log_info('Migrated existing media tags to use expectedMediaType field');
 				}
 			}
 		} catch (Exception $e) {
@@ -292,7 +297,7 @@ class Peaches_Media_Tags_Manager implements Peaches_Media_Tags_Manager_Interface
 		$all_tags = $this->get_all_tags();
 
 		return array_filter($all_tags, function($tag_data) use ($media_type) {
-			return isset($tag_data['expected_media_type']) && $tag_data['expected_media_type'] === $media_type;
+			return isset($tag_data['expectedMediaType']) && $tag_data['expectedMediaType'] === $media_type;
 		});
 	}
 
@@ -327,7 +332,7 @@ class Peaches_Media_Tags_Manager implements Peaches_Media_Tags_Manager_Interface
 	 */
 	public function get_tag_expected_media_type($tag_key) {
 		$tag_data = $this->get_tag($tag_key);
-		return $tag_data ? ($tag_data['expected_media_type'] ?? null) : null;
+		return $tag_data ? ($tag_data['expectedMediaType'] ?? null) : null;
 	}
 
 	/**
@@ -419,10 +424,11 @@ class Peaches_Media_Tags_Manager implements Peaches_Media_Tags_Manager_Interface
 		try {
 			$tags = $this->get_all_tags();
 			$tags[$tag_key] = array(
-				'label' => sanitize_text_field($tag_label),
-				'description' => sanitize_textarea_field($tag_description),
-				'category' => sanitize_text_field($tag_category),
-				'expected_media_type' => sanitize_text_field($tag_expected_media_type)
+				'name'               => sanitize_text_field($tag_label),
+				'label'              => sanitize_text_field($tag_label),
+				'description'        => sanitize_textarea_field($tag_description),
+				'category'           => sanitize_text_field($tag_category),
+				'expectedMediaType'  => sanitize_text_field($tag_expected_media_type)
 			);
 
 			$result = update_option(self::TAGS_OPTION, $tags);
@@ -471,10 +477,11 @@ class Peaches_Media_Tags_Manager implements Peaches_Media_Tags_Manager_Interface
 		try {
 			$tags = $this->get_all_tags();
 			$tags[$tag_key] = array(
-				'label' => sanitize_text_field($tag_label),
-				'description' => sanitize_textarea_field($tag_description),
-				'category' => sanitize_text_field($tag_category),
-				'expected_media_type' => sanitize_text_field($tag_expected_media_type)
+				'name'               => sanitize_text_field($tag_label),
+				'label'              => sanitize_text_field($tag_label),
+				'description'        => sanitize_textarea_field($tag_description),
+				'category'           => sanitize_text_field($tag_category),
+				'expectedMediaType'  => sanitize_text_field($tag_expected_media_type) // FIXED
 			);
 
 			$result = update_option(self::TAGS_OPTION, $tags);

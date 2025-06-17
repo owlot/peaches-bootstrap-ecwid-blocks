@@ -82,10 +82,7 @@ function getMediaTypeLabel( tagData ) {
 		return __( 'Unknown', 'ecwid-shopping-cart' );
 	}
 
-	const mediaType =
-		tagData.expectedMediaType ||
-		tagData.expected_media_type ||
-		tagData.mediaType;
+	const mediaType = tagData.expectedMediaType || 'image';
 
 	if ( ! mediaType ) {
 		return __( 'Unknown', 'ecwid-shopping-cart' );

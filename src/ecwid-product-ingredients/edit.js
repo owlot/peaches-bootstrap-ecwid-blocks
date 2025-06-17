@@ -29,6 +29,122 @@ const SUPPORTED_SETTINGS = {
 };
 
 /**
+ * Get current language for API requests
+ *
+ * @return {string} Current language code (normalized to 2 characters)
+ */
+function getCurrentLanguageForAPI() {
+	let language = '';
+
+	// In block editor - check for peaches-multilingual store
+	if ( typeof wp !== 'undefined' && wp.data && wp.data.select ) {
+		try {
+			const multilingualStore = wp.data.select( 'peaches/multilingual' );
+			if (
+				multilingualStore &&
+				typeof multilingualStore.getCurrentEditorLanguage === 'function'
+			) {
+				const editorLang = multilingualStore.getCurrentEditorLanguage();
+				if ( editorLang ) {
+					language = editorLang;
+				}
+			}
+		} catch ( error ) {
+			// Peaches multilingual store not available, continue with fallbacks
+		}
+	}
+
+	// Frontend - check HTML lang attribute (format: "en-US", "fr-FR", "nl-NL", etc.)
+	if ( ! language ) {
+		const htmlLang = document.documentElement.lang;
+		if ( htmlLang ) {
+			language = htmlLang;
+		}
+	}
+
+	// Fallback - check for language in body class (common pattern)
+	if ( ! language ) {
+		const bodyClasses = document.body.className;
+		const langMatch = bodyClasses.match( /\blang-([a-z]{2})\b/ );
+		if ( langMatch ) {
+			language = langMatch[ 1 ];
+		}
+	}
+
+	// Check URL for language parameter
+	if ( ! language ) {
+		const urlParams = new URLSearchParams( window.location.search );
+		const langParam = urlParams.get( 'lang' );
+		if ( langParam && /^[a-z]{2}/.test( langParam ) ) {
+			language = langParam;
+		}
+	}
+
+	// Normalize the language code to match ingredient storage format
+	return normalizeLanguageCode( language || 'en' );
+}
+
+/**
+ * Normalize language code to match ingredient storage format.
+ *
+ * Converts codes like 'nl_NL', 'en-US', 'fr-FR' to 'nl', 'en', 'fr'
+ *
+ * @param {string} languageCode - Raw language code
+ * @return {string} Normalized language code (2 characters)
+ */
+function normalizeLanguageCode( languageCode ) {
+	if ( ! languageCode ) {
+		return 'en';
+	}
+
+	// Convert to lowercase
+	languageCode = languageCode.toLowerCase();
+
+	// Handle formats like 'nl_NL', 'nl-NL'
+	if ( languageCode.includes( '_' ) ) {
+		return languageCode.split( '_' )[ 0 ];
+	}
+
+	if ( languageCode.includes( '-' ) ) {
+		return languageCode.split( '-' )[ 0 ];
+	}
+
+	// Already normalized (should be 2 characters)
+	return languageCode.length > 2
+		? languageCode.substring( 0, 2 )
+		: languageCode;
+}
+
+/**
+ * Enhanced fetch function that includes language headers
+ *
+ * @param {string} url     - API endpoint URL
+ * @param {Object} options - Fetch options
+ * @return {Promise} Fetch promise
+ */
+function fetchWithLanguage( url, options = {} ) {
+	const currentLang = getCurrentLanguageForAPI();
+
+	// Add language headers for the API
+	const headers = {
+		Accept: 'application/json',
+		'X-Peaches-Language': currentLang,
+		...options.headers,
+	};
+
+	// For editor requests, also add editor-specific header
+	if ( typeof wp !== 'undefined' && wp.data ) {
+		headers[ 'X-Editor-Language' ] = currentLang;
+	}
+
+	return fetch( url, {
+		credentials: 'same-origin',
+		...options,
+		headers,
+	} );
+}
+
+/**
  * Product Ingredients Edit Component
  *
  * Renders the editor interface with test data when available from parent context.
@@ -47,6 +163,7 @@ function ProductIngredientsEdit( props ) {
 	const [ ingredientsData, setIngredientsData ] = useState( null );
 	const [ isLoading, setIsLoading ] = useState( false );
 	const [ error, setError ] = useState( null );
+	const [ currentLanguage, setCurrentLanguage ] = useState( '' );
 
 	const className = useMemo(
 		() => computeClassName( attributes ),
@@ -59,6 +176,74 @@ function ProductIngredientsEdit( props ) {
 	} );
 
 	/**
+	 * Listen for language changes in the editor (if peaches-multilingual is active)
+	 */
+	useEffect( () => {
+		if ( typeof wp !== 'undefined' && wp.data && wp.data.subscribe ) {
+			let currentLang = getCurrentLanguageForAPI();
+			setCurrentLanguage( currentLang );
+
+			const unsubscribe = wp.data.subscribe( () => {
+				const newLang = getCurrentLanguageForAPI();
+				if ( newLang !== currentLang ) {
+					currentLang = newLang;
+					setCurrentLanguage( newLang );
+					// Refetch ingredients when language changes
+					if ( testProductData?.id ) {
+						// Call your existing fetch logic here
+						setIsLoading( true );
+						setError( null );
+
+						const currentLang = getCurrentLanguageForAPI();
+						const url = `/wp-json/peaches/v1/product-ingredients/${ testProductData.id }`;
+						const urlWithLang = `${ url }?lang=${ encodeURIComponent(
+							currentLang
+						) }`;
+
+						fetchWithLanguage( urlWithLang )
+							.then( ( response ) => {
+								if ( ! response.ok ) {
+									throw new Error(
+										`HTTP error! status: ${ response.status }`
+									);
+								}
+								return response.json();
+							} )
+							.then( ( data ) => {
+								if ( data.success ) {
+									setIngredientsData( data );
+									setCurrentLanguage(
+										data.language || currentLang
+									);
+								} else {
+									throw new Error(
+										'Failed to fetch ingredients'
+									);
+								}
+							} )
+							.catch( ( fetchError ) => {
+								console.error(
+									'Error fetching ingredients:',
+									fetchError
+								);
+								setError( fetchError.message );
+								setIngredientsData( null );
+							} )
+							.finally( () => {
+								setIsLoading( false );
+							} );
+					}
+				}
+			} );
+
+			return unsubscribe;
+		}
+
+		// Set initial language for frontend
+		setCurrentLanguage( getCurrentLanguageForAPI() );
+	}, [] );
+
+	/**
 	 * Fetch ingredients data when test product data changes
 	 */
 	useEffect( () => {
@@ -66,16 +251,13 @@ function ProductIngredientsEdit( props ) {
 			setIsLoading( true );
 			setError( null );
 
-			// Use the same API endpoint as the frontend
-			fetch(
-				`/wp-json/peaches/v1/product-ingredients/${ testProductData.id }`,
-				{
-					headers: {
-						Accept: 'application/json',
-					},
-					credentials: 'same-origin',
-				}
-			)
+			const currentLang = getCurrentLanguageForAPI();
+			const url = `/wp-json/peaches/v1/product-ingredients/${ testProductData.id }`;
+			const urlWithLang = `${ url }?lang=${ encodeURIComponent(
+				currentLang
+			) }`;
+
+			fetchWithLanguage( urlWithLang )
 				.then( ( response ) => {
 					if ( ! response.ok ) {
 						throw new Error(
@@ -85,24 +267,20 @@ function ProductIngredientsEdit( props ) {
 					return response.json();
 				} )
 				.then( ( data ) => {
-					setIsLoading( false );
-					if (
-						data &&
-						data.ingredients &&
-						Array.isArray( data.ingredients )
-					) {
+					if ( data.success ) {
 						setIngredientsData( data );
-						setError( null );
+						setCurrentLanguage( data.language || currentLang );
 					} else {
-						// No ingredients found - this is okay, just show empty state
-						setIngredientsData( { ingredients: [] } );
-						setError( null );
+						throw new Error( 'Failed to fetch ingredients' );
 					}
 				} )
-				.catch( ( err ) => {
-					setIsLoading( false );
-					setError( err.message );
+				.catch( ( fetchError ) => {
+					console.error( 'Error fetching ingredients:', fetchError );
+					setError( fetchError.message );
 					setIngredientsData( null );
+				} )
+				.finally( () => {
+					setIsLoading( false );
 				} );
 		} else {
 			setIngredientsData( null );
@@ -228,6 +406,19 @@ function ProductIngredientsEdit( props ) {
 										) }
 									</>
 								) }
+								{ currentLanguage &&
+									currentLanguage !== 'en' && (
+										<>
+											<br />
+											<small>
+												{ __(
+													'Language:',
+													'ecwid-shopping-cart'
+												) }{ ' ' }
+												{ currentLanguage }
+											</small>
+										</>
+									) }
 							</Notice>
 						) }
 

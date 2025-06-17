@@ -315,8 +315,8 @@ class Peaches_Ecwid_Blocks {
 		}
 
 		// Initialize REST API (consolidates all REST endpoints)
-		if (class_exists('Peaches_REST_API') && $this->product_settings_manager && $this->media_tags_manager) {
-			$this->rest_api = new Peaches_REST_API($this->product_settings_manager, $this->media_tags_manager);
+		if (class_exists('Peaches_REST_API') && $this->product_settings_manager && $this->media_tags_manager && $this->product_media_manager && $this->ecwid_api) {
+			$this->rest_api = new Peaches_REST_API($this->product_settings_manager, $this->media_tags_manager, $this->product_media_manager, $this->ecwid_api);
 		}
 	}
 

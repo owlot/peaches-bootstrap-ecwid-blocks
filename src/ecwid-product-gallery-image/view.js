@@ -605,9 +605,7 @@ const { state, actions } = store( 'peaches-ecwid-product-gallery-image', {
 				);
 				if ( tagInfo ) {
 					context.expectedMediaType =
-						tagInfo.expected_media_type ||
-						tagInfo.expectedMediaType ||
-						'image';
+						tagInfo.expectedMediaType || 'image';
 				}
 
 				// Try to fetch primary media
