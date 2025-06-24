@@ -1,16 +1,18 @@
 /**
  * External dependencies
  */
+import clsx from 'clsx';
 import { __ } from '@wordpress/i18n';
-import { useMemo, useState, useEffect } from '@wordpress/element';
 import { InspectorControls, useBlockProps } from '@wordpress/block-editor';
 import {
 	PanelBody,
-	Button,
 	ToggleControl,
+	Button,
 	Notice,
 	Spinner,
+	SelectControl,
 } from '@wordpress/components';
+import { useEffect, useState, useMemo } from '@wordpress/element';
 
 /**
  * Internal dependencies
@@ -19,11 +21,6 @@ import {
 	BootstrapSettingsPanels,
 	computeClassName,
 } from '../../../peaches-bootstrap-blocks/src/utils/bootstrap_settings';
-
-/**
- * Styles
- */
-import './editor.scss';
 
 const SUPPORTED_SETTINGS = {
 	responsive: {
@@ -34,34 +31,158 @@ const SUPPORTED_SETTINGS = {
 	},
 };
 
+/**
+ * Product Edit component
+ *
+ * @param {Object} props               Component props
+ *
+ * @param          props.attributes
+ * @param          props.setAttributes
+ * @return {JSX.Element} React component
+ */
 function ProductEdit( props ) {
 	const { attributes, setAttributes } = props;
+	const {
+		id,
+		showAddToCart,
+		showCardHoverShadow,
+		showCardHoverJump,
+		hoverMediaTag,
+	} = attributes;
+
+	// State for product data and loading
 	const [ productData, setProductData ] = useState( null );
 	const [ isLoading, setIsLoading ] = useState( false );
 	const [ error, setError ] = useState( null );
+	const [ mediaTags, setMediaTags ] = useState( [] );
+	const [ isLoadingTags, setIsLoadingTags ] = useState( false );
+	const [ hoverImageUrl, setHoverImageUrl ] = useState( '' );
 
-	/**
-	 * Compute className from Bootstrap attributes and store it
-	 */
-	const computedClassName = useMemo( () => {
-		return computeClassName( attributes );
-	}, [ attributes ] );
+	const computedClassName = useMemo(
+		() =>
+			clsx(
+				'card h-100 border-0',
+				{
+					'hover-jump': attributes.showCardHoverJump,
+					'hover-shadow': attributes.showCardHoverShadow,
+				},
+				computeClassName( attributes, SUPPORTED_SETTINGS )
+			),
+		[ attributes ]
+	);
 
-	const blockProps = useBlockProps( { className: computedClassName } );
-	/**
-	 * Update the computedClassName attribute when it changes
-	 */
+	// Update the computedClassName attribute when it changes
 	useEffect( () => {
-		if ( attributes.computedClassName !== computedClassName ) {
-			setAttributes( { computedClassName } );
+		setAttributes( { computedClassName } );
+	}, [ computedClassName, setAttributes ] );
+
+	// Prepare block props
+	const blockProps = useBlockProps( {
+		className: computedClassName,
+	} );
+
+	// Load media tags on component mount
+	useEffect( () => {
+		const loadMediaTags = async () => {
+			setIsLoadingTags( true );
+			try {
+				const response = await fetch(
+					'/wp-json/peaches/v1/media-tags',
+					{
+						headers: { Accept: 'application/json' },
+						credentials: 'same-origin',
+					}
+				);
+
+				if ( ! response.ok ) {
+					throw new Error(
+						`HTTP error! status: ${ response.status }`
+					);
+				}
+
+				const data = await response.json();
+
+				if ( data.success && Array.isArray( data.data ) ) {
+					// Filter for image media tags only
+					const imageTags = data.data.filter(
+						( tag ) => tag.expectedMediaType === 'image'
+					);
+					setMediaTags( imageTags );
+				} else {
+					throw new Error(
+						__( 'Invalid response format', 'ecwid-shopping-cart' )
+					);
+				}
+			} catch ( fetchError ) {
+				console.error( 'Failed to load media tags:', fetchError );
+			}
+			setIsLoadingTags( false );
+		};
+
+		loadMediaTags();
+	}, [] );
+
+	// Load hover image when hover tag or product changes
+	useEffect( () => {
+		if ( ! hoverMediaTag || ! id ) {
+			setHoverImageUrl( '' );
+			return;
 		}
-	}, [ computedClassName, attributes.computedClassName, setAttributes ] );
+
+		// Fetch hover image URL
+		const fetchHoverImage = async () => {
+			try {
+				const response = await fetch(
+					`/wp-json/peaches/v1/product-media/${ id }/tag/${ hoverMediaTag }`,
+					{
+						headers: { Accept: 'application/json' },
+						credentials: 'same-origin',
+					}
+				);
+
+				if ( response.ok ) {
+					const data = await response.json();
+					if ( data && data.success && data.data ) {
+						setHoverImageUrl( data.data.url );
+					} else {
+						setHoverImageUrl( '' );
+					}
+				} else {
+					setHoverImageUrl( '' );
+				}
+			} catch ( fetchError ) {
+				console.error( 'Failed to load hover image:', fetchError );
+				setHoverImageUrl( '' );
+			}
+		};
+
+		fetchHoverImage();
+	}, [ hoverMediaTag, id ] );
 
 	/**
-	 * Fetch product data when ID changes using REST API
+	 * Get current language for API requests
+	 *
+	 * @return {string} Current language code
 	 */
+	const getCurrentLanguage = () => {
+		// Try to get from Polylang or WPML
+		if ( typeof window.pll_current_language !== 'undefined' ) {
+			return window.pll_current_language;
+		}
+
+		// Check HTML lang attribute
+		const htmlLang = document.documentElement.lang;
+		if ( htmlLang ) {
+			// Extract language code (e.g., 'en' from 'en-US')
+			return htmlLang.split( '-' )[ 0 ];
+		}
+
+		return '';
+	};
+
+	// Load product data when ID changes
 	useEffect( () => {
-		if ( ! attributes.id ) {
+		if ( ! id ) {
 			setProductData( null );
 			setError( null );
 			return;
@@ -70,8 +191,14 @@ function ProductEdit( props ) {
 		setIsLoading( true );
 		setError( null );
 
-		// Use REST API directly - works in both editor and frontend
-		fetch( `/wp-json/peaches/v1/products/${ attributes.id }`, {
+		const currentLanguage = getCurrentLanguage();
+		const apiUrl = `/wp-json/peaches/v1/products/${ id }`;
+		const urlWithLang = currentLanguage
+			? `${ apiUrl }?lang=${ encodeURIComponent( currentLanguage ) }`
+			: apiUrl;
+
+		// Use REST API directly - same as other blocks
+		fetch( urlWithLang, {
 			headers: {
 				'X-WP-Nonce': wpApiSettings?.nonce || '',
 				Accept: 'application/json',
@@ -104,6 +231,13 @@ function ProductEdit( props ) {
 				) {
 					setProductData( responseData.data );
 					setError( null );
+				} else {
+					setError(
+						__(
+							'Failed to fetch product data: Invalid response',
+							'ecwid-shopping-cart'
+						)
+					);
 				}
 				setIsLoading( false );
 			} )
@@ -111,20 +245,19 @@ function ProductEdit( props ) {
 				setIsLoading( false );
 				console.error( 'Fetch Error:', {
 					error: fetchError.message,
-					productId: attributes.id,
+					productId: id,
 				} );
 				setError(
 					__( 'Failed to load product data', 'ecwid-shopping-cart' )
 				);
 			} );
-	}, [ attributes.id ] );
+	}, [ id ] );
 
 	/**
 	 * Handle Ecwid product selection
-	 *
-	 * @param {Object} params - Selection parameters
+	 * @param params
 	 */
-	const saveCallback = function ( params ) {
+	const handleProductSelect = ( params ) => {
 		const newAttributes = {
 			id: params.newProps.product.id,
 		};
@@ -149,16 +282,16 @@ function ProductEdit( props ) {
 	 *
 	 * @param {Object} popupProps - Popup properties
 	 */
-	function openEcwidProductPopup( popupProps ) {
+	const openEcwidProductPopup = ( popupProps ) => {
 		if ( typeof window.ecwid_open_product_popup === 'function' ) {
 			window.ecwid_open_product_popup( {
-				saveCallback,
+				saveCallback: handleProductSelect,
 				props: popupProps,
 			} );
 		} else {
 			console.error( 'Ecwid product popup function not found' );
 		}
-	}
+	};
 
 	/**
 	 * Extract subtitle from product attributes
@@ -196,6 +329,82 @@ function ProductEdit( props ) {
 		return `€ ${ parseFloat( productData.price ).toFixed( 2 ) }`;
 	};
 
+	/**
+	 * Get grouped media tag options for select control
+	 */
+	const getGroupedMediaTagOptions = useMemo( () => {
+		if ( ! mediaTags.length ) {
+			return [
+				{
+					label: __(
+						'No image media tags available',
+						'ecwid-shopping-cart'
+					),
+					value: '',
+					disabled: true,
+				},
+			];
+		}
+
+		// Group tags by category
+		const groupedTags = mediaTags.reduce( ( groups, tag ) => {
+			const category = tag.category || 'other';
+			if ( ! groups[ category ] ) {
+				groups[ category ] = [];
+			}
+			groups[ category ].push( tag );
+			return groups;
+		}, {} );
+
+		// Create options with category headers
+		const options = [
+			{
+				label: __( 'No hover image', 'ecwid-shopping-cart' ),
+				value: '',
+			},
+		];
+
+		// Define category order and labels
+		const categoryInfo = {
+			primary: __( 'Primary Content', 'ecwid-shopping-cart' ),
+			secondary: __( 'Secondary Content', 'ecwid-shopping-cart' ),
+			reference: __( 'Reference Materials', 'ecwid-shopping-cart' ),
+			media: __( 'Rich Media', 'ecwid-shopping-cart' ),
+			other: __( 'Other', 'ecwid-shopping-cart' ),
+		};
+
+		Object.entries( categoryInfo ).forEach(
+			( [ categoryKey, categoryLabel ] ) => {
+				if ( groupedTags[ categoryKey ] ) {
+					options.push( {
+						label: `── ${ categoryLabel } ──`,
+						value: `category_${ categoryKey }`,
+						disabled: true,
+					} );
+
+					groupedTags[ categoryKey ].forEach( ( tag ) => {
+						options.push( {
+							label: `    ${ tag.label }`,
+							value: tag.key,
+						} );
+					} );
+				}
+			}
+		);
+
+		return options;
+	}, [ mediaTags ] );
+
+	/**
+	 * Get selected tag info
+	 */
+	const getSelectedHoverTagInfo = () => {
+		if ( ! hoverMediaTag ) {
+			return null;
+		}
+		return mediaTags.find( ( tag ) => tag.key === hoverMediaTag );
+	};
+
 	return (
 		<>
 			<InspectorControls>
@@ -203,36 +412,43 @@ function ProductEdit( props ) {
 					title={ __( 'Product Settings', 'ecwid-shopping-cart' ) }
 					initialOpen={ true }
 				>
-					{ ! attributes.id && (
-						<Button
-							variant="primary"
-							onClick={ () =>
-								openEcwidProductPopup( {
-									attributes,
-									setAttributes,
-								} )
-							}
-						>
-							{ __( 'Choose Product', 'ecwid-shopping-cart' ) }
-						</Button>
+					{ ! id && ! isLoading && (
+						<div className="product-placeholder">
+							<p>
+								{ __(
+									'Please select a product to display.',
+									'ecwid-shopping-cart'
+								) }
+							</p>
+							<Button
+								variant="secondary"
+								onClick={ () =>
+									openEcwidProductPopup( {
+										attributes,
+										setAttributes,
+									} )
+								}
+							>
+								{ __(
+									'Select Product',
+									'ecwid-shopping-cart'
+								) }
+							</Button>
+						</div>
 					) }
 
-					{ attributes.id && (
-						<div className="product-info">
+					{ id && (
+						<div className="product-selection">
 							<p>
 								<strong>
 									{ __(
-										'Product ID:',
+										'Selected Product ID:',
 										'ecwid-shopping-cart'
 									) }
 								</strong>{ ' ' }
-								{ attributes.id }
+								{ id }
 							</p>
-							{ productData && (
-								<p>
-									<strong>{ productData.name }</strong>
-								</p>
-							) }
+
 							<Button
 								variant="secondary"
 								onClick={ () =>
@@ -250,18 +466,119 @@ function ProductEdit( props ) {
 						</div>
 					) }
 
+					{ isLoading && (
+						<div className="loading-indicator">
+							<Spinner />
+							<span>
+								{ __(
+									'Loading product data…',
+									'ecwid-shopping-cart'
+								) }
+							</span>
+						</div>
+					) }
+
+					{ error && (
+						<Notice status="error" isDismissible={ false }>
+							<p>{ error }</p>
+						</Notice>
+					) }
+
 					<ToggleControl
+						__nextHasNoMarginBottom
+						className="pt-2"
 						label={ __(
-							'Show Add to Cart',
+							'Show Add to Cart Button',
 							'ecwid-shopping-cart'
 						) }
-						checked={ attributes.showAddToCart }
+						checked={ showAddToCart }
 						onChange={ ( value ) =>
 							setAttributes( { showAddToCart: value } )
 						}
-						__next40pxDefaultSize
-						__nextHasNoMarginBottom
 					/>
+
+					<ToggleControl
+						__nextHasNoMarginBottom
+						className="pt-2"
+						label={ __(
+							'Show Card shadow on hover',
+							'ecwid-shopping-cart'
+						) }
+						checked={ showCardHoverShadow }
+						onChange={ ( value ) =>
+							setAttributes( { showCardHoverShadow: value } )
+						}
+					/>
+
+					<ToggleControl
+						__nextHasNoMarginBottom
+						className="pt-2"
+						label={ __(
+							'Show Card jump effect on hover',
+							'ecwid-shopping-cart'
+						) }
+						checked={ showCardHoverJump }
+						onChange={ ( value ) =>
+							setAttributes( { showCardHoverJump: value } )
+						}
+					/>
+
+					{ isLoadingTags && (
+						<div className="loading-indicator">
+							<Spinner />
+							<span>
+								{ __(
+									'Loading media tags…',
+									'ecwid-shopping-cart'
+								) }
+							</span>
+						</div>
+					) }
+
+					{ ! isLoadingTags && (
+						<>
+							<SelectControl
+								__nextHasNoMarginBottom
+								__next40pxDefaultSize
+								label={ __(
+									'Hover Image Media Tag',
+									'ecwid-shopping-cart'
+								) }
+								value={ hoverMediaTag }
+								options={ getGroupedMediaTagOptions }
+								onChange={ ( value ) => {
+									if ( ! value.startsWith( 'category_' ) ) {
+										setAttributes( {
+											hoverMediaTag: value,
+										} );
+									}
+								} }
+								help={ __(
+									'Select a media tag to display when hovering over the product image. Leave empty for no hover effect.',
+									'ecwid-shopping-cart'
+								) }
+							/>
+
+							{ getSelectedHoverTagInfo() && (
+								<div className="mt-2 p-3 bg-light border rounded">
+									<div className="d-flex align-items-center gap-2 mb-2">
+										<i className="dashicons dashicons-format-image"></i>
+										<strong>
+											{ getSelectedHoverTagInfo().label }
+										</strong>
+									</div>
+									{ getSelectedHoverTagInfo().description && (
+										<p className="text-sm text-muted mb-0">
+											{
+												getSelectedHoverTagInfo()
+													.description
+											}
+										</p>
+									) }
+								</div>
+							) }
+						</>
+					) }
 				</PanelBody>
 
 				<BootstrapSettingsPanels
@@ -275,19 +592,19 @@ function ProductEdit( props ) {
 				{ isLoading && (
 					<div className="text-center my-3">
 						<Spinner />
-						<p>
+						<span className="ms-2">
 							{ __( 'Loading product…', 'ecwid-shopping-cart' ) }
-						</p>
+						</span>
 					</div>
 				) }
 
 				{ error && (
 					<Notice status="error" isDismissible={ false }>
-						{ error }
+						<p>{ error }</p>
 					</Notice>
 				) }
 
-				{ ! attributes.id && ! isLoading && (
+				{ ! id && ! isLoading && (
 					<div className="product-placeholder">
 						<p>
 							{ __(
@@ -299,14 +616,56 @@ function ProductEdit( props ) {
 				) }
 
 				{ productData && ! isLoading && ! error && (
-					<div className="card h-100 border-0 shadow-sm">
+					<>
 						{ productData.thumbnailUrl && (
-							<div className="card-img-top ratio ratio-1x1">
+							<div className="card-img-top ratio ratio-1x1 product-image-container">
 								<img
 									src={ productData.thumbnailUrl }
 									alt={ productData.name }
-									className="object-fit-cover"
+									className="object-fit-cover product-image-main visible"
 								/>
+								{ /* Show hover tag indicator */ }
+								{ hoverMediaTag && (
+									<div className="position-absolute top-0 start-0 end-0 bottom-0 d-flex align-items-center justify-content-center">
+										<div className="text-center bg-white opacity-70 p-2">
+											<div className="mb-2">
+												<i
+													className="dashicons dashicons-format-image"
+													style={ {
+														fontSize: '24px',
+													} }
+												></i>
+											</div>
+											<div className="badge text-dark bg-info mb-1">
+												{ __(
+													'Hover Effect Active',
+													'ecwid-shopping-cart'
+												) }
+											</div>
+											<div className="small text-muted">
+												{ hoverMediaTag }
+											</div>
+											{ hoverImageUrl && (
+												<div className="small text-success mt-1">
+													✓{ ' ' }
+													{ __(
+														'Image Found',
+														'ecwid-shopping-cart'
+													) }
+												</div>
+											) }
+											{ ! hoverImageUrl && (
+												<div className="bdage text-dark bg-warning small mt-1">
+													⚠{ ' ' }
+													{ __(
+														'No Image',
+														'ecwid-shopping-cart'
+													) }
+												</div>
+											) }
+										</div>
+									</div>
+								) }
 							</div>
 						) }
 						<div className="card-body p-2 p-md-3 d-flex flex-wrap align-content-between">
@@ -332,7 +691,7 @@ function ProductEdit( props ) {
 							>
 								{ formatPrice() }
 							</div>
-							{ attributes.showAddToCart && (
+							{ showAddToCart && (
 								<button
 									title="Add to cart"
 									className="add-to-cart btn pe-0"
@@ -341,7 +700,7 @@ function ProductEdit( props ) {
 								></button>
 							) }
 						</div>
-					</div>
+					</>
 				) }
 			</div>
 		</>

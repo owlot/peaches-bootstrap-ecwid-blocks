@@ -61,6 +61,14 @@ class Peaches_REST_API {
 	private $ecwid_api;
 
 	/**
+	 * Product Manager instance.
+	 *
+	 * @since 0.2.7
+	 * @var Peaches_Product_Manager
+	 */
+	private $product_manager;
+
+	/**
 	 * Constructor.
 	 *
 	 * @since 0.2.6
@@ -69,12 +77,14 @@ class Peaches_REST_API {
 	 * @param Peaches_Media_Tags_Manager       $media_tags_manager       Media Tags Manager instance.
 	 * @param Peaches_Product_Media_Manager    $product_media_manager    Product Media Manager instance.
 	 * @param Peaches_Ecwid_API                $ecwid_api                Ecwid API instance.
+	 * @param Peaches_Product_Manager          $product_manager          Product manager instance.
 	 */
-	public function __construct($product_settings_manager, $media_tags_manager, $product_media_manager, $ecwid_api = null) {
+	public function __construct($product_settings_manager, $media_tags_manager, $product_media_manager, $ecwid_api, $product_manager) {
 		$this->product_settings_manager = $product_settings_manager;
-		$this->media_tags_manager = $media_tags_manager;
-		$this->product_media_manager = $product_media_manager;
-		$this->ecwid_api = $ecwid_api;
+		$this->media_tags_manager       = $media_tags_manager;
+		$this->product_media_manager    = $product_media_manager;
+		$this->ecwid_api                = $ecwid_api;
+		$this->product_manager          = $product_manager;
 
 		$this->init_hooks();
 	}
@@ -112,6 +122,12 @@ class Peaches_REST_API {
 						'type'        => 'integer',
 						'required'    => true,
 						'minimum'     => 1,
+					),
+					'lang'       => array(
+						'description' => __('Language code for multilingual sites.', 'peaches'),
+						'type'        => 'string',
+						'required'    => false,
+						'sanitize_callback' => 'sanitize_text_field',
 					),
 				),
 			)
@@ -661,7 +677,7 @@ class Peaches_REST_API {
 		}
 	}
 
-/**
+	/**
 	 * Get product media by tag with full processing.
 	 *
 	 * @since 0.2.5
@@ -1273,6 +1289,29 @@ class Peaches_REST_API {
 				);
 			}
 
+			// Get language from request if available, otherwise use current language
+			$lang = $request->get_param('lang') ? sanitize_text_field($request->get_param('lang')) : '';
+
+			// If no language specified in request, get current language
+			if (empty($lang)) {
+				$lang = Peaches_Ecwid_Utilities::get_current_language();
+			}
+
+			// Set the language for the current request if provided and different from current
+			if (!empty($lang)) {
+				// Polylang support
+				if (function_exists('pll_set_language')) {
+					pll_set_language($lang);
+				}
+				// WPML support
+				elseif (defined('ICL_LANGUAGE_CODE') && class_exists('SitePress')) {
+					global $sitepress;
+					if ($sitepress) {
+						$sitepress->switch_lang($lang);
+					}
+				}
+			}
+
 			// Get the product data
 			$product = $this->ecwid_api->get_product_by_id($product_id);
 
@@ -1284,10 +1323,34 @@ class Peaches_REST_API {
 				);
 			}
 
+			// Convert the entire product object to array for JSON response
+			$product_data = (array) $product;
+
+			// Generate product URL
+			$product_url = $this->product_manager->build_product_url($product, $lang);
+
+			// Add our custom URL field
+			$product_data['url'] = $product_url;
+			if (!isset($product_data['description'])) {
+				$product_data['description'] = '';
+			}
+			if (!isset($product_data['galleryImages'])) {
+				$product_data['galleryImages'] = array();
+			}
+			if (!isset($product_data['media'])) {
+				$product_data['media'] = null;
+			}
+			if (!isset($product_data['inStock'])) {
+				$product_data['inStock'] = true; // Default assumption
+			}
+			if (!isset($product_data['compareToPrice'])) {
+				$product_data['compareToPrice'] = null;
+			}
+
 			return new WP_REST_Response(
 				array(
 					'success' => true,
-					'data'    => $product,
+					'data'    => $product_data,
 				),
 				200
 			);

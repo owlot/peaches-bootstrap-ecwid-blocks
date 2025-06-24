@@ -5,25 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.2.7] - 2025-06-23
 
 ### Added
-- Gallery tags and ingredient translations fixes
-- Product related products custom block
-- Working product-description custom block
-- Multiple product descriptions support
-- Easy create new product settings from table functionality
-
-### Fixed
-- Gallery tags and ingredient translations
-- Column title in product settings table
-- Patterns using block updates
-- Ecwid-product-gallery-image block format fixes
-- Product links with multilingual sites
+- Product hover image functionality with media tag selection
+- Template functions for product media URL retrieval
+- Enhanced product card interactions with smooth transitions
 
 ## [0.2.6] - 2025-06-17
 
 ### Added
+- Gallery tags and ingredient translations fixes
+- Easy create new product settings from table functionality
 - Product Media Manager with enhanced functionality (@since 0.2.6)
 - REST API endpoints for product data (@since 0.2.5)
 - Comprehensive product media management system
@@ -43,6 +36,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Block patterns integration issues
 - Gallery image block formatting
 - Add to cart button functionality in product cards
+- Gallery tags and ingredient translations
+- Column title in product settings table
+- Patterns using block updates
+- Ecwid-product-gallery-image block format fixes
+- Product links with multilingual sites
 
 ## [0.2.5] - 2025-06-17
 

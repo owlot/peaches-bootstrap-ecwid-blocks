@@ -126,6 +126,7 @@ function ProductDetailEdit( { attributes, setAttributes } ) {
 
 	/**
 	 * Handle Ecwid product selection
+	 *
 	 * @param params
 	 */
 	const handleProductSelect = ( params ) => {
@@ -150,7 +151,8 @@ function ProductDetailEdit( { attributes, setAttributes } ) {
 
 	/**
 	 * Open Ecwid product selection popup
-	 * @param popupProps
+	 *
+	 * @param {Object} popupProps - Popup properties
 	 */
 	const openEcwidProductPopup = ( popupProps ) => {
 		if ( typeof window.ecwid_open_product_popup === 'function' ) {
@@ -167,7 +169,7 @@ function ProductDetailEdit( { attributes, setAttributes } ) {
 	 * Clear test product selection
 	 */
 	const clearTestProduct = () => {
-		setAttributes( { testProductId: 0, testProductData: null } );
+		setAttributes( { testProductId: undefined, testProductData: null } );
 		setTestProductData( null );
 		setError( null );
 	};
@@ -182,7 +184,11 @@ function ProductDetailEdit( { attributes, setAttributes } ) {
 					) }
 					initialOpen={ false }
 				>
-					<Notice status="info" isDismissible={ false }>
+					<Notice
+						className="mb-2"
+						status="info"
+						isDismissible={ false }
+					>
 						{ __(
 							'Configure a test product to preview how child blocks will display product data in the editor.',
 							'ecwid-shopping-cart'
@@ -191,7 +197,7 @@ function ProductDetailEdit( { attributes, setAttributes } ) {
 
 					{ ! testProductId && (
 						<Button
-							variant="primary"
+							variant="secondary"
 							onClick={ () =>
 								openEcwidProductPopup( {
 									attributes,
@@ -206,7 +212,7 @@ function ProductDetailEdit( { attributes, setAttributes } ) {
 						</Button>
 					) }
 
-					{ testProductId && (
+					{ testProductId && testProductId > 0 && (
 						<div className="test-product-info">
 							<div className="test-product-header">
 								<strong>

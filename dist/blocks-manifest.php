@@ -106,6 +106,18 @@ return array(
 				'type' => 'boolean',
 				'default' => true
 			),
+			'showCardHoverShadow' => array(
+				'type' => 'boolean',
+				'default' => true
+			),
+			'showCardHoverJump' => array(
+				'type' => 'boolean',
+				'default' => true
+			),
+			'hoverMediaTag' => array(
+				'type' => 'string',
+				'default' => ''
+			),
 			'computedClassName' => array(
 				'type' => 'string',
 				'default' => ''

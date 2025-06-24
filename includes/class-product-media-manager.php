@@ -257,6 +257,124 @@ class Peaches_Product_Media_Manager implements Peaches_Product_Media_Manager_Int
 	}
 
 	/**
+	 * Get product media URL by tag.
+	 *
+	 * @since 0.2.7
+	 *
+	 * @param int    $product_id  Ecwid product ID.
+	 * @param string $tag_key     Media tag key.
+	 * @param string $size        Image size (thumbnail, medium, large, full).
+	 * @param bool   $fallback    Whether to use fallback images.
+	 *
+	 * @return string|null Media URL or null if not found.
+	 */
+	public function get_product_media_url($product_id, $tag_key, $size = 'large', $fallback = true) {
+		if (empty($product_id) || empty($tag_key)) {
+			return null;
+		}
+
+		try {
+			// Find product settings post for this Ecwid product ID
+			$product_settings_posts = get_posts(array(
+				'post_type' => 'product_settings',
+				'meta_query' => array(
+					array(
+						'key' => '_ecwid_product_id',
+						'value' => $product_id,
+						'compare' => '='
+					)
+				),
+				'posts_per_page' => 1,
+				'post_status' => 'any'
+			));
+
+			if (empty($product_settings_posts)) {
+				$this->log_error('No post found for given product ID', array(
+					'product_id' => $product_id,
+				));
+
+				// No product settings found, try fallback to Ecwid images if enabled
+				if ($fallback) {
+					return $this->get_ecwid_image_by_position($post_id, 1);
+				}
+				return null;
+			}
+
+			$product_settings_post = $product_settings_posts[0];
+			$post_id = $product_settings_post->ID;
+			$this->log_info('Successfully found product settings post', array(
+				'product_id' => $product_id,
+				'post_id'    => $post_id
+			));
+
+			// Get raw media data by tag
+			$media_data = $this->get_product_media_by_tag($post_id, $tag_key);
+
+			if (!$media_data) {
+				$this->log_error('No media found for given product and tag', array(
+					'post_id' => $post_id,
+					'tag_key' => $tag_key
+				));
+
+				// No product settings found, try fallback to Ecwid images if enabled
+				if ($fallback) {
+					return $this->get_ecwid_image_by_position($post_id, 1);
+				}
+				return null;
+			}
+
+			// Process different media types
+			switch ($media_data['media_type']) {
+				case 'upload':
+					if (!empty($media_data['attachment_id'])) {
+						$image_url = wp_get_attachment_image_url($media_data['attachment_id'], $size);
+						if ($image_url) {
+							return $image_url;
+						}
+					}
+					break;
+
+				case 'url':
+					if (!empty($media_data['media_url'])) {
+						return $media_data['media_url'];
+					}
+					break;
+
+				case 'ecwid':
+					if (!empty($media_data['ecwid_position'])) {
+						$product = $this->ecwid_api->get_product_by_id($product_id);
+						if ($product) {
+							return $this->get_ecwid_image_by_position($product, $media_data['ecwid_position']);
+						}
+					}
+					break;
+			}
+
+			// If we get here, the specified media couldn't be loaded, try fallback
+			if ($fallback && $post_id) {
+				return $this->get_ecwid_image_by_position($post_id, 1);
+			}
+
+			return null;
+
+		} catch (Exception $e) {
+			$this->log_error('Error getting product media URL', array(
+				'product_id' => $product_id,
+				'tag_key' => $tag_key,
+				'size' => $size,
+				'error' => $e->getMessage()
+			));
+
+			// Try fallback on error
+			if ($fallback && isset($post_id)) {
+				return $this->get_ecwid_image_by_position($post_id, 1);
+			}
+
+			return null;
+		}
+	}
+
+	/**
 	 * Render media tag item with multiple input modes (Interface implementation).
 	 *
 	 * Renders the complete media management interface for a specific tag.
@@ -1002,31 +1120,15 @@ class Peaches_Product_Media_Manager implements Peaches_Product_Media_Manager_Int
 	 * Get Ecwid fallback image for hero image tag.
 	 *
 	 * @since 0.2.1
+	 * @since 0.2.7 Refactored to use generic get_ecwid_image function.
 	 *
 	 * @param int $post_id Post ID.
 	 *
 	 * @return string|null Fallback image URL or null.
 	 */
 	private function get_ecwid_fallback_image($post_id) {
-		try {
-			$ecwid_product_id = get_post_meta($post_id, '_ecwid_product_id', true);
-			if (!$ecwid_product_id) {
-				return null;
-			}
-
-			$product = $this->ecwid_api->get_product_by_id($ecwid_product_id);
-			if ($product && !empty($product->thumbnailUrl)) {
-				return $product->thumbnailUrl;
-			}
-
-		} catch (Exception $e) {
-			$this->log_error('Error getting Ecwid fallback image', array(
-				'post_id' => $post_id,
-				'error'   => $e->getMessage(),
-			));
-		}
-
-		return null;
+		// For hero image fallback, use position 0 (main/thumbnail image)
+		return $this->get_ecwid_image_by_position($post_id, 0);
 	}
 
 	/**

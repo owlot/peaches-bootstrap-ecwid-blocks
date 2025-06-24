@@ -60,4 +60,14 @@ interface Peaches_Product_Manager_Interface {
 	 * @return string HTML for breadcrumbs.
 	 */
 	public function generate_breadcrumbs($product);
+
+	/**
+	 * Build a complete product URL.
+	 *
+	 * @since 0.1.2
+	 * @param object $product The product object.
+	 * @param string $lang    The language code.
+	 * @return string         The complete product URL.
+	 */
+	public function build_product_url($product, $lang = '');
 }

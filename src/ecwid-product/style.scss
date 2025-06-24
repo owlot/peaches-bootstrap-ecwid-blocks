@@ -1,19 +1,74 @@
-.card-footer {
-	--bs-card-cap-bg: inherit;
+.wp-block-peaches-ecwid-product {
+	// Card footer styling
+	.card-footer {
+		--bs-card-cap-bg: inherit;
+	}
+
+	// Add to cart button styling
+	.add-to-cart::before {
+		display: inline-block;
+		content: "";
+		mask-image: url('data:image/svg+xml,<svg width="26" height="32" viewBox="0 0 26 32" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M22.2988 8.0415L24.8818 30.6587H1.12207L3.70508 8.0415H22.2988Z" stroke="white" stroke-width="2"/><path d="M18.825 8.03346C18.825 4.14899 16.4166 1 13.4457 1C10.4748 1 8.06641 4.14899 8.06641 8.03346" stroke="white" stroke-width="2"/></svg>');
+		mask-size: contain;
+		mask-position: center;
+		mask-repeat: no-repeat;
+		height: 1.5rem;
+		width: 1.5rem;
+		background-color: var(--bs-body-color);
+	}
+
+	.add-to-cart:hover::before {
+		mask-image: url('data:image/svg+xml,<svg width="26" height="32" viewBox="0 0 26 32" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M22.2988 8.0415L24.8818 30.6587H1.12207L3.70508 8.0415H22.2988Z" fill="white" stroke="white" stroke-width="2"/><path d="M18.825 8.03346C18.825 4.14899 16.4166 1 13.4457 1C10.4748 1 8.06641 4.14899 8.06641 8.03346" stroke="white" stroke-width="2"/></svg>');
+	}
+
+	// Product image hover effect styling
+	.product-image-container {
+		position: relative;
+		overflow: hidden;
+	}
+
+	.product-image-main,
+	.product-image-hover {
+		position: absolute;
+		top: 0;
+		left: 0;
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+		transition: opacity 0.3s ease-in-out;
+	}
+
+	.product-image-main,
+	.product-image-hover {
+		opacity: 0;
+		pointer-events: none;
+
+		&.visible {
+			opacity: 1;
+			pointer-events: auto;
+		}
+	}
 }
 
-.add-to-cart::before {
-	display: inline-block;
-	content: "";
-	mask-image: url('data:image/svg+xml,<svg width="26" height="32" viewBox="0 0 26 32" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M22.2988 8.0415L24.8818 30.6587H1.12207L3.70508 8.0415H22.2988Z" stroke="white" stroke-width="2"/><path d="M18.825 8.03346C18.825 4.14899 16.4166 1 13.4457 1C10.4748 1 8.06641 4.14899 8.06641 8.03346" stroke="white" stroke-width="2"/></svg>');
-	mask-size: contain;
-	mask-position: center;
-	mask-repeat: no-repeat;
-	height: 1.5rem;
-	width: 1.5rem;
-	background-color: var(--bs-body-color);
+// Add room in parent for hover effect
+*:has(> .wp-block-peaches-ecwid-product.card) {
+	padding-top: 10px;
+	padding-bottom: 10px;
+}
+// Enhanced hover effects for the entire card
+.wp-block-peaches-ecwid-product.card {
+	transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+
+	&.hover-jump:hover {
+		transform: translateY(-2px);
+	}
+	&.hover-shadow:hover {
+		box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+	}
 }
 
-.add-to-cart:hover::before {
-	mask-image: url('data:image/svg+xml,<svg width="26" height="32" viewBox="0 0 26 32" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M22.2988 8.0415L24.8818 30.6587H1.12207L3.70508 8.0415H22.2988Z" fill="white" stroke="white" stroke-width="2"/><path d="M18.825 8.03346C18.825 4.14899 16.4166 1 13.4457 1C10.4748 1 8.06641 4.14899 8.06641 8.03346" stroke="white" stroke-width="2"/></svg>');
+// Loading state
+.spinner-border {
+	width: 2rem;
+	height: 2rem;
 }

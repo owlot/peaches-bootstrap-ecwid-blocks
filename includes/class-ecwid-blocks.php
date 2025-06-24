@@ -240,6 +240,9 @@ class Peaches_Ecwid_Blocks {
 				require_once $class_file;
 			}
 		}
+
+		// Include template functions
+		require_once PEACHES_ECWID_INCLUDES_DIR . 'template-functions.php';
 	}
 
 	/**
@@ -315,8 +318,8 @@ class Peaches_Ecwid_Blocks {
 		}
 
 		// Initialize REST API (consolidates all REST endpoints)
-		if (class_exists('Peaches_REST_API') && $this->product_settings_manager && $this->media_tags_manager && $this->product_media_manager && $this->ecwid_api) {
-			$this->rest_api = new Peaches_REST_API($this->product_settings_manager, $this->media_tags_manager, $this->product_media_manager, $this->ecwid_api);
+		if (class_exists('Peaches_REST_API') && $this->product_settings_manager && $this->media_tags_manager && $this->product_media_manager && $this->ecwid_api && $this->product_manager) {
+			$this->rest_api = new Peaches_REST_API($this->product_settings_manager, $this->media_tags_manager, $this->product_media_manager, $this->ecwid_api, $this->product_manager);
 		}
 	}
 
