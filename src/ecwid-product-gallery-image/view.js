@@ -1,7 +1,9 @@
 import { store, getContext, getElement } from '@wordpress/interactivity';
 
-// Access the parent product detail store
-const productDetailStore = store( 'peaches-ecwid-product-detail' );
+/**
+ * Internal dependencies
+ */
+import { getProductIdWithFallback } from '../utils/ecwid-view-utils';
 
 /**
  * Gallery Image Store
@@ -12,24 +14,6 @@ const productDetailStore = store( 'peaches-ecwid-product-detail' );
  */
 const { state, actions } = store( 'peaches-ecwid-product-gallery-image', {
 	state: {
-		/**
-		 * Get product ID from parent store
-		 *
-		 * @return {string|null} - Current product ID
-		 */
-		get productId() {
-			return productDetailStore.state.productId;
-		},
-
-		/**
-		 * Get product data from parent store
-		 *
-		 * @return {Object|null} - Current product data
-		 */
-		get productData() {
-			return productDetailStore.state.productData;
-		},
-
 		/**
 		 * Computed state: Should show loading spinner
 		 *
@@ -426,13 +410,12 @@ const { state, actions } = store( 'peaches-ecwid-product-gallery-image', {
 		 *
 		 * Uses the correct API endpoint that matches the registered route.
 		 *
-		 * @param {string} tagKey - Media tag key to fetch
+		 * @param {string} tagKey    - Media tag key to fetch
+		 * @param {number} productId - Product ID to fetch the tag for
 		 *
 		 * @return {Object|null} - Media data or null if not found
 		 */
-		*fetchMediaByTag( tagKey ) {
-			const productId = state.productId;
-
+		*fetchMediaByTag( tagKey, productId ) {
 			if ( ! productId || ! tagKey ) {
 				return null;
 			}
@@ -570,7 +553,11 @@ const { state, actions } = store( 'peaches-ecwid-product-gallery-image', {
 		 */
 		*initGalleryImage() {
 			const context = getContext();
-			const productId = state.productId;
+
+			// Use consolidated utility to get product ID
+			const productId = getProductIdWithFallback(
+				context.selectedProductId
+			);
 
 			// Ensure we have proper initial state
 			context.isLoading = true;
@@ -610,7 +597,8 @@ const { state, actions } = store( 'peaches-ecwid-product-gallery-image', {
 
 				// Try to fetch primary media
 				const primaryMedia = yield actions.fetchMediaByTag(
-					context.selectedMediaTag
+					context.selectedMediaTag,
+					productId
 				);
 
 				if ( primaryMedia ) {

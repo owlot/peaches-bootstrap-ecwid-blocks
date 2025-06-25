@@ -22,6 +22,7 @@ import { computeClassName } from '../../../peaches-bootstrap-blocks/src/utils/bo
  */
 export default function save( { attributes } ) {
 	const {
+		selectedProductId,
 		selectedMediaTag = '',
 		hideIfMissing = true,
 		fallbackType = 'none',
@@ -47,6 +48,7 @@ export default function save( { attributes } ) {
 		className: computeClassName( attributes ),
 		'data-wp-interactive': 'peaches-ecwid-product-gallery-image',
 		'data-wp-context': JSON.stringify( {
+			selectedProductId: selectedProductId || null,
 			selectedMediaTag,
 			hideIfMissing,
 			fallbackType,

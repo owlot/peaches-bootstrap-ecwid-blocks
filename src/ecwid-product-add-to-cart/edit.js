@@ -20,6 +20,10 @@ import {
 	computeClassName,
 	initializeBootstrapAttributes,
 } from '../../../peaches-bootstrap-blocks/src/utils/bootstrap_settings';
+import {
+	useEcwidProductData,
+	ProductSelectionPanel,
+} from '../utils/ecwid-product-utils';
 
 /**
  * Styles
@@ -140,7 +144,7 @@ const INPUT_SUPPORTED_SETTINGS = {
  * @return {JSX.Element} - Edit component
  */
 function AddToCartEdit( props ) {
-	const { attributes, setAttributes, context } = props;
+	const { attributes, setAttributes, context, clientId } = props;
 	const {
 		buttonThemeColor,
 		buttonSize,
@@ -151,6 +155,17 @@ function AddToCartEdit( props ) {
 		buttonBootstrapSettings,
 		inputBootstrapSettings,
 	} = attributes;
+
+	const {
+		productData,
+		isLoading,
+		error: productError,
+		hasProductDetailAncestor,
+		selectedProductId,
+		contextProductData,
+		openEcwidProductPopup,
+		clearSelectedProduct,
+	} = useEcwidProductData( context, attributes, setAttributes, clientId );
 
 	// Initialize Bootstrap attributes with defaults
 	useEffect( () => {
@@ -171,24 +186,21 @@ function AddToCartEdit( props ) {
 		}
 	}, [] );
 
-	// Get test product data from parent context
-	const testProductData = context?.[ 'peaches/testProductData' ];
-
 	/**
 	 * Get stock status info from test product data
 	 *
 	 * @return {Object} - Stock status object with inStock boolean and text
 	 */
 	const getStockStatus = () => {
-		if ( testProductData ) {
+		if ( productData ) {
 			return {
-				inStock: testProductData.inStock !== false, // Default to true if not specified
+				inStock: productData.inStock !== false, // Default to true if not specified
 				text:
-					testProductData.inStock !== false
+					productData.inStock !== false
 						? __( 'In Stock', 'peaches' )
 						: __( 'Out of Stock', 'peaches' ),
 				class:
-					testProductData.inStock !== false
+					productData.inStock !== false
 						? 'text-success'
 						: 'text-danger',
 			};
@@ -263,15 +275,28 @@ function AddToCartEdit( props ) {
 	return (
 		<>
 			<InspectorControls>
+				<ProductSelectionPanel
+					productData={ productData }
+					isLoading={ isLoading }
+					error={ productError }
+					hasProductDetailAncestor={ hasProductDetailAncestor }
+					selectedProductId={ selectedProductId }
+					contextProductData={ contextProductData }
+					openEcwidProductPopup={ openEcwidProductPopup }
+					clearSelectedProduct={ clearSelectedProduct }
+					attributes={ attributes }
+					setAttributes={ setAttributes }
+				/>
 				<PanelBody
 					title={ __( 'Add to Cart Settings', 'peaches' ) }
 					initialOpen={ true }
 				>
-					{ testProductData ? (
-						<Notice status="success" isDismissible={ false }>
-							{ __( 'Using test product data:', 'peaches' ) }{ ' ' }
-							<strong>{ testProductData.name }</strong>
-							<br />
+					{ productData ? (
+						<Notice
+							className="mb-2"
+							status="success"
+							isDismissible={ false }
+						>
 							{ __( 'Stock status:', 'peaches' ) }{ ' ' }
 							<span className={ stockStatus.class }>
 								{ stockStatus.text }
@@ -466,48 +491,61 @@ function AddToCartEdit( props ) {
 				/>
 			</InspectorControls>
 
-			<div { ...blockProps }>
-				{ showQuantitySelector && (
-					<div className={ `${ borderClasses } input-group` }>
-						<button
-							className={ `btn-${ inputBootstrapSettings.colors.background } btn quantity-decrease border-0 rounded-0` }
-							type="button"
-							data-wp-on--click="actions.decreaseAmount"
-							disabled={ shouldDisableControls }
-						>
-							-
-						</button>
-						<input
-							id="quantity-input"
-							type="number"
-							className={ `${ inputClasses } form-control text-center border-0 rounded-0` }
-							defaultValue="1"
-							min="1"
-							data-wp-bind--value="context.amount"
-							data-wp-on--input="actions.setAmount"
-							disabled={ shouldDisableControls }
-						/>
-						<button
-							className={ `btn-${ inputBootstrapSettings.colors.background } btn quantity-increase border-0 rounded-0` }
-							type="button"
-							data-wp-on--click="actions.increaseAmount"
-							disabled={ shouldDisableControls }
-						>
-							+
-						</button>
+			{ isLoading && (
+				<div className="text-center p-2">
+					<div
+						className="spinner-border spinner-border-sm"
+						role="status"
+					>
+						<span className="visually-hidden">
+							{ __(
+								'Loading product data…',
+								'ecwid-shopping-cart'
+							) }
+						</span>
 					</div>
-				) }
+				</div>
+			) }
 
-				<button
-					className={ buttonClasses }
-					data-wp-on--click="actions.addToCart"
-					disabled={ shouldDisableControls }
-				>
-					{ shouldDisableControls && ! allowOutOfStockPurchase
-						? outOfStockText
-						: buttonText }
-				</button>
-			</div>
+			{ ! isLoading && (
+				<div { ...blockProps }>
+					{ showQuantitySelector && (
+						<div className={ `${ borderClasses } input-group` }>
+							<button
+								className={ `btn-${ inputBootstrapSettings.colors.background } btn quantity-decrease border-0 rounded-0` }
+								type="button"
+								disabled={ shouldDisableControls }
+							>
+								-
+							</button>
+							<input
+								id="quantity-input"
+								type="number"
+								className={ `${ inputClasses } form-control text-center border-0 rounded-0` }
+								defaultValue="1"
+								min="1"
+								disabled={ shouldDisableControls }
+							/>
+							<button
+								className={ `btn-${ inputBootstrapSettings.colors.background } btn quantity-increase border-0 rounded-0` }
+								type="button"
+								disabled={ shouldDisableControls }
+							>
+								+
+							</button>
+						</div>
+					) }
+
+					<button
+						className={ buttonClasses }
+						disabled={ shouldDisableControls }
+					>
+						{ shouldDisableControls && ! allowOutOfStockPurchase
+							? outOfStockText
+							: buttonText }
+					</button>
+				</div>
+			) }
 		</>
 	);
 }

@@ -1,32 +1,49 @@
-import { store } from '@wordpress/interactivity';
+import { store, getContext } from '@wordpress/interactivity';
 
-// Access the parent product detail store
-const productDetailStore = store( 'peaches-ecwid-product-detail' );
+/**
+ * Internal dependencies
+ */
+import { getProductDataWithFallbackGenerator } from '../utils/ecwid-view-utils';
 
 // Store definition with proper lifecycle methods
 const { state } = store( 'peaches-ecwid-product-images', {
 	state: {
-		get productId() {
-			return productDetailStore.state.productId;
-		},
-		get productData() {
-			return productDetailStore.state.productData;
-		},
 		productName: '',
 		currentImage: '',
 		galleryImages: [],
+	},
 
-		processProductData() {
+	actions: {
+		setCurrentImage( event ) {
+			const imageUrl = event.target.getAttribute( 'data-imageUrl' );
+			if ( imageUrl ) {
+				state.currentImage = imageUrl;
+				state.galleryImages.forEach( ( image ) => {
+					image.isCurrent = image.imageUrl === imageUrl;
+				} );
+			}
+		},
+	},
+
+	// The callbacks section for lifecycle methods
+	callbacks: {
+		// This will be automatically called when the component is mounted via data-wp-init
+		*initProductImages() {
+			const context = getContext();
+
+			// Use consolidated utility to get product data and ID
+			const productData = yield* getProductDataWithFallbackGenerator(
+				context.selectedProductId
+			);
+
+			if ( ! productData ) {
+				console.error( 'Product images - Product data not available' );
+				return;
+			}
+
 			try {
-				const product = state.productData;
-
-				if ( ! product ) {
-					console.error( 'Product data not found' );
-					return;
-				}
-
 				// Set the product data
-				state.productName = product.name;
+				state.productName = productData.name;
 
 				// Process images based on image size setting
 				const element = document.querySelector(
@@ -54,17 +71,17 @@ const { state } = store( 'peaches-ecwid-product-images', {
 
 				// Handle media.images first (newer API structure)
 				if (
-					product.media &&
-					product.media.images &&
-					product.media.images.length > 0
+					productData.media &&
+					productData.media.images &&
+					productData.media.images.length > 0
 				) {
 					// Set the main image using the correct URL property
-					const mainImage = product.media.images[ 0 ];
+					const mainImage = productData.media.images[ 0 ];
 					state.currentImage =
 						mainImage[ imageSizeKey ] || mainImage.image400pxUrl;
 
 					// Set gallery images with the correct URL properties, respecting maxThumbnails
-					state.galleryImages = product.media.images
+					state.galleryImages = productData.media.images
 						.slice( 0, maxThumbnails + 1 )
 						.map( ( image ) => ( {
 							thumbnailUrl: image.image160pxUrl, // Use the smallest image for thumbnails
@@ -78,12 +95,12 @@ const { state } = store( 'peaches-ecwid-product-images', {
 				}
 				// Fall back to legacy galleryImages if available
 				else if (
-					product.galleryImages &&
-					product.galleryImages.length > 0
+					productData.galleryImages &&
+					productData.galleryImages.length > 0
 				) {
 					// Use main product image as current image
 					state.currentImage =
-						product.thumbnailUrl || product.imageUrl || '';
+						productData.thumbnailUrl || productData.imageUrl || '';
 
 					// Process legacy gallery images
 					const legacySizeMapping = {
@@ -99,14 +116,16 @@ const { state } = store( 'peaches-ecwid-product-images', {
 					// Add main image as first gallery item
 					const mainGalleryItem = {
 						thumbnailUrl:
-							product.thumbnailUrl || product.smallThumbnailUrl,
+							productData.thumbnailUrl ||
+							productData.smallThumbnailUrl,
 						imageUrl:
-							product[ legacyImageSizeKey ] || product.imageUrl,
+							productData[ legacyImageSizeKey ] ||
+							productData.imageUrl,
 						isCurrent: true,
 					};
 
 					// Add gallery images, respecting maxThumbnails (subtract 1 for main image)
-					const galleryItems = product.galleryImages
+					const galleryItems = productData.galleryImages
 						.slice( 0, maxThumbnails - 1 )
 						.map( ( image ) => ( {
 							thumbnailUrl:
@@ -119,15 +138,17 @@ const { state } = store( 'peaches-ecwid-product-images', {
 					state.galleryImages = [ mainGalleryItem, ...galleryItems ];
 				}
 				// Last resort, use the main product image only
-				else if ( product.thumbnailUrl || product.imageUrl ) {
+				else if ( productData.thumbnailUrl || productData.imageUrl ) {
 					state.currentImage =
-						product.thumbnailUrl || product.imageUrl;
+						productData.thumbnailUrl || productData.imageUrl;
 					state.galleryImages = [
 						{
 							thumbnailUrl:
-								product.thumbnailUrl ||
-								product.smallThumbnailUrl,
-							imageUrl: product.imageUrl || product.thumbnailUrl,
+								productData.thumbnailUrl ||
+								productData.smallThumbnailUrl,
+							imageUrl:
+								productData.imageUrl ||
+								productData.thumbnailUrl,
 							isCurrent: true,
 						},
 					];
@@ -148,36 +169,6 @@ const { state } = store( 'peaches-ecwid-product-images', {
 					'):',
 					state.galleryImages
 				);
-			} catch ( error ) {
-				console.error( 'Error processing product images data:', error );
-			}
-		},
-	},
-
-	actions: {
-		setCurrentImage( event ) {
-			const imageUrl = event.target.getAttribute( 'data-imageUrl' );
-			if ( imageUrl ) {
-				state.currentImage = imageUrl;
-				state.galleryImages.forEach( ( image ) => {
-					image.isCurrent = image.imageUrl === imageUrl;
-				} );
-			}
-		},
-	},
-
-	// The callbacks section for lifecycle methods
-	callbacks: {
-		// This will be automatically called when the component is mounted via data-wp-init
-		*initProductImages() {
-			if ( ! state.productId || ! state.productData ) {
-				console.error( 'Product images - Product data not available' );
-				return;
-			}
-
-			try {
-				// Process product data that's already available from parent block
-				state.processProductData();
 			} catch ( error ) {
 				console.error( 'Error processing product images:', error );
 			}

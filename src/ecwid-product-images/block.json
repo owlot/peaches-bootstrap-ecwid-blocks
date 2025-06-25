@@ -5,7 +5,6 @@
 	"version": "0.1.0",
 	"title": "Bootstrap ECWID Product Images",
 	"category": "peaches-bootstrap",
-	"ancestor": [ "peaches/ecwid-product-detail" ],
 	"description": "Display product images for ECWID products with Bootstrap styling.",
 	"keywords": [
 		"bootstrap",
@@ -27,6 +26,9 @@
 	},
 	"usesContext": [ "peaches/testProductData" ],
 	"attributes": {
+		"selectedProductId": {
+			"type": "number"
+		},
 		"imageSize": {
 			"type": "string",
 			"default": "medium"

@@ -11,6 +11,7 @@ import { computeClassName } from '../../../peaches-bootstrap-blocks/src/utils/bo
 
 export default function save( { attributes } ) {
 	const {
+		selectedProductId,
 		buttonThemeColor = 'primary',
 		buttonSize = 'md',
 		buttonText = 'Add to Cart',
@@ -64,7 +65,11 @@ export default function save( { attributes } ) {
 	const blockProps = useBlockProps.save( {
 		className,
 		'data-wp-interactive': 'peaches-ecwid-add-to-cart',
-		'data-wp-context': `{"amount": 1, "allowOutOfStockPurchase": ${ allowOutOfStockPurchase }}`,
+		'data-wp-context': JSON.stringify( {
+			selectedProductId: selectedProductId || null,
+			quantity: 1,
+			allowOutOfStockPurchase,
+		} ),
 	} );
 
 	return (
@@ -74,7 +79,7 @@ export default function save( { attributes } ) {
 					<button
 						className={ `btn-${ inputBootstrapSettings.colors.background } btn quantity-decrease border-0 rounded-0` }
 						type="button"
-						data-wp-on--click="actions.decreaseAmount"
+						data-wp-on--click="actions.decreaseQuantity"
 						data-wp-bind--disabled="state.shouldDisableControls"
 					>
 						-
@@ -85,14 +90,14 @@ export default function save( { attributes } ) {
 						className={ `${ inputClasses } form-control text-center border-0 rounded-0` }
 						defaultValue="1"
 						min="1"
-						data-wp-bind--value="context.amount"
-						data-wp-on--input="actions.setAmount"
+						data-wp-bind--value="context.quantity"
+						data-wp-on--input="actions.setQuantity"
 						data-wp-bind--disabled="state.shouldDisableControls"
 					/>
 					<button
 						className={ `btn-${ inputBootstrapSettings.colors.background } btn quantity-increase border-0 rounded-0` }
 						type="button"
-						data-wp-on--click="actions.increaseAmount"
+						data-wp-on--click="actions.increaseQuantity"
 						data-wp-bind--disabled="state.shouldDisableControls"
 					>
 						+
@@ -106,12 +111,7 @@ export default function save( { attributes } ) {
 				data-wp-bind--disabled="state.shouldDisableControls"
 				data-wp-class--disabled="state.shouldDisableControls"
 			>
-				<span data-wp-bind--hidden="state.shouldDisableControls">
-					{ buttonText }
-				</span>
-				<span data-wp-bind--hidden="!state.shouldDisableControls">
-					{ outOfStockText }
-				</span>
+				<span data-wp-text="state.buttonText"></span>
 			</button>
 		</div>
 	);

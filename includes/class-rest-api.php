@@ -400,7 +400,7 @@ class Peaches_REST_API {
 	 * @return string Current language code.
 	 */
 	private function get_current_language_code() {
-		// Check for editor language override (from peaches-multilingual plugin)
+		// Check for editor language override in request headers
 		$editor_language = $this->get_editor_language_from_request();
 		if (!empty($editor_language)) {
 			return $editor_language;
@@ -468,20 +468,12 @@ class Peaches_REST_API {
 		$headers = getallheaders();
 		if (is_array($headers)) {
 			foreach ($headers as $key => $value) {
-				if (strtolower($key) === 'x-editor-language' || strtolower($key) === 'x-peaches-language') {
+				if (strtolower($key) === 'x-peaches-language') {
 					$lang = sanitize_text_field($value);
 					if (preg_match('/^[a-z]{2}(_[A-Z]{2})?$/', $lang)) {
 						return $lang;
 					}
 				}
-			}
-		}
-
-		// Check for language parameter in request (for manual override)
-		if (isset($_GET['editor_lang']) && !empty($_GET['editor_lang'])) {
-			$lang = sanitize_text_field($_GET['editor_lang']);
-			if (preg_match('/^[a-z]{2}(_[A-Z]{2})?$/', $lang)) {
-				return $lang;
 			}
 		}
 

@@ -5,7 +5,6 @@
 	"version": "0.1.0",
 	"title": "Bootstrap ECWID Product Ingredients",
 	"category": "peaches-bootstrap",
-	"ancestor": [ "peaches/ecwid-product-detail" ],
 	"description": "Display product ingredients for ECWID products with Bootstrap accordion styling.",
 	"keywords": [
 		"bootstrap",
@@ -26,6 +25,9 @@
 	},
 	"usesContext": [ "peaches/testProductData" ],
 	"attributes": {
+		"selectedProductId": {
+			"type": "number"
+		},
 		"startOpened": {
 			"type": "boolean",
 			"default": false

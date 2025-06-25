@@ -19,6 +19,10 @@ import {
 	BootstrapSettingsPanels,
 	computeClassName,
 } from '../../../peaches-bootstrap-blocks/src/utils/bootstrap_settings';
+import {
+	useEcwidProductData,
+	ProductSelectionPanel,
+} from '../utils/ecwid-product-utils';
 
 const SUPPORTED_SETTINGS = {
 	responsive: {
@@ -37,11 +41,20 @@ const IMAGE_SIZE_OPTIONS = [
 ];
 
 function ProductImagesEdit( props ) {
-	const { attributes, setAttributes, context } = props;
+	const { attributes, setAttributes, context, clientId } = props;
 	const { imageSize, showThumbnails, maxThumbnails } = attributes;
 
-	// Get test product data from parent context
-	const testProductData = context?.[ 'peaches/testProductData' ];
+	// Use unified product data hook
+	const {
+		productData,
+		isLoading,
+		error,
+		hasProductDetailAncestor,
+		selectedProductId,
+		contextProductData,
+		openEcwidProductPopup,
+		clearSelectedProduct,
+	} = useEcwidProductData( context, attributes, setAttributes, clientId );
 
 	const className = useMemo(
 		() => computeClassName( attributes ),
@@ -59,7 +72,7 @@ function ProductImagesEdit( props ) {
 	 * @return {Object} Object with mainImage and thumbnails
 	 */
 	const getPreviewImages = () => {
-		if ( ! testProductData ) {
+		if ( ! productData ) {
 			return {
 				mainImage:
 					'https://placehold.co/600x400?text=Product+Image+Preview',
@@ -86,18 +99,18 @@ function ProductImagesEdit( props ) {
 
 		// Try new media.images structure first
 		if (
-			testProductData.media &&
-			testProductData.media.images &&
-			testProductData.media.images.length > 0
+			productData.media &&
+			productData.media.images &&
+			productData.media.images.length > 0
 		) {
 			// Get main image
-			const mainImageData = testProductData.media.images[ 0 ];
+			const mainImageData = productData.media.images[ 0 ];
 			mainImage =
 				mainImageData[ imageSizeKey ] || mainImageData.image400pxUrl;
 
 			// Get thumbnails (skip the first image since it's used as main image)
-			if ( showThumbnails && testProductData.media.images.length > 1 ) {
-				thumbnails = testProductData.media.images
+			if ( showThumbnails && productData.media.images.length > 1 ) {
+				thumbnails = productData.media.images
 					.slice( 1, maxThumbnails + 1 ) // Skip first image, get up to maxThumbnails
 					.map( ( image ) => image.image160pxUrl );
 			}
@@ -105,12 +118,11 @@ function ProductImagesEdit( props ) {
 		// Fallback to legacy galleryImages + main image
 		else {
 			// Use main product image
-			mainImage =
-				testProductData.thumbnailUrl || testProductData.imageUrl || '';
+			mainImage = productData.thumbnailUrl || productData.imageUrl || '';
 
 			// Get gallery thumbnails (these are separate from main image)
-			if ( showThumbnails && testProductData.galleryImages ) {
-				thumbnails = testProductData.galleryImages
+			if ( showThumbnails && productData.galleryImages ) {
+				thumbnails = productData.galleryImages
 					.slice( 0, maxThumbnails )
 					.map(
 						( image ) =>
@@ -131,30 +143,28 @@ function ProductImagesEdit( props ) {
 	return (
 		<>
 			<InspectorControls>
+				<ProductSelectionPanel
+					productData={ productData }
+					isLoading={ isLoading }
+					error={ error }
+					hasProductDetailAncestor={ hasProductDetailAncestor }
+					selectedProductId={ selectedProductId }
+					contextProductData={ contextProductData }
+					openEcwidProductPopup={ openEcwidProductPopup }
+					clearSelectedProduct={ clearSelectedProduct }
+					attributes={ attributes }
+					setAttributes={ setAttributes }
+				/>
+
 				<PanelBody
 					title={ __(
 						'Product Images Settings',
 						'ecwid-shopping-cart'
 					) }
 				>
-					{ testProductData ? (
-						<Notice status="success" isDismissible={ false }>
-							{ __(
-								'Using test product images:',
-								'ecwid-shopping-cart'
-							) }{ ' ' }
-							<strong>{ testProductData.name }</strong>
-						</Notice>
-					) : (
-						<Notice status="info" isDismissible={ false }>
-							{ __(
-								'Using placeholder images. Configure a test product in the parent block to preview real images.',
-								'ecwid-shopping-cart'
-							) }
-						</Notice>
-					) }
-
 					<SelectControl
+						__nextHasNoMarginBottom
+						__next40pxDefaultSize
 						label={ __( 'Main Image Size', 'ecwid-shopping-cart' ) }
 						value={ imageSize }
 						options={ IMAGE_SIZE_OPTIONS }
@@ -164,6 +174,8 @@ function ProductImagesEdit( props ) {
 					/>
 
 					<ToggleControl
+						__nextHasNoMarginBottom
+						__next40pxDefaultSize
 						label={ __( 'Show Thumbnails', 'ecwid-shopping-cart' ) }
 						checked={ showThumbnails }
 						onChange={ ( value ) =>
@@ -173,6 +185,8 @@ function ProductImagesEdit( props ) {
 
 					{ showThumbnails && (
 						<RangeControl
+							__nextHasNoMarginBottom
+							__next40pxDefaultSize
 							label={ __(
 								'Maximum Thumbnails',
 								'ecwid-shopping-cart'
@@ -194,38 +208,56 @@ function ProductImagesEdit( props ) {
 				/>
 			</InspectorControls>
 
-			<div { ...blockProps }>
-				<div className="product-images-container">
-					<div className="main-image ratio ratio-1x1">
-						<img
-							className="img-fluid"
-							src={ mainImage }
-							alt={
-								testProductData?.name ||
-								__(
-									'Product Image Preview',
-									'ecwid-shopping-cart'
-								)
-							}
-						/>
+			{ isLoading && (
+				<div className="text-center p-2">
+					<div
+						className="spinner-border spinner-border-sm"
+						role="status"
+					>
+						<span className="visually-hidden">
+							{ __(
+								'Loading product data…',
+								'ecwid-shopping-cart'
+							) }
+						</span>
 					</div>
-					{ showThumbnails && thumbnails.length > 0 && (
-						<div className="thumbnails d-flex">
-							{ thumbnails.map( ( thumbnail, i ) => (
-								<div key={ i } className="ratio ratio-1x1">
-									<img
-										src={ thumbnail }
-										className="img-fluid"
-										alt={ `${
-											testProductData?.name || 'Product'
-										} thumbnail ${ i + 1 }` }
-									/>
-								</div>
-							) ) }
-						</div>
-					) }
 				</div>
-			</div>
+			) }
+
+			{ ! isLoading && (
+				<div { ...blockProps }>
+					<div className="product-images-container">
+						<div className="main-image ratio ratio-1x1">
+							<img
+								className="img-fluid"
+								src={ mainImage }
+								alt={
+									productData?.name ||
+									__(
+										'Product Image Preview',
+										'ecwid-shopping-cart'
+									)
+								}
+							/>
+						</div>
+						{ showThumbnails && thumbnails.length > 0 && (
+							<div className="thumbnails d-flex">
+								{ thumbnails.map( ( thumbnail, i ) => (
+									<div key={ i } className="ratio ratio-1x1">
+										<img
+											src={ thumbnail }
+											className="img-fluid"
+											alt={ `${
+												productData?.name || 'Product'
+											} thumbnail ${ i + 1 }` }
+										/>
+									</div>
+								) ) }
+							</div>
+						) }
+					</div>
+				</div>
+			) }
 		</>
 	);
 }

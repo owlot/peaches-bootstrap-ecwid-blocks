@@ -5,7 +5,6 @@
 	"version": "0.1.0",
 	"title": "Bootstrap ECWID Product Gallery Image",
 	"category": "peaches-bootstrap",
-	"ancestor": [ "peaches/ecwid-product-detail" ],
 	"description": "Display a specific product media item based on media tag selection with Bootstrap styling and media type-specific controls.",
 	"keywords": [
 		"bootstrap",
@@ -30,6 +29,9 @@
 	},
 	"usesContext": [ "peaches/testProductData" ],
 	"attributes": {
+		"selectedProductId": {
+			"type": "number"
+		},
 		"selectedMediaTag": {
 			"type": "string",
 			"default": ""

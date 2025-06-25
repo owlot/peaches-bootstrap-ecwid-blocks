@@ -31,6 +31,15 @@ class Peaches_Ecwid_Blocks {
 	private static $instance = null;
 
 	/**
+	 * Block registration instance.
+	 *
+	 * @since  0.3.0
+	 * @access private
+	 * @var    Peaches_Block_Registration_Interface
+	 */
+	private $block_registration;
+
+	/**
 	 * Ecwid API instance.
 	 *
 	 * @since  0.2.0
@@ -194,6 +203,7 @@ class Peaches_Ecwid_Blocks {
 	private function load_dependencies() {
 		// Load interfaces first
 		$interfaces = array(
+			'interfaces/interface-block-registration.php',
 			'interfaces/interface-ecwid-api.php',
 			'interfaces/interface-rewrite-manager.php',
 			'interfaces/interface-product-manager.php',
@@ -216,6 +226,7 @@ class Peaches_Ecwid_Blocks {
 
 		// Load classes
 		$classes = array(
+			'class-block-registration.php',
 			'class-utilities.php',
 			'class-ecwid-api.php',
 			'class-rewrite-manager.php',
@@ -321,6 +332,11 @@ class Peaches_Ecwid_Blocks {
 		if (class_exists('Peaches_REST_API') && $this->product_settings_manager && $this->media_tags_manager && $this->product_media_manager && $this->ecwid_api && $this->product_manager) {
 			$this->rest_api = new Peaches_REST_API($this->product_settings_manager, $this->media_tags_manager, $this->product_media_manager, $this->ecwid_api, $this->product_manager);
 		}
+
+		// Initialize block registration
+		if (class_exists('Peaches_Ecwid_Block_Registration')) {
+			$this->block_registration = new Peaches_Ecwid_Block_Registration();
+		}
 	}
 
 	/**
@@ -329,6 +345,9 @@ class Peaches_Ecwid_Blocks {
 	 * @since 0.2.0
 	 */
 	private function init_hooks() {
+		// Load text domain on init hook instead of immediately to avoid the "too early" error
+		add_action('init', array($this, 'load_textdomain'), 0);
+
 		add_action('wp_enqueue_scripts', array($this, 'enqueue_frontend_scripts'));
 		add_action('admin_enqueue_scripts', array($this, 'enqueue_admin_scripts'));
 
@@ -340,6 +359,19 @@ class Peaches_Ecwid_Blocks {
 		// Plugin activation and deactivation
 		add_action('activate_plugin', array($this, 'activate'));
 		add_action('deactivate_plugin', array($this, 'deactivate'));
+	}
+
+	/**
+	 * Load plugin text domain for translations.
+	 *
+	 * @since 0.3.0
+	 */
+	public function load_textdomain() {
+		load_plugin_textdomain(
+			'peaches-bootstrap-ecwid-blocks',
+			false,
+			dirname( plugin_basename( __FILE__ ) ) . '/languages'
+		);
 	}
 
 	/**

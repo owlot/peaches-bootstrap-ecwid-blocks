@@ -5,6 +5,35 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2025-06-28
+
+### Added
+- **Block Independence**: All Ecwid product blocks can now work without `ecwid-product-detail` ancestor
+- **Smart Product Selection**: Automatic product selection UI when no parent context exists
+- **Shared Utilities**: `useEcwidProductData` hook and `ProductSelectionPanel` component for consistent behavior
+- **Translation System**: Full WordPress i18n support with exportable `__()` function for view.js files
+- **Global Language Functions**: `getCurrentLanguageForAPI()` and `getLanguageAwareApiUrl()` available site-wide
+
+### Enhanced
+- **Modern WPML API**: Migrated from deprecated `ICL_LANGUAGE_CODE` to filter-based API
+- **Language Detection**: Simplified logic with cookie support for both Polylang and WPML
+- **Field Value Extraction**: Dynamic language-aware product attribute handling
+- **API Consistency**: Standardized on query string language parameters (`?lang=xx`)
+
+### Fixed
+- **Translation Issues**: Resolved webpack import errors for `@wordpress/i18n` in view.js files
+- **Language Values**: Fixed hardcoded `.nl` values, now uses current language dynamically
+- **Product Selection UX**: Improved visual feedback and error handling
+
+### Breaking Changes
+- Removed `ancestor` requirement from all product block `block.json` files
+- API language parameters now use query string only (no custom headers)
+
+### Migration
+- Existing implementations continue working unchanged
+- New standalone usage automatically available
+- No action required for current users
+
 ## [0.2.7] - 2025-06-23
 
 ### Added

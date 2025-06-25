@@ -10,13 +10,17 @@ import { useBlockProps } from '@wordpress/block-editor';
 import { computeClassName } from '../../../peaches-bootstrap-blocks/src/utils/bootstrap_settings';
 
 export default function save( { attributes } ) {
-	const { startOpened } = attributes;
+	const { startOpened, selectedProductId } = attributes;
 
 	const blockProps = useBlockProps.save( {
 		className: computeClassName( attributes ),
 		'data-wp-interactive': 'peaches-ecwid-product-ingredients',
-		'data-wp-context': `{ "isLoading": true, "ingredients": [] }`,
 		'data-wp-init': 'callbacks.initProductIngredients',
+		'data-wp-context': JSON.stringify( {
+			selectedProductId: selectedProductId || null,
+			isLoading: true,
+			ingredients: [],
+		} ),
 	} );
 
 	return (
@@ -33,17 +37,15 @@ export default function save( { attributes } ) {
 								data-bs-toggle="collapse"
 								data-wp-bind--data-bs-target="context.ingredient.targetId"
 								data-wp-bind--aria-controls="context.ingredient.collapseId"
-								data-wp-bind--aria-expanded="!(context.ingredient.isCollapsed ?? true)"
+								data-wp-bind--aria-expande="!(context.ingredient.isCollapsed ?? true)"
 								data-wp-on--click="actions.toggleAccordion"
 							>
 								<span data-wp-text="context.ingredient.name"></span>
 							</button>
 						</div>
 						<div
-							className={ `accordion-collapse collapse ${
-								startOpened ? 'show' : ''
-							}` }
-							data-wp-bind--class--show="!(context.ingredient.isCollapsed ?? true)"
+							className="accordion-collapse"
+							data-wp-class--collapse="context.ingredient.isCollapsed"
 							data-wp-bind--id="context.ingredient.collapseId"
 							data-wp-bind--aria-labelledby="context.ingredient.headingId"
 						>
@@ -56,7 +58,7 @@ export default function save( { attributes } ) {
 				</template>
 
 				<div
-					data-wp-bind--hidden="!context.isLoading"
+					data-wp-class--d-none="!context.isLoading"
 					className="text-center my-3"
 				>
 					<div className="spinner-border text-primary" role="status">

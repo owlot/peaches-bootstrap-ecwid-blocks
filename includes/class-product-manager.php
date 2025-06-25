@@ -50,7 +50,6 @@ class Peaches_Product_Manager implements Peaches_Product_Manager_Interface {
 	 * @since 0.1.2
 	 */
 	private function init_hooks() {
-		add_action('init', array($this, 'register_blocks'));
 		add_action('admin_enqueue_scripts', array($this, 'enqueue_admin_scripts'));
 		add_action('wp_enqueue_scripts', array($this, 'enqueue_frontend_scripts'), 5);
 
@@ -66,31 +65,6 @@ class Peaches_Product_Manager implements Peaches_Product_Manager_Interface {
 		// AJAX handlers
 		add_action('wp_ajax_get_ecwid_product_descriptions', array($this, 'ajax_get_product_descriptions'));
 		add_action('wp_ajax_nopriv_get_ecwid_product_descriptions', array($this, 'ajax_get_product_descriptions'));
-	}
-
-	/**
-	 * Register block types related to products.
-	 *
-	 * @since 0.1.2
-	 */
-	public function register_blocks() {
-		// Register block metadata collection
-		wp_register_block_metadata_collection(
-			PEACHES_ECWID_PLUGIN_DIR . 'dist',
-			PEACHES_ECWID_PLUGIN_DIR . 'dist/blocks-manifest.php'
-		);
-
-		// Register all blocks
-		register_block_type_from_metadata(PEACHES_ECWID_PLUGIN_DIR . 'build/ecwid-product');
-		register_block_type_from_metadata(PEACHES_ECWID_PLUGIN_DIR . 'build/ecwid-category');
-		register_block_type_from_metadata(PEACHES_ECWID_PLUGIN_DIR . 'build/ecwid-product-detail/');
-		register_block_type_from_metadata(PEACHES_ECWID_PLUGIN_DIR . 'build/ecwid-product-description/');
-		register_block_type_from_metadata(PEACHES_ECWID_PLUGIN_DIR . 'build/ecwid-product-field/');
-		register_block_type_from_metadata(PEACHES_ECWID_PLUGIN_DIR . 'build/ecwid-product-add-to-cart/');
-		register_block_type_from_metadata(PEACHES_ECWID_PLUGIN_DIR . 'build/ecwid-product-images/');
-		register_block_type_from_metadata(PEACHES_ECWID_PLUGIN_DIR . 'build/ecwid-product-ingredients/');
-		register_block_type_from_metadata(PEACHES_ECWID_PLUGIN_DIR . 'build/ecwid-product-gallery-image/');
-		register_block_type_from_metadata(PEACHES_ECWID_PLUGIN_DIR . 'build/ecwid-product-related-products/');
 	}
 
 	/**

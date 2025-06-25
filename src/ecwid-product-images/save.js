@@ -10,16 +10,20 @@ import { useBlockProps } from '@wordpress/block-editor';
 import { computeClassName } from '../../../peaches-bootstrap-blocks/src/utils/bootstrap_settings';
 
 export default function save( { attributes } ) {
-	const { showThumbnails, imageSize, maxThumbnails } = attributes;
+	const { selectedProductId, showThumbnails, imageSize, maxThumbnails } =
+		attributes;
 
 	const blockProps = useBlockProps.save( {
 		className: computeClassName( attributes ),
 		'data-wp-interactive': 'peaches-ecwid-product-images',
-		'data-wp-context': `{ "currentImageIndex": 0 }`,
 		'data-wp-bind--data-image-size': 'context.imageSize',
 		'data-wp-init': 'callbacks.initProductImages',
 		'data-image-size': imageSize,
 		'data-max-thumbnails': maxThumbnails,
+		'data-wp-context': JSON.stringify( {
+			selectedProductId: selectedProductId || null,
+			currentImageIndex: 0,
+		} ),
 	} );
 
 	return (

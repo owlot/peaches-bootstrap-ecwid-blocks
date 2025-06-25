@@ -40,7 +40,11 @@ $ecwid_api = $ecwid_blocks->get_ecwid_api();
 
 // Get product ID from the parent product detail store
 $product_detail_state = wp_interactivity_state('peaches-ecwid-product-detail');
-$product_id = isset($product_detail_state['productId']) ? $product_detail_state['productId'] : 0;
+$product_id = $attributes['selectedProductId'];
+// Use state product id if available
+if($product_detail_state) {
+	$product_id = isset($product_detail_state['productId']) ? $product_detail_state['productId'] : null;
+}
 
 // If no product ID, don't render anything
 if (empty($product_id)) {
@@ -89,7 +93,7 @@ if ($is_in_carousel) {
 	$block_props = get_block_wrapper_attributes();
 
 	$title_text = !empty($attributes['customTitle']) ?
-		$attributes['customTitle'] : __('Related Products', 'peaches');
+		$attributes['customTitle'] : __('Related Products', 'peaches-bootstrap-ecwid-blocks');
 	?>
 
 	<div <?php echo $block_props; ?>>

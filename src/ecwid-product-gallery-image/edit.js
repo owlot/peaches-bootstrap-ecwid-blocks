@@ -26,6 +26,10 @@ import {
 	BootstrapSettingsPanels,
 	computeClassName,
 } from '../../../peaches-bootstrap-blocks/src/utils/bootstrap_settings';
+import {
+	useEcwidProductData,
+	ProductSelectionPanel,
+} from '../utils/ecwid-product-utils';
 
 // Content block settings
 const SUPPORTED_SETTINGS = {
@@ -443,7 +447,7 @@ function createMediaElement( mediaUrl, mediaAlt, mediaType, attributes ) {
  * @param props
  */
 function ProductGalleryImageEdit( props ) {
-	const { attributes, setAttributes, context } = props;
+	const { attributes, setAttributes, context, clientId } = props;
 	const {
 		selectedMediaTag,
 		hideIfMissing,
@@ -459,6 +463,18 @@ function ProductGalleryImageEdit( props ) {
 		audioControls = true,
 	} = attributes;
 
+	// Use unified product data hook
+	const {
+		productData,
+		isLoading: productLoading,
+		error: productError,
+		hasProductDetailAncestor,
+		selectedProductId,
+		contextProductData,
+		openEcwidProductPopup,
+		clearSelectedProduct,
+	} = useEcwidProductData( context, attributes, setAttributes, clientId );
+
 	const [ mediaTags, setMediaTags ] = useState( [] );
 	const [ isLoading, setIsLoading ] = useState( true );
 	const [ error, setError ] = useState( null );
@@ -468,9 +484,6 @@ function ProductGalleryImageEdit( props ) {
 	// Preview state
 	const [ previewMedia, setPreviewMedia ] = useState( null );
 	const [ isLoadingPreview, setIsLoadingPreview ] = useState( false );
-
-	// Get test product data from parent context
-	const testProductData = context?.[ 'peaches/testProductData' ];
 
 	const className = useMemo(
 		() => computeClassName( attributes ),
@@ -613,7 +626,7 @@ function ProductGalleryImageEdit( props ) {
 	 */
 	useEffect( () => {
 		const loadPreviewMedia = async () => {
-			if ( ! selectedMediaTag || ! testProductData?.id ) {
+			if ( ! selectedMediaTag || ! productData?.id ) {
 				setPreviewMedia( null );
 				return;
 			}
@@ -624,7 +637,7 @@ function ProductGalleryImageEdit( props ) {
 				// Try to fetch primary media
 				const primaryMedia = await fetchMediaByTag(
 					selectedMediaTag,
-					testProductData.id
+					productData.id
 				);
 
 				if ( primaryMedia ) {
@@ -636,7 +649,7 @@ function ProductGalleryImageEdit( props ) {
 					if ( fallbackType === 'tag' && fallbackTagKey ) {
 						fallbackMedia = await fetchMediaByTag(
 							fallbackTagKey,
-							testProductData.id
+							productData.id
 						);
 					} else if ( fallbackType === 'media' && fallbackMediaId ) {
 						fallbackMedia =
@@ -657,7 +670,7 @@ function ProductGalleryImageEdit( props ) {
 		loadPreviewMedia();
 	}, [
 		selectedMediaTag,
-		testProductData?.id,
+		productData?.id,
 		fallbackType,
 		fallbackTagKey,
 		fallbackMediaId,
@@ -1374,6 +1387,19 @@ function ProductGalleryImageEdit( props ) {
 	return (
 		<>
 			<InspectorControls>
+				<ProductSelectionPanel
+					productData={ productData }
+					isLoading={ productLoading }
+					error={ productError }
+					hasProductDetailAncestor={ hasProductDetailAncestor }
+					selectedProductId={ selectedProductId }
+					contextProductData={ contextProductData }
+					openEcwidProductPopup={ openEcwidProductPopup }
+					clearSelectedProduct={ clearSelectedProduct }
+					attributes={ attributes }
+					setAttributes={ setAttributes }
+				/>
+
 				<PanelBody
 					title={ __(
 						'Gallery Image Settings',
@@ -1386,23 +1412,6 @@ function ProductGalleryImageEdit( props ) {
 							'ecwid-shopping-cart'
 						) }
 					</Notice>
-
-					{ testProductData ? (
-						<Notice status="success" isDismissible={ false }>
-							{ __(
-								'Using test product data:',
-								'ecwid-shopping-cart'
-							) }{ ' ' }
-							<strong>{ testProductData.name }</strong>
-						</Notice>
-					) : (
-						<Notice status="info" isDismissible={ false }>
-							{ __(
-								'Using placeholder data. Configure a test product in the parent block to preview real media.',
-								'ecwid-shopping-cart'
-							) }
-						</Notice>
-					) }
 
 					{ isLoading && (
 						<div className="d-flex align-items-center gap-2 my-3">
@@ -1518,7 +1527,25 @@ function ProductGalleryImageEdit( props ) {
 				/>
 			</InspectorControls>
 
-			<div { ...blockProps }>{ renderPreview() }</div>
+			{ productLoading && (
+				<div className="text-center p-2">
+					<div
+						className="spinner-border spinner-border-sm"
+						role="status"
+					>
+						<span className="visually-hidden">
+							{ __(
+								'Loading product data…',
+								'ecwid-shopping-cart'
+							) }
+						</span>
+					</div>
+				</div>
+			) }
+
+			{ ! productLoading && (
+				<div { ...blockProps }>{ renderPreview() }</div>
+			) }
 		</>
 	);
 }

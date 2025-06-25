@@ -18,6 +18,11 @@ import {
 	BootstrapSettingsPanels,
 	computeClassName,
 } from '../../../peaches-bootstrap-blocks/src/utils/bootstrap_settings';
+import {
+	getCurrentLanguageForAPI,
+	useEcwidProductData,
+	ProductSelectionPanel,
+} from '../utils/ecwid-product-utils';
 
 const SUPPORTED_SETTINGS = {
 	responsive: {
@@ -29,122 +34,6 @@ const SUPPORTED_SETTINGS = {
 };
 
 /**
- * Get current language for API requests
- *
- * @return {string} Current language code (normalized to 2 characters)
- */
-function getCurrentLanguageForAPI() {
-	let language = '';
-
-	// In block editor - check for peaches-multilingual store
-	if ( typeof wp !== 'undefined' && wp.data && wp.data.select ) {
-		try {
-			const multilingualStore = wp.data.select( 'peaches/multilingual' );
-			if (
-				multilingualStore &&
-				typeof multilingualStore.getCurrentEditorLanguage === 'function'
-			) {
-				const editorLang = multilingualStore.getCurrentEditorLanguage();
-				if ( editorLang ) {
-					language = editorLang;
-				}
-			}
-		} catch ( error ) {
-			// Peaches multilingual store not available, continue with fallbacks
-		}
-	}
-
-	// Frontend - check HTML lang attribute (format: "en-US", "fr-FR", "nl-NL", etc.)
-	if ( ! language ) {
-		const htmlLang = document.documentElement.lang;
-		if ( htmlLang ) {
-			language = htmlLang;
-		}
-	}
-
-	// Fallback - check for language in body class (common pattern)
-	if ( ! language ) {
-		const bodyClasses = document.body.className;
-		const langMatch = bodyClasses.match( /\blang-([a-z]{2})\b/ );
-		if ( langMatch ) {
-			language = langMatch[ 1 ];
-		}
-	}
-
-	// Check URL for language parameter
-	if ( ! language ) {
-		const urlParams = new URLSearchParams( window.location.search );
-		const langParam = urlParams.get( 'lang' );
-		if ( langParam && /^[a-z]{2}/.test( langParam ) ) {
-			language = langParam;
-		}
-	}
-
-	// Normalize the language code to match ingredient storage format
-	return normalizeLanguageCode( language || 'en' );
-}
-
-/**
- * Normalize language code to match ingredient storage format.
- *
- * Converts codes like 'nl_NL', 'en-US', 'fr-FR' to 'nl', 'en', 'fr'
- *
- * @param {string} languageCode - Raw language code
- * @return {string} Normalized language code (2 characters)
- */
-function normalizeLanguageCode( languageCode ) {
-	if ( ! languageCode ) {
-		return 'en';
-	}
-
-	// Convert to lowercase
-	languageCode = languageCode.toLowerCase();
-
-	// Handle formats like 'nl_NL', 'nl-NL'
-	if ( languageCode.includes( '_' ) ) {
-		return languageCode.split( '_' )[ 0 ];
-	}
-
-	if ( languageCode.includes( '-' ) ) {
-		return languageCode.split( '-' )[ 0 ];
-	}
-
-	// Already normalized (should be 2 characters)
-	return languageCode.length > 2
-		? languageCode.substring( 0, 2 )
-		: languageCode;
-}
-
-/**
- * Enhanced fetch function that includes language headers
- *
- * @param {string} url     - API endpoint URL
- * @param {Object} options - Fetch options
- * @return {Promise} Fetch promise
- */
-function fetchWithLanguage( url, options = {} ) {
-	const currentLang = getCurrentLanguageForAPI();
-
-	// Add language headers for the API
-	const headers = {
-		Accept: 'application/json',
-		'X-Peaches-Language': currentLang,
-		...options.headers,
-	};
-
-	// For editor requests, also add editor-specific header
-	if ( typeof wp !== 'undefined' && wp.data ) {
-		headers[ 'X-Editor-Language' ] = currentLang;
-	}
-
-	return fetch( url, {
-		credentials: 'same-origin',
-		...options,
-		headers,
-	} );
-}
-
-/**
  * Product Ingredients Edit Component
  *
  * Renders the editor interface with test data when available from parent context.
@@ -154,11 +43,20 @@ function fetchWithLanguage( url, options = {} ) {
  * @return {JSX.Element} - Edit component
  */
 function ProductIngredientsEdit( props ) {
-	const { attributes, setAttributes, context } = props;
+	const { attributes, setAttributes, context, clientId } = props;
 	const { startOpened } = attributes;
 
-	// Get test product data from parent context
-	const testProductData = context?.[ 'peaches/testProductData' ];
+	// Use unified product data hook
+	const {
+		productData,
+		isLoading: productLoading,
+		error: productError,
+		hasProductDetailAncestor,
+		selectedProductId,
+		contextProductData,
+		openEcwidProductPopup,
+		clearSelectedProduct,
+	} = useEcwidProductData( context, attributes, setAttributes, clientId );
 
 	const [ ingredientsData, setIngredientsData ] = useState( null );
 	const [ isLoading, setIsLoading ] = useState( false );
@@ -189,13 +87,13 @@ function ProductIngredientsEdit( props ) {
 					currentLang = newLang;
 					setCurrentLanguage( newLang );
 					// Refetch ingredients when language changes
-					if ( testProductData?.id ) {
+					if ( productData?.id ) {
 						// Call your existing fetch logic here
 						setIsLoading( true );
 						setError( null );
 
 						const currentLang = getCurrentLanguageForAPI();
-						const url = `/wp-json/peaches/v1/product-ingredients/${ testProductData.id }`;
+						const url = `/wp-json/peaches/v1/product-ingredients/${ productData.id }`;
 						const urlWithLang = `${ url }?lang=${ encodeURIComponent(
 							currentLang
 						) }`;
@@ -247,17 +145,22 @@ function ProductIngredientsEdit( props ) {
 	 * Fetch ingredients data when test product data changes
 	 */
 	useEffect( () => {
-		if ( testProductData?.id ) {
+		if ( productData?.id ) {
 			setIsLoading( true );
 			setError( null );
 
 			const currentLang = getCurrentLanguageForAPI();
-			const url = `/wp-json/peaches/v1/product-ingredients/${ testProductData.id }`;
+			const url = `/wp-json/peaches/v1/product-ingredients/${ productData.id }`;
 			const urlWithLang = `${ url }?lang=${ encodeURIComponent(
 				currentLang
 			) }`;
 
-			fetchWithLanguage( urlWithLang )
+			fetch( urlWithLang, {
+				headers: {
+					Accept: 'application/json',
+				},
+				credentials: 'same-origin',
+			} )
 				.then( ( response ) => {
 					if ( ! response.ok ) {
 						throw new Error(
@@ -286,7 +189,7 @@ function ProductIngredientsEdit( props ) {
 			setIngredientsData( null );
 			setError( null );
 		}
-	}, [ testProductData?.id ] );
+	}, [ productData?.id ] );
 
 	/**
 	 * Get preview ingredients for display
@@ -326,23 +229,30 @@ function ProductIngredientsEdit( props ) {
 	return (
 		<>
 			<InspectorControls>
+				<ProductSelectionPanel
+					productData={ productData }
+					isLoading={ productLoading }
+					error={ productError }
+					hasProductDetailAncestor={ hasProductDetailAncestor }
+					selectedProductId={ selectedProductId }
+					contextProductData={ contextProductData }
+					openEcwidProductPopup={ openEcwidProductPopup }
+					clearSelectedProduct={ clearSelectedProduct }
+					attributes={ attributes }
+					setAttributes={ setAttributes }
+				/>
 				<PanelBody
 					title={ __(
 						'Product Ingredients Settings',
 						'ecwid-shopping-cart'
 					) }
 				>
-					{ ! testProductData && (
-						<Notice status="warning" isDismissible={ false }>
-							{ __(
-								'No test product configured in parent block. Configure a test product to preview real ingredients.',
-								'ecwid-shopping-cart'
-							) }
-						</Notice>
-					) }
-
-					{ testProductData && isLoading && (
-						<Notice status="info" isDismissible={ false }>
+					{ productData && isLoading && (
+						<Notice
+							className="mb-2"
+							status="info"
+							isDismissible={ false }
+						>
 							<div className="d-flex align-items-center gap-2">
 								<Spinner />
 								<span>
@@ -355,8 +265,12 @@ function ProductIngredientsEdit( props ) {
 						</Notice>
 					) }
 
-					{ testProductData && ! isLoading && error && (
-						<Notice status="error" isDismissible={ false }>
+					{ productData && ! isLoading && error && (
+						<Notice
+							className="mb-2"
+							status="error"
+							isDismissible={ false }
+						>
 							{ __(
 								'Error loading ingredients:',
 								'ecwid-shopping-cart'
@@ -365,25 +279,18 @@ function ProductIngredientsEdit( props ) {
 						</Notice>
 					) }
 
-					{ testProductData &&
+					{ productData &&
 						! isLoading &&
 						! error &&
 						ingredientsData && (
-							<Notice status="success" isDismissible={ false }>
+							<Notice
+								className="mb-2"
+								status="success"
+								isDismissible={ false }
+							>
 								{ ingredientsData.ingredients.length > 0 ? (
 									<>
-										{ __(
-											'Using ingredients from test product:',
-											'ecwid-shopping-cart'
-										) }{ ' ' }
-										<strong>
-											{ testProductData.name }
-										</strong>
-										<br />
-										{ __(
-											'Found',
-											'ecwid-shopping-cart'
-										) }{ ' ' }
+										{ __( 'Found', 'ecwid-shopping-cart' ) }{ ' ' }
 										{ ingredientsData.ingredients.length }{ ' ' }
 										{ __(
 											'ingredients',
@@ -396,9 +303,7 @@ function ProductIngredientsEdit( props ) {
 											'Test product has no ingredients configured:',
 											'ecwid-shopping-cart'
 										) }{ ' ' }
-										<strong>
-											{ testProductData.name }
-										</strong>
+										<strong>{ productData.name }</strong>
 										<br />
 										{ __(
 											'Showing sample ingredients for preview.',
@@ -422,16 +327,9 @@ function ProductIngredientsEdit( props ) {
 							</Notice>
 						) }
 
-					{ ! testProductData && (
-						<Notice status="info" isDismissible={ false }>
-							{ __(
-								'This block displays product ingredients dynamically based on the product detail block.',
-								'ecwid-shopping-cart'
-							) }
-						</Notice>
-					) }
-
 					<ToggleControl
+						__nextHasNoMarginBottom
+						__next40pxDefaultSize
 						label={ __( 'Start Opened', 'ecwid-shopping-cart' ) }
 						checked={ startOpened }
 						onChange={ ( value ) =>
@@ -447,48 +345,68 @@ function ProductIngredientsEdit( props ) {
 				/>
 			</InspectorControls>
 
-			<div { ...blockProps }>
-				<div className="product-ingredients-preview">
-					<div className="accordion" id="ingredientsPreview">
-						{ previewIngredients.map( ( ingredient, index ) => (
-							<div key={ index } className="accordion-item">
-								<div className="accordion-header">
-									<button
-										className={ `accordion-button ${
-											index === 0 && startOpened
-												? ''
-												: 'collapsed'
-										}` }
-										type="button"
-									>
-										{ ingredient.name }
-									</button>
-								</div>
-								<div
-									className={ `accordion-collapse collapse ${
-										index === 0 && startOpened ? 'show' : ''
-									}` }
-								>
-									<div className="accordion-body">
-										{ ingredient.description }
-									</div>
-								</div>
-							</div>
-						) ) }
-
-						{ previewIngredients.length === 0 && (
-							<div className="text-center text-muted py-4">
-								<p>
-									{ __(
-										'No ingredients configured for this product.',
-										'ecwid-shopping-cart'
-									) }
-								</p>
-							</div>
-						) }
+			{ productLoading && (
+				<div className="text-center p-2">
+					<div
+						className="spinner-border spinner-border-sm"
+						role="status"
+					>
+						<span className="visually-hidden">
+							{ __(
+								'Loading product data…',
+								'ecwid-shopping-cart'
+							) }
+						</span>
 					</div>
 				</div>
-			</div>
+			) }
+
+			{ ! productLoading && (
+				<div { ...blockProps }>
+					<div className="product-ingredients-preview">
+						<div className="accordion" id="ingredientsPreview">
+							{ previewIngredients.map( ( ingredient, index ) => (
+								<div key={ index } className="accordion-item">
+									<div className="accordion-header">
+										<button
+											className={ `accordion-button ${
+												index === 0 && startOpened
+													? ''
+													: 'collapsed'
+											}` }
+											type="button"
+										>
+											{ ingredient.name }
+										</button>
+									</div>
+									<div
+										className={ `accordion-collapse collapse ${
+											index === 0 && startOpened
+												? 'show'
+												: ''
+										}` }
+									>
+										<div className="accordion-body">
+											{ ingredient.description }
+										</div>
+									</div>
+								</div>
+							) ) }
+
+							{ previewIngredients.length === 0 && (
+								<div className="text-center text-muted py-4">
+									<p>
+										{ __(
+											'No ingredients configured for this product.',
+											'ecwid-shopping-cart'
+										) }
+									</p>
+								</div>
+							) }
+						</div>
+					</div>
+				</div>
+			) }
 		</>
 	);
 }

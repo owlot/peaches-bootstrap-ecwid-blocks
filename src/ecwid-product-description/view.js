@@ -1,25 +1,30 @@
 import { store, getContext, getElement } from '@wordpress/interactivity';
 
-// Access the parent product detail store
-const productDetailStore = store( 'peaches-ecwid-product-detail' );
+/**
+ * Internal dependencies
+ */
+import {
+	getProductDataWithFallbackGenerator,
+	getCurrentLanguageForAPI,
+} from '../utils/ecwid-view-utils';
 
 const { state } = store( 'peaches-ecwid-product-description', {
-	state: {
-		get productId() {
-			return productDetailStore.state.productId;
-		},
-		get productData() {
-			return productDetailStore.state.productData;
-		},
-	},
-
 	callbacks: {
 		*initProductDescription() {
 			const context = getContext();
-			const productId = state.productId;
 
-			if ( ! productId ) {
-				console.error( 'Product ID not found for product description' );
+			// Use consolidated utility to get product data
+			const productData = yield* getProductDataWithFallbackGenerator(
+				context.selectedProductId
+			);
+
+			if ( ! productData?.id ) {
+				console.error( 'Product data not found for description block' );
+
+				// Hide the block if no product data
+				if ( element && element.ref ) {
+					element.ref.style.display = 'none';
+				}
 				return;
 			}
 
@@ -31,12 +36,12 @@ const { state } = store( 'peaches-ecwid-product-description', {
 
 			try {
 				console.log(
-					`Fetching description for product ${ productId }, type: ${ descriptionType }`
+					`Fetching description for product ${ productData?.id }, type: ${ descriptionType }`
 				);
 
 				// Fetch specific description type from unified API
 				const response = yield window.fetch(
-					`/wp-json/peaches/v1/product-descriptions/${ productId }/type/${ descriptionType }`,
+					`/wp-json/peaches/v1/product-descriptions/${ productData?.id }/type/${ descriptionType }`,
 					{
 						headers: {
 							Accept: 'application/json',

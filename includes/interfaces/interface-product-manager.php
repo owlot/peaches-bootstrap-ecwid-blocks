@@ -20,14 +20,6 @@ if (!defined('ABSPATH')) {
  */
 interface Peaches_Product_Manager_Interface {
 	/**
-	 * Register block types related to products.
-	 *
-	 * @since 0.1.2
-	 * @return void
-	 */
-	public function register_blocks();
-
-	/**
 	 * Initialize AJAX handlers for product data.
 	 *
 	 * @since 0.1.2

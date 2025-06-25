@@ -167,9 +167,6 @@ return array(
 		'version' => '0.1.0',
 		'title' => 'Bootstrap ECWID Product Add to cart',
 		'category' => 'peaches-bootstrap',
-		'ancestor' => array(
-			'peaches/ecwid-product-detail'
-		),
 		'description' => 'A dynamic ECWID product add to cart template with Bootstrap styling.',
 		'keywords' => array(
 			'bootstrap',
@@ -196,6 +193,9 @@ return array(
 		'editorScript' => 'file:./index.js',
 		'style' => 'file:./style-index.css',
 		'attributes' => array(
+			'selectedProductId' => array(
+				'type' => 'number'
+			),
 			'buttonThemeColor' => array(
 				'type' => 'string',
 				'default' => 'primary'
@@ -211,6 +211,12 @@ return array(
 			'outOfStockText' => array(
 				'type' => 'string',
 				'default' => 'Out of Stock'
+			),
+			'translations' => array(
+				'type' => 'object',
+				'default' => array(
+					
+				)
 			),
 			'allowOutOfStockPurchase' => array(
 				'type' => 'boolean',
@@ -354,9 +360,6 @@ return array(
 		'version' => '0.1.0',
 		'title' => 'Bootstrap ECWID Product Description',
 		'category' => 'peaches-bootstrap',
-		'ancestor' => array(
-			'peaches/ecwid-product-detail'
-		),
 		'description' => 'Display product descriptions with Bootstrap styling.',
 		'keywords' => array(
 			'bootstrap',
@@ -379,6 +382,9 @@ return array(
 			'peaches/testProductData'
 		),
 		'attributes' => array(
+			'selectedProductId' => array(
+				'type' => 'number'
+			),
 			'descriptionType' => array(
 				'type' => 'string',
 				'default' => 'usage'
@@ -515,9 +521,6 @@ return array(
 		'version' => '0.1.0',
 		'title' => 'Bootstrap ECWID Product Field',
 		'category' => 'peaches-bootstrap',
-		'ancestor' => array(
-			'peaches/ecwid-product-detail'
-		),
 		'description' => 'Display product field for ECWID products with Bootstrap styling.',
 		'keywords' => array(
 			'bootstrap',
@@ -540,6 +543,9 @@ return array(
 			'peaches/testProductData'
 		),
 		'attributes' => array(
+			'selectedProductId' => array(
+				'type' => 'number'
+			),
 			'fieldType' => array(
 				'type' => 'string',
 				'default' => 'title'
@@ -563,9 +569,6 @@ return array(
 		'version' => '0.1.0',
 		'title' => 'Bootstrap ECWID Product Gallery Image',
 		'category' => 'peaches-bootstrap',
-		'ancestor' => array(
-			'peaches/ecwid-product-detail'
-		),
 		'description' => 'Display a specific product media item based on media tag selection with Bootstrap styling and media type-specific controls.',
 		'keywords' => array(
 			'bootstrap',
@@ -592,6 +595,9 @@ return array(
 			'peaches/testProductData'
 		),
 		'attributes' => array(
+			'selectedProductId' => array(
+				'type' => 'number'
+			),
 			'selectedMediaTag' => array(
 				'type' => 'string',
 				'default' => ''
@@ -671,9 +677,6 @@ return array(
 		'version' => '0.1.0',
 		'title' => 'Bootstrap ECWID Product Images',
 		'category' => 'peaches-bootstrap',
-		'ancestor' => array(
-			'peaches/ecwid-product-detail'
-		),
 		'description' => 'Display product images for ECWID products with Bootstrap styling.',
 		'keywords' => array(
 			'bootstrap',
@@ -697,6 +700,9 @@ return array(
 			'peaches/testProductData'
 		),
 		'attributes' => array(
+			'selectedProductId' => array(
+				'type' => 'number'
+			),
 			'imageSize' => array(
 				'type' => 'string',
 				'default' => 'medium'
@@ -720,9 +726,6 @@ return array(
 		'version' => '0.1.0',
 		'title' => 'Bootstrap ECWID Product Ingredients',
 		'category' => 'peaches-bootstrap',
-		'ancestor' => array(
-			'peaches/ecwid-product-detail'
-		),
 		'description' => 'Display product ingredients for ECWID products with Bootstrap accordion styling.',
 		'keywords' => array(
 			'bootstrap',
@@ -745,6 +748,9 @@ return array(
 			'peaches/testProductData'
 		),
 		'attributes' => array(
+			'selectedProductId' => array(
+				'type' => 'number'
+			),
 			'startOpened' => array(
 				'type' => 'boolean',
 				'default' => false
@@ -760,9 +766,6 @@ return array(
 		'version' => '0.1.0',
 		'title' => 'Bootstrap ECWID Product Related Products',
 		'category' => 'peaches-bootstrap',
-		'ancestor' => array(
-			'peaches/ecwid-product-detail'
-		),
 		'description' => 'Display related products for ECWID products using existing product blocks.',
 		'keywords' => array(
 			'bootstrap',
@@ -785,6 +788,9 @@ return array(
 			'peaches/testProductData'
 		),
 		'attributes' => array(
+			'selectedProductId' => array(
+				'type' => 'number'
+			),
 			'showTitle' => array(
 				'type' => 'boolean',
 				'default' => true

@@ -10,7 +10,9 @@ import { useBlockProps } from '@wordpress/block-editor';
 import { computeClassName } from '../../../peaches-bootstrap-blocks/src/utils/bootstrap_settings';
 
 export default function save( { attributes } ) {
-	const { fieldType, htmlTag, customFieldKey } = attributes;
+	const { fieldType, htmlTag, customFieldKey, selectedProductId } =
+		attributes;
+
 	// Fields that contain HTML content
 	const htmlFields = [ 'description', 'price', 'stock' ];
 	const isHtmlField = htmlFields.includes( fieldType );
@@ -19,7 +21,12 @@ export default function save( { attributes } ) {
 		className: computeClassName( attributes ),
 		'data-wp-init': isHtmlField ? 'callbacks.initProductField' : '',
 		'data-wp-interactive': 'peaches-ecwid-product-field',
-		'data-wp-context': `{ "fieldType": "${ fieldType }", "customFieldKey": "${ customFieldKey }", "fieldValue": "" }`,
+		'data-wp-context': JSON.stringify( {
+			fieldType,
+			customFieldKey,
+			selectedProductId: selectedProductId || null,
+			fieldValue: '',
+		} ),
 	} );
 
 	const getEmptyContent = () => {

@@ -1,35 +1,43 @@
+/**
+ * WordPress dependencies
+ */
 import { store, getContext, getElement } from '@wordpress/interactivity';
 
-// Access the parent product detail store
-const productDetailStore = store( 'peaches-ecwid-product-detail' );
+/**
+ * Internal dependencies
+ */
+import { getProductDataWithFallbackGenerator } from '../utils/ecwid-view-utils';
 
-const { state, actions } = store( 'peaches-ecwid-product-field', {
-	state: {
-		get productId() {
-			return productDetailStore.state.productId;
-		},
-		get productData() {
-			return productDetailStore.state.productData;
-		},
-	},
-
+/**
+ * Ecwid Product Field interactivity store
+ */
+store( 'peaches-ecwid-product-field', {
 	callbacks: {
+		/**
+		 * Initialize product field display
+		 *
+		 * Gets product data from global state or fetches selected product data.
+		 */
 		*initProductField() {
 			const context = getContext();
 			const element = getElement();
 
-			if ( ! state.productId || ! state.productData ) {
-				console.error( 'Product data not available' );
+			// Use consolidated utility to get product data
+			const product = yield* getProductDataWithFallbackGenerator(
+				context.selectedProductId
+			);
+
+			if ( ! product ) {
+				console.error( 'Product data not found' );
 				return;
 			}
 
-			const product = state.productData;
-			const fieldType = context.fieldType;
+			// Rest of the existing logic unchanged
 			let value = '';
 			let isHtml = false;
 
 			try {
-				switch ( fieldType ) {
+				switch ( context.fieldType ) {
 					case 'title':
 						value = product.name || '';
 						break;
@@ -39,8 +47,18 @@ const { state, actions } = store( 'peaches-ecwid-product-field', {
 						if ( product.attributes ) {
 							const subtitleAttr = product.attributes.find(
 								( attr ) =>
-									attr.name === 'Ondertitel' ||
-									attr.name === 'Subtitle'
+									attr.name
+										.toLowerCase()
+										.includes( 'ondertitel' ) ||
+									attr.name
+										.toLowerCase()
+										.includes( 'subtitle' ) ||
+									attr.name
+										.toLowerCase()
+										.includes( 'sub-title' ) ||
+									attr.name
+										.toLowerCase()
+										.includes( 'tagline' )
 							);
 							value =
 								subtitleAttr?.valueTranslated?.nl ||
@@ -50,22 +68,23 @@ const { state, actions } = store( 'peaches-ecwid-product-field', {
 						break;
 
 					case 'price':
-						// Check if there's a sale price
-						if (
-							product.compareToPrice &&
-							product.compareToPrice > product.price
-						) {
-							value = `<span class="regular-price text-decoration-line-through me-2 text-muted">€ ${ product.compareToPrice
-								.toFixed( 2 )
-								.replace( '.', ',' ) }</span>
+						if ( product.price !== undefined ) {
+							if (
+								product.compareToPrice &&
+								product.compareToPrice > product.price
+							) {
+								value = `<span class="original-price text-decoration-line-through text-muted">€ ${ product.compareToPrice
+									.toFixed( 2 )
+									.replace( '.', ',' ) }</span>
 									 <span class="sale-price text-danger">€ ${ product.price
 											.toFixed( 2 )
 											.replace( '.', ',' ) }</span>`;
-							isHtml = true;
-						} else {
-							value = `€ ${ product.price
-								.toFixed( 2 )
-								.replace( '.', ',' ) }`;
+								isHtml = true;
+							} else {
+								value = `€ ${ product.price
+									.toFixed( 2 )
+									.replace( '.', ',' ) }`;
+							}
 						}
 						break;
 

@@ -5,7 +5,6 @@
 	"version": "0.1.0",
 	"title": "Bootstrap ECWID Product Add to cart",
 	"category": "peaches-bootstrap",
-	"ancestor": [ "peaches/ecwid-product-detail" ],
 	"description": "A dynamic ECWID product add to cart template with Bootstrap styling.",
 	"keywords": [
 		"bootstrap",
@@ -30,6 +29,9 @@
 	"editorScript": "file:./index.js",
 	"style": "file:./style-index.css",
 	"attributes": {
+		"selectedProductId": {
+			"type": "number"
+		},
 		"buttonThemeColor": {
 			"type": "string",
 			"default": "primary"
@@ -45,6 +47,10 @@
 		"outOfStockText": {
 			"type": "string",
 			"default": "Out of Stock"
+		},
+		"translations": {
+			"type": "object",
+			"default": {}
 		},
 		"allowOutOfStockPurchase": {
 			"type": "boolean",

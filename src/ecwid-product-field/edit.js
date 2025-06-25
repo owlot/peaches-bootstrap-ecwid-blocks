@@ -4,12 +4,7 @@
 import { __ } from '@wordpress/i18n';
 import { InspectorControls, useBlockProps } from '@wordpress/block-editor';
 import { useMemo } from '@wordpress/element';
-import {
-	PanelBody,
-	SelectControl,
-	TextControl,
-	Notice,
-} from '@wordpress/components';
+import { PanelBody, SelectControl, TextControl } from '@wordpress/components';
 
 /**
  * Internal dependencies
@@ -18,6 +13,11 @@ import {
 	BootstrapSettingsPanels,
 	computeClassName,
 } from '../../../peaches-bootstrap-blocks/src/utils/bootstrap_settings';
+import {
+	useEcwidProductData,
+	ProductSelectionPanel,
+	getProductFieldValue,
+} from '../utils/ecwid-product-utils';
 
 const SUPPORTED_SETTINGS = {
 	responsive: {
@@ -57,169 +57,71 @@ const HTML_TAGS = [
 /**
  * Product Field Edit Component
  *
- * Displays a product field with test data when available from parent context.
+ * Displays a product field with unified product data handling.
  *
  * @param {Object} props - Component props
  *
  * @return {JSX.Element} - Edit component
  */
 function ProductFieldEdit( props ) {
-	const { attributes, setAttributes, context } = props;
+	const { attributes, setAttributes, context, clientId } = props;
 	const { fieldType, htmlTag, customFieldKey } = attributes;
 
-	// Get test product data from parent context
-	const testProductData = context?.[ 'peaches/testProductData' ];
+	// Use unified product data hook
+	const {
+		productData,
+		isLoading,
+		error,
+		hasProductDetailAncestor,
+		selectedProductId,
+		contextProductData,
+		openEcwidProductPopup,
+		clearSelectedProduct,
+	} = useEcwidProductData( context, attributes, setAttributes, clientId );
 
-	const className = useMemo(
-		() => computeClassName( attributes ),
-		[ attributes ]
-	);
+	// Compute class name with Bootstrap utilities
+	const computedClassName = useMemo( () => {
+		return computeClassName( attributes );
+	}, [ attributes ] );
 
 	const blockProps = useBlockProps( {
-		className,
-		'data-wp-interactive': 'peaches-ecwid-product-field',
+		className: computedClassName,
 	} );
 
 	/**
-	 * Get preview text based on field type and available test data
+	 * Get preview text for the field
 	 *
-	 * @return {string} - Preview text to display
+	 * @return {string} - Preview text
 	 */
 	const getPreviewText = () => {
-		if ( testProductData ) {
-			try {
-				switch ( fieldType ) {
-					case 'title':
-						return testProductData.name || '';
-
-					case 'subtitle':
-						if ( testProductData.attributes ) {
-							const subtitleAttr =
-								testProductData.attributes.find(
-									( attr ) =>
-										attr.name === 'Ondertitel' ||
-										attr.name === 'Subtitle'
-								);
-							return (
-								subtitleAttr?.valueTranslated?.nl ||
-								subtitleAttr?.value ||
-								''
-							);
-						}
-						return '';
-
-					case 'price':
-						if ( testProductData.price ) {
-							// Check if there's a sale price
-							if (
-								testProductData.compareToPrice &&
-								testProductData.compareToPrice >
-									testProductData.price
-							) {
-								return `€ ${ testProductData.compareToPrice.toFixed(
-									2
-								) } €ht ${ testProductData.price.toFixed(
-									2
-								) }`;
-							}
-							return `€ ${ testProductData.price.toFixed( 2 ) }`;
-						}
-						return '';
-
-					case 'stock':
-						return testProductData.inStock
-							? __( 'In Stock', 'ecwid-shopping-cart' )
-							: __( 'Out of Stock', 'ecwid-shopping-cart' );
-
-					case 'description':
-						// Return HTML content for description, but we'll handle it specially
-						return testProductData.description || '';
-
-					case 'custom':
-						if ( customFieldKey && testProductData.attributes ) {
-							const customField = testProductData.attributes.find(
-								( attr ) => attr.name === customFieldKey
-							);
-							return (
-								customField?.valueTranslated?.nl ||
-								customField?.value ||
-								''
-							);
-						}
-						return customFieldKey
-							? __(
-									'Custom field not found in test product',
-									'ecwid-shopping-cart'
-							  )
-							: __(
-									'Select a custom field',
-									'ecwid-shopping-cart'
-							  );
-
-					default:
-						return '';
-				}
-			} catch ( error ) {
-				return __(
-					'Error loading test product field',
-					'ecwid-shopping-cart'
-				);
-			}
-		}
-
-		// Fallback to placeholder text when no test product is available
-		switch ( fieldType ) {
-			case 'title':
-				return __( 'Sample Product Title', 'ecwid-shopping-cart' );
-			case 'subtitle':
-				return __( 'Sample Product Subtitle', 'ecwid-shopping-cart' );
-			case 'price':
-				return '€ 29.99';
-			case 'stock':
-				return __( 'In Stock', 'ecwid-shopping-cart' );
-			case 'description':
-				return __(
-					'This is a sample product description…',
-					'ecwid-shopping-cart'
-				);
-			case 'custom':
-				return customFieldKey
-					? __( 'Custom Field:', 'ecwid-shopping-cart' ) +
-							' ' +
-							customFieldKey
-					: __( 'Select a custom field', 'ecwid-shopping-cart' );
-			default:
-				return '';
-		}
+		return getProductFieldValue( productData, fieldType, customFieldKey );
 	};
 
 	return (
 		<>
 			<InspectorControls>
+				<ProductSelectionPanel
+					productData={ productData }
+					isLoading={ isLoading }
+					error={ error }
+					hasProductDetailAncestor={ hasProductDetailAncestor }
+					selectedProductId={ selectedProductId }
+					contextProductData={ contextProductData }
+					openEcwidProductPopup={ openEcwidProductPopup }
+					clearSelectedProduct={ clearSelectedProduct }
+					attributes={ attributes }
+					setAttributes={ setAttributes }
+				/>
+
 				<PanelBody
 					title={ __(
 						'Product Field Settings',
 						'ecwid-shopping-cart'
 					) }
 				>
-					{ testProductData ? (
-						<Notice status="success" isDismissible={ false }>
-							{ __(
-								'Using test product data:',
-								'ecwid-shopping-cart'
-							) }{ ' ' }
-							<strong>{ testProductData.name }</strong>
-						</Notice>
-					) : (
-						<Notice status="info" isDismissible={ false }>
-							{ __(
-								'Using placeholder data. Configure a test product in the parent block to preview real data.',
-								'ecwid-shopping-cart'
-							) }
-						</Notice>
-					) }
-
 					<SelectControl
+						__nextHasNoMarginBottom
+						__next40pxDefaultSize
 						label={ __( 'Field Type', 'ecwid-shopping-cart' ) }
 						value={ fieldType }
 						options={ FIELD_TYPES }
@@ -230,6 +132,8 @@ function ProductFieldEdit( props ) {
 
 					{ fieldType === 'custom' && (
 						<TextControl
+							__nextHasNoMarginBottom
+							__next40pxDefaultSize
 							label={ __(
 								'Custom Field Key',
 								'ecwid-shopping-cart'
@@ -246,6 +150,8 @@ function ProductFieldEdit( props ) {
 					) }
 
 					<SelectControl
+						__nextHasNoMarginBottom
+						__next40pxDefaultSize
 						label={ __( 'HTML Tag', 'ecwid-shopping-cart' ) }
 						value={ htmlTag }
 						options={ HTML_TAGS }
@@ -262,15 +168,33 @@ function ProductFieldEdit( props ) {
 				/>
 			</InspectorControls>
 
-			<div { ...blockProps }>
-				{ fieldType === 'description' && testProductData?.description
-					? React.createElement( htmlTag, {
-							dangerouslySetInnerHTML: {
-								__html: testProductData.description,
-							},
-					  } )
-					: React.createElement( htmlTag, {}, getPreviewText() ) }
-			</div>
+			{ isLoading && (
+				<div className="text-center p-2">
+					<div
+						className="spinner-border spinner-border-sm"
+						role="status"
+					>
+						<span className="visually-hidden">
+							{ __(
+								'Loading product data…',
+								'ecwid-shopping-cart'
+							) }
+						</span>
+					</div>
+				</div>
+			) }
+
+			{ ! isLoading && (
+				<div { ...blockProps }>
+					{ fieldType === 'description' && productData?.description
+						? React.createElement( htmlTag, {
+								dangerouslySetInnerHTML: {
+									__html: productData.description,
+								},
+						  } )
+						: React.createElement( htmlTag, {}, getPreviewText() ) }
+				</div>
+			) }
 		</>
 	);
 }

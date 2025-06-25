@@ -5,7 +5,6 @@
 	"version": "0.1.0",
 	"title": "Bootstrap ECWID Product Related Products",
 	"category": "peaches-bootstrap",
-	"ancestor": [ "peaches/ecwid-product-detail" ],
 	"description": "Display related products for ECWID products using existing product blocks.",
 	"keywords": [
 		"bootstrap",
@@ -26,6 +25,9 @@
 	},
 	"usesContext": [ "peaches/testProductData" ],
 	"attributes": {
+		"selectedProductId": {
+			"type": "number"
+		},
 		"showTitle": {
 			"type": "boolean",
 			"default": true

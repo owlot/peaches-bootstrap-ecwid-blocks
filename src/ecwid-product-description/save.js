@@ -10,15 +10,17 @@ import { useBlockProps } from '@wordpress/block-editor';
 import { computeClassName } from '../../../peaches-bootstrap-blocks/src/utils/bootstrap_settings';
 
 export default function save( { attributes } ) {
-	const { descriptionType, displayTitle } = attributes;
+	const { selectedProductId, descriptionType, displayTitle } = attributes; // ONLY ADDED selectedProductId
 
 	const blockProps = useBlockProps.save( {
 		className: computeClassName( attributes ),
 		'data-wp-init': 'callbacks.initProductDescription',
 		'data-wp-interactive': 'peaches-ecwid-product-description',
-		'data-wp-context': `{ "descriptionType": "${ descriptionType }", "displayTitle": ${ displayTitle }, "customTitle": "${
+		'data-wp-context': `{ "selectedProductId": ${
+			selectedProductId || null
+		}, "descriptionType": "${ descriptionType }", "displayTitle": ${ displayTitle }, "customTitle": "${
 			attributes.customTitle || ''
-		}", "descriptionContent": "", "descriptionTitle": "" }`,
+		}", "descriptionContent": "", "descriptionTitle": "" }`, // ONLY ADDED selectedProductId TO ORIGINAL TEMPLATE STRING
 	} );
 
 	return (

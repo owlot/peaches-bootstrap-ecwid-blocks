@@ -32,6 +32,11 @@ import {
 	BootstrapSettingsPanels,
 	computeClassName,
 } from '../../../peaches-bootstrap-blocks/src/utils/bootstrap_settings';
+import {
+	getCurrentLanguageForAPI,
+	useEcwidProductData,
+	ProductSelectionPanel,
+} from '../utils/ecwid-product-utils';
 
 // Supported Bootstrap settings
 const SUPPORTED_SETTINGS = {
@@ -62,9 +67,15 @@ const SUPPORTED_SETTINGS = {
  * @param {Function} props.setAttributes - Function to set attributes
  * @param {string}   props.clientId      - Block client ID
  *
+ * @param            props.context
  * @return {JSX.Element} Edit component
  */
-export default function Edit( { attributes, setAttributes, clientId } ) {
+export default function Edit( {
+	context,
+	attributes,
+	setAttributes,
+	clientId,
+} ) {
 	const { showTitle, customTitle } = attributes;
 
 	const [ relatedProducts, setRelatedProducts ] = useState( [] );
@@ -100,24 +111,17 @@ export default function Edit( { attributes, setAttributes, clientId } ) {
 		},
 		[ clientId ]
 	);
-
-	// Get test product data from context
-	const testProductData = useSelect(
-		( select ) => {
-			const { getBlockParents, getBlock } = select( 'core/block-editor' );
-			const parents = getBlockParents( clientId );
-
-			// Look for product detail block in parents
-			for ( const parentId of parents ) {
-				const parent = getBlock( parentId );
-				if ( parent?.name === 'peaches/ecwid-product-detail' ) {
-					return parent.attributes.testProductData;
-				}
-			}
-			return null;
-		},
-		[ clientId ]
-	);
+	// Use unified product data hook
+	const {
+		productData,
+		isLoading: productLoading,
+		error: productError,
+		hasProductDetailAncestor,
+		selectedProductId,
+		contextProductData,
+		openEcwidProductPopup,
+		clearSelectedProduct,
+	} = useEcwidProductData( context, attributes, setAttributes, clientId );
 
 	/**
 	 * Clear inner blocks safely without dependencies on innerBlocks
@@ -239,7 +243,7 @@ export default function Edit( { attributes, setAttributes, clientId } ) {
 	 * @return {void}
 	 */
 	const updateBlocks = useCallback( () => {
-		const productId = testProductData?.id;
+		const productId = productData?.id;
 
 		// Check if we need to update blocks
 		const shouldUpdateBlocks =
@@ -265,7 +269,7 @@ export default function Edit( { attributes, setAttributes, clientId } ) {
 			}
 		}
 	}, [
-		testProductData?.id,
+		productData?.id,
 		relatedProducts,
 		attributes.showAddToCart,
 		attributes.maxProducts,
@@ -287,31 +291,34 @@ export default function Edit( { attributes, setAttributes, clientId } ) {
 
 	// Fetch related products when test product changes
 	useEffect( () => {
-		if ( ! testProductData?.id ) {
+		if ( ! productData?.id ) {
 			setRelatedProducts( [] );
 			setError( null );
 			return;
 		}
 
 		// Don't fetch if we're already loading for this product
-		if ( currentProductIdRef.current === testProductData.id && isLoading ) {
+		if ( currentProductIdRef.current === productData.id && isLoading ) {
 			return;
 		}
 
 		setIsLoading( true );
 		setError( null );
 
-		// Use REST API directly - works in both editor and frontend
-		fetch( `/wp-json/peaches/v1/related-products/${ testProductData.id }`, {
+		fetch( `/wp-json/peaches/v1/related-products/${ productData.id }`, {
 			headers: {
-				'X-WP-Nonce': wpApiSettings?.nonce || '',
 				Accept: 'application/json',
 			},
 			credentials: 'same-origin',
 		} )
 			.then( ( response ) => {
 				if ( response.status === 404 ) {
-					setError( __( 'No related products found', 'peaches' ) );
+					setError(
+						__(
+							'No related products found',
+							'peaches-bootstrap-ecwid-blocks'
+						)
+					);
 					setRelatedProducts( [] );
 					setIsLoading( false );
 					clearInnerBlocks();
@@ -336,7 +343,12 @@ export default function Edit( { attributes, setAttributes, clientId } ) {
 					setRelatedProducts( responseData.related_products );
 					setError( null );
 				} else {
-					setError( __( 'No related products found', 'peaches' ) );
+					setError(
+						__(
+							'No related products found',
+							'peaches-bootstrap-ecwid-blocks'
+						)
+					);
 					setRelatedProducts( [] );
 					clearInnerBlocks();
 				}
@@ -344,14 +356,17 @@ export default function Edit( { attributes, setAttributes, clientId } ) {
 			.catch( ( fetchError ) => {
 				console.error( 'Error fetching related products:', fetchError );
 				setError(
-					__( 'Error loading related products', 'peaches' ) +
+					__(
+						'Error loading related products',
+						'peaches-bootstrap-ecwid-blocks'
+					) +
 						': ' +
 						fetchError.message
 				);
 				setRelatedProducts( [] );
 				setIsLoading( false );
 			} );
-	}, [ testProductData?.id, clearInnerBlocks ] );
+	}, [ productData?.id, clearInnerBlocks ] );
 
 	/**
 	 * Compute className from Bootstrap attributes and store it
@@ -375,11 +390,24 @@ export default function Edit( { attributes, setAttributes, clientId } ) {
 	return (
 		<>
 			<InspectorControls>
+				<ProductSelectionPanel
+					productData={ productData }
+					isLoading={ productLoading }
+					error={ productError }
+					hasProductDetailAncestor={ hasProductDetailAncestor }
+					selectedProductId={ selectedProductId }
+					contextProductData={ contextProductData }
+					openEcwidProductPopup={ openEcwidProductPopup }
+					clearSelectedProduct={ clearSelectedProduct }
+					attributes={ attributes }
+					setAttributes={ setAttributes }
+				/>
+
 				{ isInCarousel && (
 					<Notice status="info" isDismissible={ false }>
 						{ __(
 							'This block is inside a carousel. Products will be displayed as carousel slides. Title and status messages are not shown in carousel mode.',
-							'peaches'
+							'peaches-bootstrap-ecwid-blocks'
 						) }
 					</Notice>
 				) }
@@ -391,7 +419,7 @@ export default function Edit( { attributes, setAttributes, clientId } ) {
 					<ToggleControl
 						label={ __(
 							'Show Add to Cart',
-							'ecwid-shopping-cart'
+							'peaches-bootstrap-ecwid-blocks'
 						) }
 						checked={ attributes.showAddToCart }
 						onChange={ ( value ) =>
@@ -411,7 +439,7 @@ export default function Edit( { attributes, setAttributes, clientId } ) {
 							isInCarousel
 								? __(
 										'Title is not shown in carousel mode',
-										'peaches'
+										'peaches-bootstrap-ecwid-blocks'
 								  )
 								: ''
 						}
@@ -426,10 +454,13 @@ export default function Edit( { attributes, setAttributes, clientId } ) {
 							onChange={ ( value ) =>
 								setAttributes( { customTitle: value } )
 							}
-							placeholder={ __( 'Related Products', 'peaches' ) }
+							placeholder={ __(
+								'Related Products',
+								'peaches-bootstrap-ecwid-blocks'
+							) }
 							help={ __(
 								'Leave empty to use default title',
-								'peaches'
+								'peaches-bootstrap-ecwid-blocks'
 							) }
 							__next40pxDefaultSize
 							__nextHasNoMarginBottom
@@ -446,7 +477,7 @@ export default function Edit( { attributes, setAttributes, clientId } ) {
 						max={ 12 }
 						help={ __(
 							'Maximum number of related products to display',
-							'peaches'
+							'peaches-bootstrap-ecwid-blocks'
 						) }
 						__next40pxDefaultSize
 						__nextHasNoMarginBottom
@@ -473,7 +504,10 @@ export default function Edit( { attributes, setAttributes, clientId } ) {
 					{ showTitle && (
 						<h3 className="related-products-title mb-4">
 							{ customTitle ||
-								__( 'Related Products', 'peaches' ) }
+								__(
+									'Related Products',
+									'peaches-bootstrap-ecwid-blocks'
+								) }
 						</h3>
 					) }
 
@@ -484,11 +518,17 @@ export default function Edit( { attributes, setAttributes, clientId } ) {
 								role="status"
 							>
 								<span className="visually-hidden">
-									{ __( 'Loading…', 'peaches' ) }
+									{ __(
+										'Loading…',
+										'peaches-bootstrap-ecwid-blocks'
+									) }
 								</span>
 							</div>
 							<span>
-								{ __( 'Loading related products…', 'peaches' ) }
+								{ __(
+									'Loading related products…',
+									'peaches-bootstrap-ecwid-blocks'
+								) }
 							</span>
 						</div>
 					) }
@@ -499,11 +539,11 @@ export default function Edit( { attributes, setAttributes, clientId } ) {
 						</div>
 					) }
 
-					{ ! testProductData && (
+					{ ! productData && (
 						<div className="alert alert-info mb-3" role="alert">
 							{ __(
 								'Configure a test product in the Product Detail block to see related products preview.',
-								'peaches'
+								'peaches-bootstrap-ecwid-blocks'
 							) }
 						</div>
 					) }
