@@ -5,6 +5,33 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.1] - 2025-06-29
+
+### Added
+- **Product Lines Support in Product Field Block**: Extended the existing `ecwid-product-field` block to display product lines with multiple display modes (@since 0.3.1)
+- **Product Lines REST API**: New REST endpoints for fetching product lines and line types
+  - `/wp-json/peaches/v1/product-lines/{product_id}` - Get product lines for a specific product
+  - `/wp-json/peaches/v1/line-types` - Get all available line types
+- **Product Lines Display Modes**: Multiple visual styles for displaying product lines
+  - Badges - Bootstrap badge styling with custom colors
+  - Pills - Rounded pill badges
+  - List - Unordered list with optional descriptions
+  - Inline - Comma-separated or custom separator format
+- **Product Lines Filtering**: Advanced filtering options for `lines_filtered` field type
+  - Filter by line type (fragrance, color_scheme, design_collection, etc.)
+  - Maximum lines limit (0 = unlimited)
+  - Show/hide line descriptions
+  - Custom separator for inline mode
+- **Enhanced Color Support**: Product line badges and pills respect block editor color settings
+- **Multilingual Support**: Product lines integration with existing language detection utilities
+
+### Changed
+- **Product Field Block**: Enhanced with comprehensive product lines support while maintaining backward compatibility
+- **REST API Architecture**: Added product lines manager dependency injection for better maintainability
+- **Editor Experience**: True WYSIWYG rendering - product lines display exactly as they appear on frontend
+- **Code Consistency**: Standardized fetch patterns across blocks for improved maintainability
+# Changelog
+
 ## [0.3.0] - 2025-06-28
 
 ### Added

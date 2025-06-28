@@ -1,12 +1,47 @@
 /**
  * WordPress dependencies
  */
-import { store, getContext, getElement } from '@wordpress/interactivity';
+import {
+	store,
+	getContext,
+	getElement,
+	withScope,
+} from '@wordpress/interactivity';
 
 /**
  * Internal dependencies
  */
-import { getProductDataWithFallbackGenerator } from '../utils/ecwid-view-utils';
+import {
+	getProductDataWithFallbackGenerator,
+	getProductIdWithFallback,
+	buildApiUrl,
+} from '../utils/ecwid-view-utils';
+
+/**
+ * Decode HTML entities in text content
+ *
+ * Safely converts HTML entities like &amp; to their proper characters.
+ *
+ * @since 0.3.1
+ *
+ * @param {string} text - Text content that may contain HTML entities
+ *
+ * @return {string} - Decoded text content
+ */
+function decodeHtmlEntities( text ) {
+	if ( ! text || typeof text !== 'string' ) {
+		return '';
+	}
+
+	try {
+		const textarea = document.createElement( 'textarea' );
+		textarea.innerHTML = text;
+		return textarea.value;
+	} catch ( error ) {
+		console.warn( 'Error decoding HTML entities:', error );
+		return text;
+	}
+}
 
 /**
  * Ecwid Product Field interactivity store
@@ -32,7 +67,6 @@ store( 'peaches-ecwid-product-field', {
 				return;
 			}
 
-			// Rest of the existing logic unchanged
 			let value = '';
 			let isHtml = false;
 
@@ -76,9 +110,9 @@ store( 'peaches-ecwid-product-field', {
 								value = `<span class="original-price text-decoration-line-through text-muted">€ ${ product.compareToPrice
 									.toFixed( 2 )
 									.replace( '.', ',' ) }</span>
-									 <span class="sale-price text-danger">€ ${ product.price
-											.toFixed( 2 )
-											.replace( '.', ',' ) }</span>`;
+									<span class="sale-price text-danger">€ ${ product.price
+										.toFixed( 2 )
+										.replace( '.', ',' ) }</span>`;
 								isHtml = true;
 							} else {
 								value = `€ ${ product.price
@@ -141,6 +175,231 @@ store( 'peaches-ecwid-product-field', {
 			} catch ( error ) {
 				console.error( 'Error processing product field:', error );
 				context.fieldValue = '';
+			}
+		},
+	},
+} );
+
+/**
+ * Ecwid Product Lines interactivity store
+ *
+ * @since 0.3.1 - Added product lines support
+ */
+store( 'peaches-ecwid-product-lines', {
+	state: {
+		/**
+		 * Computed state: Get decoded line name
+		 *
+		 * Returns the line name with HTML entities properly decoded.
+		 *
+		 * @since 0.3.1
+		 *
+		 * @return {string} - decoded line name
+		 */
+		get decodedName() {
+			const context = getContext();
+			return decodeHtmlEntities( context.line.name || '' );
+		},
+
+		/**
+		 * Computed state: Get decoded line description
+		 *
+		 * Returns the line description with HTML entities properly decoded,
+		 * including the separator if descriptions are shown.
+		 *
+		 * @since 0.3.1
+		 *
+		 * @return {string} - decoded line description with separator
+		 */
+		get decodedDescription() {
+			const context = getContext();
+			if (
+				! context.showLineDescriptions ||
+				! context.line.description
+			) {
+				return '';
+			}
+			return (
+				context.descriptionSeparator +
+				decodeHtmlEntities( context.line.description )
+			);
+		},
+
+		/**
+		 * Computed state: Get complete decoded line content
+		 *
+		 * Returns the complete line content (name + description) with proper
+		 * HTML entity decoding and separator handling for badges/spans.
+		 *
+		 * @since 0.3.1
+		 *
+		 * @return {string} - complete decoded line content
+		 */
+		get decodedLineContent() {
+			const context = getContext();
+			let text = decodeHtmlEntities( context.line.name || '' );
+
+			if ( context.showLineDescriptions && context.line.description ) {
+				text +=
+					context.descriptionSeparator +
+					decodeHtmlEntities( context.line.description );
+			}
+
+			return text;
+		},
+
+		/**
+		 * Computed state: Get inline content for all lines
+		 *
+		 * Returns all filtered lines joined with the line separator for inline display.
+		 *
+		 * @since 0.3.1
+		 *
+		 * @return {string} - complete inline content for all lines
+		 */
+		get inlineContent() {
+			const context = getContext();
+
+			if (
+				! context.productLines ||
+				! Array.isArray( context.productLines )
+			) {
+				return '';
+			}
+
+			// Filter lines by type if specified
+			let filteredLines = context.productLines;
+			if ( context.lineType && context.fieldType === 'lines_filtered' ) {
+				filteredLines = context.productLines.filter(
+					( line ) => line.line_type === context.lineType
+				);
+			}
+
+			// Apply max lines limit
+			if ( context.maxLines > 0 ) {
+				filteredLines = filteredLines.slice( 0, context.maxLines );
+			}
+
+			// Generate content for each line
+			const lineContents = filteredLines.map( ( line ) => {
+				let text = decodeHtmlEntities( line.name || '' );
+
+				if ( context.showLineDescriptions && line.description ) {
+					text +=
+						context.descriptionSeparator +
+						decodeHtmlEntities( line.description );
+				}
+
+				return text;
+			} );
+
+			return lineContents.join( context.lineSeparator || ', ' );
+		},
+	},
+	callbacks: {
+		/**
+		 * Initialize product lines display
+		 *
+		 * Gets product lines for product found in global state or fetches selected product data.
+		 */
+		*initProductField() {
+			const context = getContext();
+
+			// Use consolidated utility to get product ID
+			const productId = getProductIdWithFallback(
+				context.selectedProductId
+			);
+
+			context.isLoading = true;
+
+			try {
+				const apiUrl = buildApiUrl( 'product-lines', productId );
+
+				console.log( `Calling API with language: ${ apiUrl }` );
+				// Fetch ingredients from WordPress API with language support
+				const response = yield fetch( apiUrl, {
+					headers: {
+						Accept: 'application/json',
+					},
+					credentials: 'same-origin',
+				} );
+
+				if ( response.status === 404 ) {
+					context.productLines = [];
+					context.isLoading = false;
+					yield* actions.renderProductLines();
+					return;
+				}
+
+				if ( ! response.ok ) {
+					throw new Error(
+						`HTTP error! status: ${ response.status }`
+					);
+				}
+
+				const responseData = yield response.json();
+
+				if (
+					responseData &&
+					responseData.data &&
+					Array.isArray( responseData.data )
+				) {
+					// Filter lines by type if specified
+					let filteredLines = responseData.data;
+					if (
+						context.fieldType === 'lines_filtered' &&
+						context.lineType
+					) {
+						filteredLines = responseData.data.filter(
+							( line ) => line.line_type === context.lineType
+						);
+					}
+
+					// Apply max lines limit
+					if ( context.maxLines > 0 ) {
+						filteredLines = filteredLines.slice(
+							0,
+							context.maxLines
+						);
+					}
+
+					// Check if we need to consolidate the output
+					if ( context.displayMode === 'inline' ) {
+						const separator = context.lineSeparator || ', '; // Use custom separator or default
+						const lines = filteredLines
+							.map( ( line ) => {
+								let text = line.name;
+								if (
+									context.showLineDescriptions &&
+									line.description
+								) {
+									text =
+										text +
+										context.descriptionSeparator +
+										line.description;
+								}
+								return text;
+							} )
+							.join( context.lineSeparator );
+
+						filteredLines = [
+							{
+								id: 0,
+								name: lines,
+							},
+						];
+					}
+
+					context.productLines = filteredLines;
+				} else {
+					context.productLines = [];
+				}
+
+				context.isLoading = false;
+			} catch ( error ) {
+				console.error( 'Error fetching product lines:', error );
+				context.productLines = [];
+				context.isLoading = false;
 			}
 		},
 	},

@@ -18,9 +18,6 @@
 	"supports": {
 		"html": false,
 		"layout": false,
-		"color": {
-			"overlay": true
-		},
 		"interactivity": true
 	},
 	"usesContext": [ "peaches/testProductData" ],
@@ -39,6 +36,65 @@
 		"customFieldKey": {
 			"type": "string",
 			"default": ""
+		},
+		"lineType": {
+			"type": "string",
+			"default": ""
+		},
+		"displayMode": {
+			"type": "string",
+			"default": "badges",
+			"enum": [ "badges", "list", "inline" ]
+		},
+		"showLineDescriptions": {
+			"type": "boolean",
+			"default": false
+		},
+		"descriptionSeparator": {
+			"type": "string",
+			"default": " | "
+		},
+		"maxLines": {
+			"type": "number",
+			"default": 0
+		},
+		"lineSeparator": {
+			"type": "string",
+			"default": ", "
+		},
+		"xs": {
+			"type": "object",
+			"default": {}
+		},
+		"sm": {
+			"type": "object",
+			"default": {}
+		},
+		"md": {
+			"type": "object",
+			"default": {}
+		},
+		"lg": {
+			"type": "object",
+			"default": {}
+		},
+		"xl": {
+			"type": "object",
+			"default": {}
+		},
+		"xxl": {
+			"type": "object",
+			"default": {}
+		},
+		"border": {
+			"type": "object",
+			"default": {
+				"type_location": {}
+			}
+		},
+		"colors": {
+			"type": "object",
+			"default": {}
 		}
 	},
 	"viewScriptModule": "file:./view.js",

@@ -329,8 +329,8 @@ class Peaches_Ecwid_Blocks {
 		}
 
 		// Initialize REST API (consolidates all REST endpoints)
-		if (class_exists('Peaches_REST_API') && $this->product_settings_manager && $this->media_tags_manager && $this->product_media_manager && $this->ecwid_api && $this->product_manager) {
-			$this->rest_api = new Peaches_REST_API($this->product_settings_manager, $this->media_tags_manager, $this->product_media_manager, $this->ecwid_api, $this->product_manager);
+		if (class_exists('Peaches_REST_API') && $this->product_settings_manager && $this->media_tags_manager && $this->product_media_manager && $this->ecwid_api && $this->product_manager && $this->product_lines_manager) {
+			$this->rest_api = new Peaches_REST_API($this->product_settings_manager, $this->media_tags_manager, $this->product_media_manager, $this->ecwid_api, $this->product_manager, $this->product_lines_manager);
 		}
 
 		// Initialize block registration

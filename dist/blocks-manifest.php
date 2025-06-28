@@ -534,9 +534,6 @@ return array(
 		'supports' => array(
 			'html' => false,
 			'layout' => false,
-			'color' => array(
-				'overlay' => true
-			),
 			'interactivity' => true
 		),
 		'usesContext' => array(
@@ -557,6 +554,85 @@ return array(
 			'customFieldKey' => array(
 				'type' => 'string',
 				'default' => ''
+			),
+			'lineType' => array(
+				'type' => 'string',
+				'default' => ''
+			),
+			'displayMode' => array(
+				'type' => 'string',
+				'default' => 'badges',
+				'enum' => array(
+					'badges',
+					'list',
+					'inline'
+				)
+			),
+			'showLineDescriptions' => array(
+				'type' => 'boolean',
+				'default' => false
+			),
+			'descriptionSeparator' => array(
+				'type' => 'string',
+				'default' => ' | '
+			),
+			'maxLines' => array(
+				'type' => 'number',
+				'default' => 0
+			),
+			'lineSeparator' => array(
+				'type' => 'string',
+				'default' => ', '
+			),
+			'xs' => array(
+				'type' => 'object',
+				'default' => array(
+					
+				)
+			),
+			'sm' => array(
+				'type' => 'object',
+				'default' => array(
+					
+				)
+			),
+			'md' => array(
+				'type' => 'object',
+				'default' => array(
+					
+				)
+			),
+			'lg' => array(
+				'type' => 'object',
+				'default' => array(
+					
+				)
+			),
+			'xl' => array(
+				'type' => 'object',
+				'default' => array(
+					
+				)
+			),
+			'xxl' => array(
+				'type' => 'object',
+				'default' => array(
+					
+				)
+			),
+			'border' => array(
+				'type' => 'object',
+				'default' => array(
+					'type_location' => array(
+						
+					)
+				)
+			),
+			'colors' => array(
+				'type' => 'object',
+				'default' => array(
+					
+				)
 			)
 		),
 		'viewScriptModule' => 'file:./view.js',

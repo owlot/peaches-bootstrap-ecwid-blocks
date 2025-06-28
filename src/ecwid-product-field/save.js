@@ -10,22 +10,41 @@ import { useBlockProps } from '@wordpress/block-editor';
 import { computeClassName } from '../../../peaches-bootstrap-blocks/src/utils/bootstrap_settings';
 
 export default function save( { attributes } ) {
-	const { fieldType, htmlTag, customFieldKey, selectedProductId } =
-		attributes;
+	const {
+		fieldType,
+		htmlTag,
+		customFieldKey,
+		selectedProductId,
+		lineType,
+		displayMode,
+		showLineDescriptions,
+		maxLines,
+		lineSeparator,
+		descriptionSeparator,
+	} = attributes;
+
+	const computedClassName = computeClassName( attributes );
 
 	// Fields that contain HTML content
 	const htmlFields = [ 'description', 'price', 'stock' ];
 	const isHtmlField = htmlFields.includes( fieldType );
 
 	const blockProps = useBlockProps.save( {
-		className: computeClassName( attributes ),
-		'data-wp-init': isHtmlField ? 'callbacks.initProductField' : '',
-		'data-wp-interactive': 'peaches-ecwid-product-field',
+		'data-wp-interactive':
+			fieldType === 'lines' || fieldType === 'lines_filtered'
+				? 'peaches-ecwid-product-lines'
+				: 'peaches-ecwid-product-field',
 		'data-wp-context': JSON.stringify( {
 			fieldType,
 			customFieldKey,
 			selectedProductId: selectedProductId || null,
 			fieldValue: '',
+			lineType,
+			displayMode,
+			maxLines,
+			lineSeparator,
+			descriptionSeparator,
+			showLineDescriptions,
 		} ),
 	} );
 
@@ -47,9 +66,55 @@ export default function save( { attributes } ) {
 				return '';
 		}
 	};
+	/**
+	 * Get template for product lines with proper styling
+	 *
+	 * @return {JSX.Element|string} - Template content
+	 */
+	const getProductLinesContent = () => {
+		if ( displayMode === 'list' ) {
+			return (
+				<ul className="list-unstyled">
+					<template data-wp-each--line="context.productLines">
+						<li
+							data-wp-bind--id="context.line.id"
+							className={ computedClassName }
+						>
+							<span data-wp-text="state.decodedName" />
+							{ showLineDescriptions && (
+								<span data-wp-text="state.decodedDescription" />
+							) }
+						</li>
+					</template>
+				</ul>
+			);
+		}
 
+		const className =
+			displayMode === 'badges'
+				? `${ computedClassName } badge`
+				: computedClassName;
+
+		return (
+			<template data-wp-each--line="context.productLines">
+				{ React.createElement( htmlTag, {
+					className,
+					'data-wp-bind--id': 'context.line.id',
+					'data-wp-text': 'state.decodedLineContent',
+				} ) }
+			</template>
+		);
+	};
+
+	if ( fieldType === 'lines' || fieldType === 'lines_filtered' ) {
+		return (
+			<div { ...blockProps } data-wp-init="callbacks.initProductField">
+				{ getProductLinesContent() }
+			</div>
+		);
+	}
 	const elementProps = {
-		'data-wp-init': isHtmlField ? '' : 'callbacks.initProductField',
+		'data-wp-init': 'callbacks.initProductField',
 		'data-wp-text': 'context.fieldValue',
 	};
 

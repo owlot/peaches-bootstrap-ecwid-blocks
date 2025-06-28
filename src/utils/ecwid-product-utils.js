@@ -431,18 +431,28 @@ export function ProductSelectionPanel( {
  * Get formatted product field value
  *
  * Utility function to extract specific field values from product data.
+ * Now includes support for product lines display.
  *
  * @param {Object} productData    - Product data object
  * @param {string} fieldType      - Type of field to extract
  * @param {string} customFieldKey - Key for custom fields
+ * @param {Object} linesData      - Product lines data (for lines field types)
+ * @param {Object} linesOptions   - Options for lines display
  *
  * @return {string} - Formatted field value
  */
 export function getProductFieldValue(
 	productData,
 	fieldType,
-	customFieldKey = ''
+	customFieldKey = '',
+	linesData = null,
+	linesOptions = {}
 ) {
+	// Handle lines field types
+	if ( fieldType === 'lines' || fieldType === 'lines_filtered' ) {
+		return getProductLinesValue( linesData, linesOptions );
+	}
+
 	if ( ! productData ) {
 		// Return placeholder values
 		const placeholders = {
@@ -460,6 +470,8 @@ export function getProductFieldValue(
 						'ecwid-shopping-cart'
 				  ) } ${ customFieldKey }`
 				: __( 'Select a custom field', 'ecwid-shopping-cart' ),
+			lines: __( 'Sample Product Lines', 'peaches' ),
+			lines_filtered: __( 'Filtered Product Lines', 'peaches' ),
 		};
 		return placeholders[ fieldType ] || '';
 	}
@@ -535,8 +547,79 @@ export function getProductFieldValue(
 			default:
 				return '';
 		}
-	} catch ( e ) {
-		console.error( 'Error getting product field value:', e );
+	} catch ( error ) {
+		console.error( 'Error getting product field value:', error );
 		return __( 'Error loading field', 'ecwid-shopping-cart' );
+	}
+}
+
+/**
+ * Get formatted product lines value
+ *
+ * Utility function to format product lines for display.
+ *
+ * @since 0.3.1
+ *
+ * @param {Array}  linesData    - Array of product line objects
+ * @param {Object} linesOptions - Display options
+ *
+ * @return {string} - Formatted lines value
+ */
+export function getProductLinesValue( linesData, linesOptions = {} ) {
+	const {
+		lineType = '',
+		displayMode = 'badges',
+		maxLines = 0,
+		showLineDescriptions = false,
+	} = linesOptions;
+
+	if (
+		! linesData ||
+		! Array.isArray( linesData ) ||
+		linesData.length === 0
+	) {
+		return __( 'No product lines found', 'peaches' );
+	}
+
+	// Filter by line type if specified
+	let filteredLines = linesData;
+	if ( lineType ) {
+		filteredLines = linesData.filter(
+			( line ) => line.line_type === lineType
+		);
+	}
+
+	// Apply max lines limit
+	if ( maxLines > 0 ) {
+		filteredLines = filteredLines.slice( 0, maxLines );
+	}
+
+	if ( filteredLines.length === 0 ) {
+		return __( 'No matching lines found', 'peaches' );
+	}
+
+	// Format based on display mode
+	switch ( displayMode ) {
+		case 'inline':
+			return filteredLines.map( ( line ) => line.name ).join( ', ' );
+
+		case 'list':
+			if ( showLineDescriptions ) {
+				return filteredLines
+					.map( ( line ) => {
+						let text = line.name;
+						if ( line.line_description ) {
+							text += `: ${ line.line_description }`;
+						}
+						return text;
+					} )
+					.join( ' • ' );
+			}
+			return filteredLines.map( ( line ) => line.name ).join( ' • ' );
+
+		case 'badges':
+		case 'pills':
+		default:
+			return filteredLines.map( ( line ) => line.name ).join( ' • ' );
 	}
 }

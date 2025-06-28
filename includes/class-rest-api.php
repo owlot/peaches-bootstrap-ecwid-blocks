@@ -69,6 +69,15 @@ class Peaches_REST_API {
 	private $product_manager;
 
 	/**
+	 *
+	 * Product Lines Manager instance.
+	 *
+	 * @since 0.3.1
+	 * @var Peaches_Product_Lines_Manager
+	 */
+	private $product_lines_manager;
+
+	/**
 	 * Constructor.
 	 *
 	 * @since 0.2.6
@@ -78,13 +87,15 @@ class Peaches_REST_API {
 	 * @param Peaches_Product_Media_Manager    $product_media_manager    Product Media Manager instance.
 	 * @param Peaches_Ecwid_API                $ecwid_api                Ecwid API instance.
 	 * @param Peaches_Product_Manager          $product_manager          Product manager instance.
+	 * @param Peaches_Product_Lines_Manager    $product_lines_manager    Product lines manager instance.
 	 */
-	public function __construct($product_settings_manager, $media_tags_manager, $product_media_manager, $ecwid_api, $product_manager) {
+	public function __construct($product_settings_manager, $media_tags_manager, $product_media_manager, $ecwid_api, $product_manager, $product_lines_manager) {
 		$this->product_settings_manager = $product_settings_manager;
 		$this->media_tags_manager       = $media_tags_manager;
 		$this->product_media_manager    = $product_media_manager;
 		$this->ecwid_api                = $ecwid_api;
 		$this->product_manager          = $product_manager;
+		$this->product_lines_manager    = $product_lines_manager;
 
 		$this->init_hooks();
 	}
@@ -99,8 +110,7 @@ class Peaches_REST_API {
 	private function init_hooks() {
 		add_action('rest_api_init', array($this, 'register_routes'));
 	}
-
-	/**
+/**
 	 * Register all REST API routes.
 	 *
 	 * @since 0.2.5
@@ -130,6 +140,42 @@ class Peaches_REST_API {
 						'sanitize_callback' => 'sanitize_text_field',
 					),
 				),
+			)
+		);
+
+		// Product lines endpoint (NEW)
+		register_rest_route(
+			self::NAMESPACE,
+			'/product-lines/(?P<product_id>\d+)',
+			array(
+				'methods'             => WP_REST_Server::READABLE,
+				'callback'            => array($this, 'get_product_lines'),
+				'permission_callback' => array($this, 'check_public_permissions'),
+				'args'                => array(
+					'product_id' => array(
+						'description' => __('Ecwid product ID.', 'peaches'),
+						'type'        => 'integer',
+						'required'    => true,
+						'minimum'     => 1,
+					),
+					'line_type'  => array(
+						'description' => __('Filter by line type.', 'peaches'),
+						'type'        => 'string',
+						'required'    => false,
+						'sanitize_callback' => 'sanitize_text_field',
+					),
+				),
+			)
+		);
+
+		// All line types endpoint (NEW)
+		register_rest_route(
+			self::NAMESPACE,
+			'/line-types',
+			array(
+				'methods'             => WP_REST_Server::READABLE,
+				'callback'            => array($this, 'get_line_types'),
+				'permission_callback' => array($this, 'check_public_permissions'),
 			)
 		);
 
@@ -253,6 +299,14 @@ class Peaches_REST_API {
 						'required'    => true,
 						'minimum'     => 1,
 					),
+					'limit'      => array(
+						'description' => __('Number of related products to return.', 'peaches'),
+						'type'        => 'integer',
+						'required'    => false,
+						'default'     => 4,
+						'minimum'     => 1,
+						'maximum'     => 20,
+					),
 				),
 			)
 		);
@@ -300,6 +354,174 @@ class Peaches_REST_API {
 				),
 			)
 		);
+	}
+
+	/**
+	 * Get product lines for a specific product.
+	 *
+	 * @since 0.3.1
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 *
+	 * @return WP_REST_Response|WP_Error Response object or error.
+	 */
+	public function get_product_lines($request) {
+		try {
+			$product_id = $request->get_param('product_id');
+			$line_type = $request->get_param('line_type');
+
+			if (!$product_id || !is_numeric($product_id)) {
+				return new WP_Error(
+					'invalid_product_id',
+					__('Invalid product ID provided.', 'peaches'),
+					array('status' => 400)
+				);
+			}
+
+			// Verify product exists in Ecwid
+			$product = $this->ecwid_api->get_product_by_id($product_id);
+			if (!$product) {
+				return new WP_Error(
+					'product_not_found',
+					__('Product not found.', 'peaches'),
+					array('status' => 404)
+				);
+			}
+
+			// Get product lines using the product manager
+			$line_ids = $this->product_lines_manager->get_product_lines($product_id);
+
+			if (empty($line_ids)) {
+				return new WP_REST_Response(
+					array(
+						'success' => true,
+						'data'    => array(),
+						'count'   => 0,
+						'message' => __('No product lines found for this product.', 'peaches'),
+					),
+					200
+				);
+			}
+
+			// Get full line data
+			$lines = array();
+			foreach ($line_ids as $line_id) {
+				$term = get_term($line_id, 'product_line');
+				if (!is_wp_error($term) && $term) {
+					$line_type_meta = get_term_meta($line_id, 'line_type', true);
+					$line_description = get_term_meta($line_id, 'line_description', true);
+
+					// Filter by line type if specified
+					if ($line_type && $line_type_meta !== $line_type) {
+						continue;
+					}
+
+					$lines[] = array(
+						'id'          => $term->term_id,
+						'name'        => $term->name,
+						'slug'        => $term->slug,
+						'description' => $term->description,
+						'line_type'   => $line_type_meta ?: '',
+						'line_description' => $line_description ?: '',
+						'count'       => $term->count,
+					);
+				}
+			}
+
+			return new WP_REST_Response(
+				array(
+					'success' => true,
+					'data'    => $lines,
+					'count'   => count($lines),
+					'filter'  => array(
+						'product_id' => $product_id,
+						'line_type'  => $line_type,
+					),
+				),
+				200
+			);
+
+		} catch (Exception $e) {
+			error_log('Peaches API: Error getting product lines: ' . $e->getMessage());
+
+			return new WP_Error(
+				'server_error',
+				__('Internal server error.', 'peaches'),
+				array('status' => 500)
+			);
+		}
+	}
+
+	/**
+	 * Get all available line types.
+	 *
+	 * @since 0.3.1
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 *
+	 * @return WP_REST_Response|WP_Error Response object or error.
+	 */
+	public function get_line_types($request) {
+		try {
+			// Get all product lines
+			$terms = get_terms(array(
+				'taxonomy'   => 'product_line',
+				'hide_empty' => false,
+				'fields'     => 'ids',
+			));
+
+			if (is_wp_error($terms)) {
+				return new WP_Error(
+					'taxonomy_error',
+					__('Error retrieving product lines.', 'peaches'),
+					array('status' => 500)
+				);
+			}
+
+			$line_types = array();
+			foreach ($terms as $term_id) {
+				$line_type = get_term_meta($term_id, 'line_type', true);
+				if (!empty($line_type) && !in_array($line_type, $line_types)) {
+					$line_types[] = $line_type;
+				}
+			}
+
+			// Add common default types if they don't exist
+			$default_types = array(
+				'fragrance',
+				'color_scheme',
+				'design_collection',
+				'seasonal',
+				'limited_edition'
+			);
+
+			foreach ($default_types as $default_type) {
+				if (!in_array($default_type, $line_types)) {
+					$line_types[] = $default_type;
+				}
+			}
+
+			// Sort alphabetically
+			sort($line_types);
+
+			return new WP_REST_Response(
+				array(
+					'success' => true,
+					'data'    => $line_types,
+					'count'   => count($line_types),
+				),
+				200
+			);
+
+		} catch (Exception $e) {
+			error_log('Peaches API: Error getting line types: ' . $e->getMessage());
+
+			return new WP_Error(
+				'server_error',
+				__('Internal server error.', 'peaches'),
+				array('status' => 500)
+			);
+		}
 	}
 
 	/**
