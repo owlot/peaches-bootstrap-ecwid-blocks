@@ -780,9 +780,9 @@ class Peaches_Media_Tags_Manager implements Peaches_Media_Tags_Manager_Interface
 		);
 
 		$badge_class = isset($category_badges[$tag_data['category']]) ? $category_badges[$tag_data['category']] : 'bg-secondary';
-		$media_type_badge = isset($media_type_badges[$tag_data['expected_media_type']]) ? $media_type_badges[$tag_data['expected_media_type']] : 'bg-secondary';
+		$media_type_badge = isset($media_type_badges[$tag_data['expectedMediaType']]) ? $media_type_badges[$tag_data['expectedMediaType']] : 'bg-secondary';
 		$is_default = array_key_exists($tag_key, self::DEFAULT_TAGS);
-		$media_type_label = isset(self::MEDIA_TYPES[$tag_data['expected_media_type']]) ? self::MEDIA_TYPES[$tag_data['expected_media_type']] : 'Unknown';
+		$media_type_label = isset(self::MEDIA_TYPES[$tag_data['expectedMediaType']]) ? self::MEDIA_TYPES[$tag_data['expectedMediaType']] : 'Unknown';
 		?>
 		<tr class="media-tag-row" data-tag-key="<?php echo esc_attr($tag_key); ?>">
 			<td>

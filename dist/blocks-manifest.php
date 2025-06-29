@@ -584,6 +584,31 @@ return array(
 				'type' => 'string',
 				'default' => ', '
 			),
+			'showImage' => array(
+				'type' => 'boolean',
+				'default' => false
+			),
+			'imageMediaTag' => array(
+				'type' => 'string',
+				'default' => ''
+			),
+			'imageSize' => array(
+				'type' => 'string',
+				'default' => 'small',
+				'enum' => array(
+					'small',
+					'medium',
+					'large'
+				)
+			),
+			'imagePosition' => array(
+				'type' => 'string',
+				'default' => 'before',
+				'enum' => array(
+					'before',
+					'after'
+				)
+			),
 			'xs' => array(
 				'type' => 'object',
 				'default' => array(
@@ -635,6 +660,7 @@ return array(
 				)
 			)
 		),
+		'style' => 'file:./style-index.css',
 		'viewScriptModule' => 'file:./view.js',
 		'editorScript' => 'file:./index.js'
 	),

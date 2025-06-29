@@ -21,6 +21,10 @@ export default function save( { attributes } ) {
 		maxLines,
 		lineSeparator,
 		descriptionSeparator,
+		showImage,
+		imageMediaTag,
+		imageSize,
+		imagePosition,
 	} = attributes;
 
 	const computedClassName = computeClassName( attributes );
@@ -45,6 +49,7 @@ export default function save( { attributes } ) {
 			lineSeparator,
 			descriptionSeparator,
 			showLineDescriptions,
+			imageMediaTag,
 		} ),
 	} );
 
@@ -72,6 +77,15 @@ export default function save( { attributes } ) {
 	 * @return {JSX.Element|string} - Template content
 	 */
 	const getProductLinesContent = () => {
+		const sizeClasses = {
+			small: 'width-32 height-32',
+			medium: 'width-48 height-48',
+			large: 'width-64 height-64',
+		};
+		const imageClasses = `object-fit-cover ${
+			sizeClasses[ imageSize ] || sizeClasses.small
+		} ${ imagePosition === 'after' ? 'ms-2' : 'me-2' }`;
+
 		if ( displayMode === 'list' ) {
 			return (
 				<ul className="list-unstyled">
@@ -80,9 +94,25 @@ export default function save( { attributes } ) {
 							data-wp-bind--id="context.line.id"
 							className={ computedClassName }
 						>
-							<span data-wp-text="state.decodedName" />
-							{ showLineDescriptions && (
-								<span data-wp-text="state.decodedDescription" />
+							{ showImage && imagePosition === 'before' && (
+								<img
+									className={ imageClasses }
+									data-wp-bind--src="state.lineImageUrl"
+									data-wp-bind--alt="state.lineImageAlt"
+									data-wp-class--d-none="!state.hasImage"
+								/>
+							) }
+							{ React.createElement( htmlTag, {
+								'data-wp-bind--id': 'context.line.id',
+								'data-wp-text': 'state.decodedLineContent',
+							} ) }
+							{ showImage && imagePosition === 'after' && (
+								<img
+									className={ imageClasses }
+									data-wp-bind--src="state.lineImageUrl"
+									data-wp-bind--alt="state.lineImageAlt"
+									data-wp-class--d-none="!state.hasImage"
+								/>
 							) }
 						</li>
 					</template>
@@ -97,11 +127,27 @@ export default function save( { attributes } ) {
 
 		return (
 			<template data-wp-each--line="context.productLines">
+				{ showImage && imagePosition === 'before' && (
+					<img
+						className={ imageClasses }
+						data-wp-bind--src="state.lineImageUrl"
+						data-wp-bind--alt="state.lineImageAlt"
+						data-wp-class--d-none="!state.hasImage"
+					/>
+				) }
 				{ React.createElement( htmlTag, {
 					className,
 					'data-wp-bind--id': 'context.line.id',
 					'data-wp-text': 'state.decodedLineContent',
 				} ) }
+				{ showImage && imagePosition === 'after' && (
+					<img
+						className={ imageClasses }
+						data-wp-bind--src="state.lineImageUrl"
+						data-wp-bind--alt="state.lineImageAlt"
+						data-wp-class--d-none="!state.hasImage"
+					/>
+				) }
 			</template>
 		);
 	};

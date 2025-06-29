@@ -44,6 +44,23 @@ function decodeHtmlEntities( text ) {
 }
 
 /**
+ * Find media item for a line by tag
+ *
+ * @since 0.3.2
+ *
+ * @param {Object} line     - Product line object
+ * @param {string} mediaTag - Media tag to search for
+ *
+ * @return {Object|null} - Media item or null if not found
+ */
+function findLineMediaByTag( line, mediaTag ) {
+	if ( ! line.media || ! Array.isArray( line.media ) || ! mediaTag ) {
+		return null;
+	}
+	return line.media.find( ( item ) => item.tag === mediaTag ) || null;
+}
+
+/**
  * Ecwid Product Field interactivity store
  */
 store( 'peaches-ecwid-product-field', {
@@ -295,6 +312,79 @@ store( 'peaches-ecwid-product-lines', {
 
 			return lineContents.join( context.lineSeparator || ', ' );
 		},
+
+		/**
+		 * Computed state: Check if line has image for selected media tag
+		 *
+		 * @since 0.3.2
+		 *
+		 * @return {boolean} - true if image exists
+		 */
+		get hasImage() {
+			const context = getContext();
+
+			if ( ! context.imageMediaTag ) {
+				return false;
+			}
+
+			const mediaItem = findLineMediaByTag(
+				context.line,
+				context.imageMediaTag
+			);
+			return !! ( mediaItem && mediaItem.attachment_id );
+		},
+
+		/**
+		 * Computed state: Get image URL for current line
+		 *
+		 * @since 0.3.2
+		 *
+		 * @return {string|null} - image URL or null
+		 */
+		get lineImageUrl() {
+			const context = getContext();
+
+			if ( ! context.imageMediaTag ) {
+				return null;
+			}
+
+			const mediaItem = findLineMediaByTag(
+				context.line,
+				context.imageMediaTag
+			);
+
+			if ( ! mediaItem || ! mediaItem.attachment_id ) {
+				return null;
+			}
+
+			return mediaItem.thumbnail_url || null;
+		},
+
+		/**
+		 * Computed state: Get image alt text for current line
+		 *
+		 * @since 0.3.2
+		 *
+		 * @return {string} - Alt text for the image
+		 */
+		get lineImageAlt() {
+			const context = getContext();
+
+			if ( ! context.imageMediaTag ) {
+				return '';
+			}
+
+			const mediaItem = findLineMediaByTag(
+				context.line,
+				context.imageMediaTag
+			);
+
+			if ( ! mediaItem ) {
+				return '';
+			}
+
+			return mediaItem.alt || context.line.name || 'Product line image';
+		},
 	},
 	callbacks: {
 		/**
@@ -344,8 +434,50 @@ store( 'peaches-ecwid-product-lines', {
 					responseData.data &&
 					Array.isArray( responseData.data )
 				) {
+					// Fetch media ONLY if imageMediaTag is set (images are enabled)
+					if ( context.imageMediaTag ) {
+						const linesWithMedia = yield Promise.all(
+							responseData.data.map( async ( line ) => {
+								try {
+									const mediaResponse = await fetch(
+										`/wp-json/peaches/v1/product-lines/${ line.id }/media`,
+										{
+											headers: {
+												Accept: 'application/json',
+											},
+											credentials: 'same-origin',
+										}
+									);
+
+									if ( mediaResponse.ok ) {
+										const mediaData =
+											await mediaResponse.json();
+										line.media = mediaData.success
+											? mediaData.data
+											: [];
+									} else {
+										line.media = [];
+									}
+								} catch ( error ) {
+									console.error(
+										`Error fetching media for line ${ line.id }:`,
+										error
+									);
+									line.media = [];
+								}
+								return line;
+							} )
+						);
+
+						// Apply your existing filtering and processing logic to linesWithMedia
+						context.productLines = linesWithMedia; // or your filtered result
+					} else {
+						// No images needed, use basic data (your existing logic)
+						context.productLines = responseData.data; // or your filtered result
+					}
+
 					// Filter lines by type if specified
-					let filteredLines = responseData.data;
+					let filteredLines = context.productLines;
 					if (
 						context.fieldType === 'lines_filtered' &&
 						context.lineType

@@ -27,6 +27,11 @@ import {
 } from '../utils/ecwid-product-utils';
 
 /**
+ * Styles
+ */
+import './style.scss';
+
+/**
  * Bootstrap settings configuration for the product field block
  *
  * Defines which Bootstrap utility classes are available in the settings panel.
@@ -114,6 +119,38 @@ const DISPLAY_MODES = [
 ];
 
 /**
+ * Image size options for product line media
+ *
+ * @since 0.3.2
+ */
+const IMAGE_SIZE_OPTIONS = [
+	{ label: __( 'Small (32px)', 'peaches' ), value: 'small' },
+	{ label: __( 'Medium (48px)', 'peaches' ), value: 'medium' },
+	{ label: __( 'Large (64px)', 'peaches' ), value: 'large' },
+];
+
+/**
+ * Image position options relative to text
+ *
+ * @since 0.3.2
+ */
+const IMAGE_POSITION_OPTIONS = [
+	{ label: __( 'Before text', 'peaches' ), value: 'before' },
+	{ label: __( 'After text', 'peaches' ), value: 'after' },
+];
+
+/**
+ * Image alignment options relative to text
+ *
+ * @since 0.3.2
+ */
+const IMAGE_ALIGNMENT_OPTIONS = [
+	{ label: __( 'Top aligned', 'peaches' ), value: 'top' },
+	{ label: __( 'Center aligned', 'peaches' ), value: 'center' },
+	{ label: __( 'Bottom aligned', 'peaches' ), value: 'bottom' },
+];
+
+/**
  * Decode HTML entities in text content
  *
  * Safely converts HTML entities like &amp; to their proper characters.
@@ -140,14 +177,165 @@ function decodeHtmlEntities( text ) {
 }
 
 /**
+ * Generate mock product lines for preview
+ *
+ * Creates fictional product lines to demonstrate how the block will look
+ * when actual product lines are assigned. Used when no product is selected
+ * or when a product has no lines.
+ *
+ * @since 0.3.2
+ *
+ * @return {Array} Array of mock product line objects
+ */
+const generateMockProductLines = () => {
+	return [
+		{
+			id: 1,
+			name: 'Ylang Ylang & Sandalwood',
+			line_type: 'fragrance',
+			description: 'Exotic floral notes with warm woody undertones',
+			media: [
+				{ tag: 'logo', attachment_id: 123 },
+				{ tag: 'hero_image', attachment_id: 124 },
+			],
+		},
+		{
+			id: 2,
+			name: 'Ocean Breeze Collection',
+			line_type: 'design_collection',
+			description: 'Fresh aquatic scents inspired by coastal waters',
+			media: [ { tag: 'banner', attachment_id: 125 } ],
+		},
+		{
+			id: 3,
+			name: 'Sunset Warmth',
+			line_type: 'color_scheme',
+			description: 'Rich amber and golden tones',
+			media: [],
+		},
+	];
+};
+
+/**
+ * Get available media tags from product lines
+ *
+ * Extracts all unique media tags from the current product lines data.
+ *
+ * @since 0.3.2
+ *
+ * @param {Array} productLines - Array of product line objects
+ *
+ * @return {Array} - Array of media tag options for SelectControl
+ */
+function getAvailableMediaTags( productLines ) {
+	const tags = new Set();
+
+	if ( ! Array.isArray( productLines ) ) {
+		return [ { label: __( 'Select media tag…', 'peaches' ), value: '' } ];
+	}
+
+	productLines.forEach( ( line ) => {
+		if ( line.media && Array.isArray( line.media ) ) {
+			line.media.forEach( ( mediaItem ) => {
+				if ( mediaItem.tag ) {
+					tags.add( mediaItem.tag );
+				}
+			} );
+		}
+	} );
+
+	const tagOptions = Array.from( tags )
+		.sort()
+		.map( ( tag ) => ( {
+			label: tag
+				.replace( /_/g, ' ' )
+				.replace( /\b\w/g, ( l ) => l.toUpperCase() ),
+			value: tag,
+		} ) );
+
+	return [
+		{ label: __( 'Select media tag…', 'peaches' ), value: '' },
+		...tagOptions,
+	];
+}
+
+/**
+ * Get image for a specific product line and media tag
+ *
+ * Searches the line's media array for the specified tag and returns the attachment info.
+ *
+ * @since 0.3.2
+ *
+ * @param {Object} line     - Product line object
+ * @param {string} mediaTag - Media tag to search for
+ *
+ * @return {Object|null} - Attachment info or null if not found
+ */
+const getLineImage = ( line, mediaTag ) => {
+	if ( ! line.media || ! Array.isArray( line.media ) || ! mediaTag ) {
+		return null;
+	}
+
+	return line.media.find( ( item ) => item.tag === mediaTag );
+};
+
+/**
+ * Render image element for a product line
+ *
+ * Creates an img element with proper Bootstrap classes for styling.
+ *
+ * @since 0.3.2
+ *
+ * @param {Object} line          - Product line object
+ * @param {string} imageMediaTag - Media tag to display
+ * @param {string} imageSize     - Image size setting
+ * @param {string} imagePosition - Image position setting
+ *
+ * @return {JSX.Element|null} - Image element or null if no image
+ */
+const renderLineImage = ( line, imageMediaTag, imageSize, imagePosition ) => {
+	if ( ! imageMediaTag ) {
+		return null;
+	}
+
+	const imageInfo = getLineImage( line, imageMediaTag );
+	if ( ! imageInfo ) {
+		return null;
+	}
+
+	const sizeClasses = {
+		small: 'width-32 height-32',
+		medium: 'width-48 height-48',
+		large: 'width-64 height-64',
+	};
+
+	const imageClasses = `object-fit-cover ${
+		sizeClasses[ imageSize ] || sizeClasses.small
+	} ${ imagePosition === 'after' ? 'ms-2' : 'me-2' }`;
+
+	console.log( 'Using image url', imageInfo );
+	return (
+		<img
+			src={ imageInfo.thumbnail_url }
+			alt={
+				imageInfo.alt
+					? imageInfo.alt
+					: line.name || 'Product line image'
+			}
+			className={ imageClasses }
+		/>
+	);
+};
+
+/**
  * Product Field Edit Component
  *
- * Main edit component for the product field block. Handles display of various
- * product data types including standard Ecwid fields and custom product lines.
+ * Handles display of various product data types including standard Ecwid fields and custom product lines.
  * Provides a unified interface for product data with Bootstrap styling support.
  *
  * @since 0.1.0
  * @since 0.3.1 Added product lines support with filtering and display options
+ * @since 0.3.2 Added image support for product lines
  *
  * @param {Object}   props               - Component props
  * @param {Object}   props.attributes    - Block attributes
@@ -169,6 +357,10 @@ function ProductFieldEdit( props ) {
 		maxLines,
 		lineSeparator,
 		descriptionSeparator,
+		showImage,
+		imageMediaTag,
+		imageSize,
+		imagePosition,
 	} = attributes;
 
 	// State management for product lines functionality
@@ -181,7 +373,7 @@ function ProductFieldEdit( props ) {
 	// Use unified product data hook for consistent product data handling
 	const {
 		productData,
-		isLoading,
+		isLoading: productLoading,
 		error,
 		hasProductDetailAncestor,
 		selectedProductId,
@@ -189,6 +381,10 @@ function ProductFieldEdit( props ) {
 		openEcwidProductPopup,
 		clearSelectedProduct,
 	} = useEcwidProductData( context, attributes, setAttributes, clientId );
+
+	const isLoading = useMemo( () => {
+		return productLoading || isLoadingLines || isLoadingLineTypes;
+	}, [ productLoading, isLoadingLineTypes, isLoadingLines ] );
 
 	/**
 	 * Compute Bootstrap classes based on block attributes
@@ -221,27 +417,23 @@ function ProductFieldEdit( props ) {
 	 * consistent language detection across all blocks.
 	 *
 	 * @since 0.3.1
-	 *
-	 * @return {string} Two-letter language code (e.g., 'en', 'nl', 'fr')
 	 */
 	const currentLanguage = useMemo( () => {
 		return getCurrentLanguageForAPI();
 	}, [] );
 
-	// Get block props for wrapper element
-	const blockProps = useBlockProps();
-
 	/**
-	 * Load available line types from REST API
+	 * Fetch line types from the REST API
 	 *
-	 * Fetches all unique line types from the product_line taxonomy to populate
-	 * the line type filter dropdown. Handles loading states and error recovery.
+	 * Retrieves all available line types for filtering options.
 	 *
 	 * @since 0.3.1
-	 *
-	 * @return {Promise<void>} Async function that updates lineTypes state
 	 */
-	const loadLineTypes = () => {
+	useEffect( () => {
+		if ( ! isLineField ) {
+			return;
+		}
+
 		setIsLoadingLineTypes( true );
 		setLinesError( null );
 
@@ -276,114 +468,124 @@ function ProductFieldEdit( props ) {
 				setLinesError( __( 'Failed to load line types', 'peaches' ) );
 				setIsLoadingLineTypes( false );
 			} );
-	};
+	}, [ isLineField ] );
 
 	/**
-	 * Load product lines from REST API for a specific product
+	 * Fetch product lines from when test product data changes
 	 *
 	 * Fetches product line data for the given product ID with language support.
 	 * Handles 404 responses gracefully and manages loading/error states.
+	 * Uses mock data if no (test) product is set.
 	 *
 	 * @since 0.3.1
-	 *
-	 * @param {number} productId - Ecwid product ID to fetch lines for
-	 *
-	 * @return {Promise<void>} Async function that updates productLines state
 	 */
-	const loadProductLines = async ( productId ) => {
-		if ( ! productId ) {
-			setProductLines( [] );
+	useEffect( () => {
+		if ( ! isLineField ) {
 			return;
 		}
 
-		setIsLoadingLines( true );
-		setLinesError( null );
+		if ( ! productLoading && productData?.id ) {
+			setIsLoadingLines( true );
+			setLinesError( null );
 
-		// Build API URL with language parameter for multilingual sites
-		const apiUrl = `/wp-json/peaches/v1/product-lines/${ productId }?lang=${ encodeURIComponent(
-			currentLanguage
-		) }`;
+			// Build API URL with language parameter for multilingual sites
+			const apiUrl = `/wp-json/peaches/v1/product-lines/${
+				productData.id
+			}${
+				fieldType === 'lines_filtered' ? `/type/${ lineType }` : ''
+			}?lang=${ encodeURIComponent( currentLanguage ) }`;
 
-		fetch( apiUrl, {
-			headers: {
-				Accept: 'application/json',
-			},
-			credentials: 'same-origin',
-		} )
-			.then( ( response ) => {
-				// Handle 404 as empty result (product has no lines)
-				if ( response.status === 404 ) {
-					setProductLines( [] );
-					setIsLoadingLines( false );
-					return;
-				}
-				if ( ! response.ok ) {
-					throw new Error(
-						`HTTP error! status: ${ response.status }`
+			console.log( 'apiUrl', apiUrl );
+			fetch( apiUrl, {
+				headers: {
+					Accept: 'application/json',
+				},
+				credentials: 'same-origin',
+			} )
+				.then( ( response ) => {
+					// Handle 404 as empty result (product has no lines)
+					if ( response.status === 404 ) {
+						setProductLines( [] );
+						return null;
+					}
+					if ( ! response.ok ) {
+						throw new Error(
+							`HTTP error! status: ${ response.status }`
+						);
+					}
+					return response.json();
+				} )
+				.then( ( responseData ) => {
+					console.log( 'responseData', responseData );
+					if (
+						responseData &&
+						responseData.success &&
+						responseData.data &&
+						Array.isArray( responseData.data )
+					) {
+						// Fetch media for each line to populate media tags dropdown
+						return Promise.all(
+							responseData.data.map( ( line ) => {
+								return fetch(
+									`/wp-json/peaches/v1/product-lines/${ line.id }/media`,
+									{
+										headers: {
+											Accept: 'application/json',
+										},
+										credentials: 'same-origin',
+									}
+								)
+									.then( ( mediaResponse ) => {
+										if ( mediaResponse.ok ) {
+											return mediaResponse.json();
+										}
+										return { success: false, data: [] };
+									} )
+									.then( ( mediaData ) => {
+										line.media = mediaData.success
+											? mediaData.data
+											: [];
+										return line;
+									} )
+									.catch( ( error ) => {
+										console.error(
+											`Error fetching media for line ${ line.id }:`,
+											error
+										);
+										line.media = [];
+										return line;
+									} );
+							} )
+						);
+					} else if ( responseData === null ) {
+						// 404 case
+						return [];
+					}
+					return [];
+				} )
+				.then( ( linesWithMedia ) => {
+					setProductLines( linesWithMedia );
+				} )
+				.catch( ( fetchError ) => {
+					console.error( 'Error loading product lines:', fetchError );
+					setLinesError(
+						__( 'Failed to load product lines', 'peaches' )
 					);
-				}
-				return response.json();
-			} )
-			.then( ( responseData ) => {
-				if (
-					responseData &&
-					responseData.success &&
-					responseData.data
-				) {
-					setProductLines( responseData.data );
-				} else {
 					setProductLines( [] );
-				}
-				setIsLoadingLines( false );
-			} )
-			.catch( ( fetchError ) => {
-				console.error( 'Error loading product lines:', fetchError );
-				setLinesError(
-					__( 'Failed to load product lines', 'peaches' )
-				);
-				setProductLines( [] );
-				setIsLoadingLines( false );
-			} );
-	};
-
-	/**
-	 * Effect: Load line types when field type changes to lines-related
-	 *
-	 * Automatically fetches available line types when user selects a product lines
-	 * field type to populate the filter dropdown.
-	 *
-	 * @since 0.3.1
-	 */
-	useEffect( () => {
-		if ( fieldType === 'lines' || fieldType === 'lines_filtered' ) {
-			loadLineTypes();
+				} )
+				.finally( () => {
+					setIsLoadingLines( false );
+				} );
+		} else {
+			setProductLines( generateMockProductLines() );
+			setLinesError( null );
 		}
-	}, [ fieldType ] );
-
+	}, [ productData?.id, productLoading, isLineField, lineType, fieldType ] );
 	/**
-	 * Effect: Load product lines when product or settings change
+	 * Get preview text for non-line field types
 	 *
-	 * Fetches product line data when:
-	 * - Field type is set to lines/lines_filtered
-	 * - Product ID changes (from selection or context)
-	 * - Language changes (for multilingual sites)
-	 *
-	 * @since 0.3.1
-	 */
-	useEffect( () => {
-		if ( fieldType === 'lines' || fieldType === 'lines_filtered' ) {
-			const productId = selectedProductId || productData?.id;
-			if ( productId ) {
-				loadProductLines( productId );
-			}
-		}
-	}, [ fieldType, selectedProductId, productData?.id, currentLanguage ] );
-
-	/**
-	 * Get preview text for standard (non-line) field types
-	 *
-	 * Uses the utility function to extract and format standard Ecwid product
-	 * fields like title, price, description, etc.
+	 * Uses the existing product field value utility function to get formatted
+	 * field values for display in the editor preview.
 	 *
 	 * @since 0.3.1
 	 *
@@ -394,13 +596,37 @@ function ProductFieldEdit( props ) {
 	};
 
 	/**
-	 * Get preview JSX for product lines with proper styling
+	 * Computed state: Get complete decoded line content
+	 *
+	 * Returns the complete line content (name + description) with proper
+	 * HTML entity decoding and separator handling for badges/spans.
+	 *
+	 * @param  line
+	 * @since 0.3.1
+	 *
+	 * @return {string} - complete decoded line content
+	 */
+	const decodedLineContent = ( line ) => {
+		let text = decodeHtmlEntities( line.name || '' );
+
+		if ( showLineDescriptions && line.description ) {
+			text +=
+				descriptionSeparator + decodeHtmlEntities( line.description );
+		}
+
+		return text;
+	};
+
+	/**
+	 * Get preview JSX for product lines with proper styling and images
 	 *
 	 * Renders product lines based on current display mode, filters, and settings.
 	 * Handles loading states, errors, and empty results gracefully.
 	 * Applies Bootstrap styling and user color preferences.
+	 * Includes image support when enabled.
 	 *
 	 * @since 0.3.1
+	 * @since 0.3.2 Added image support
 	 *
 	 * @return {JSX.Element|string} Rendered product lines or status message
 	 */
@@ -420,17 +646,10 @@ function ProductFieldEdit( props ) {
 			return __( 'No product lines found', 'peaches' );
 		}
 
-		// Filter lines by type if specified (filtered mode only)
 		let filteredLines = productLines;
-		if ( fieldType === 'lines_filtered' && lineType ) {
-			filteredLines = productLines.filter(
-				( line ) => line.line_type === lineType
-			);
-		}
-
 		// Apply maximum lines limit (0 = unlimited)
 		if ( maxLines > 0 ) {
-			filteredLines = filteredLines.slice( 0, maxLines );
+			filteredLines = productLines.slice( 0, maxLines );
 		}
 
 		// Special handling for inline mode - consolidate into single element
@@ -450,6 +669,7 @@ function ProductFieldEdit( props ) {
 				{
 					id: 0,
 					name: lines,
+					media: [],
 				},
 			];
 		}
@@ -464,14 +684,31 @@ function ProductFieldEdit( props ) {
 			return (
 				<ul className="list-unstyled">
 					{ filteredLines.map( ( line ) => (
-						<li className={ computedClassName } key={ line.id }>
-							{ decodeHtmlEntities( line.name ) }
-							{ showLineDescriptions && line.description && (
-								<>
-									{ descriptionSeparator }
-									{ decodeHtmlEntities( line.description ) }
-								</>
+						<li
+							className={ `d-flex ${ computedClassName }` }
+							key={ line.id }
+						>
+							{ showImage &&
+								imagePosition === 'before' &&
+								renderLineImage(
+									line,
+									imageMediaTag,
+									imageSize,
+									imagePosition
+								) }
+							{ React.createElement(
+								htmlTag,
+								{},
+								decodedLineContent( line )
 							) }
+							{ showImage &&
+								imagePosition === 'after' &&
+								renderLineImage(
+									line,
+									imageMediaTag,
+									imageSize,
+									imagePosition
+								) }
 						</li>
 					) ) }
 				</ul>
@@ -481,27 +718,39 @@ function ProductFieldEdit( props ) {
 		// Render badges or standard spans
 		const className =
 			displayMode === 'badges'
-				? `${ computedClassName } badge`
-				: computedClassName;
+				? `badge ${ computedClassName }`
+				: `${ computedClassName }`;
 
 		return (
-			<>
+			<div>
 				{ filteredLines.map( ( line ) =>
 					React.createElement(
 						htmlTag,
 						{ className, key: line.id },
-						decodeHtmlEntities( line.name ),
-						showLineDescriptions && line.description && (
-							<>
-								{ descriptionSeparator }
-								{ decodeHtmlEntities( line.description ) }
-							</>
-						)
+						showImage &&
+							imagePosition === 'before' &&
+							renderLineImage(
+								line,
+								imageMediaTag,
+								imageSize,
+								imagePosition
+							),
+						decodedLineContent( line ),
+						showImage &&
+							imagePosition === 'after' &&
+							renderLineImage(
+								line,
+								imageMediaTag,
+								imageSize,
+								imagePosition
+							)
 					)
 				) }
-			</>
+			</div>
 		);
 	};
+
+	const blockProps = useBlockProps();
 
 	return (
 		<>
@@ -509,7 +758,7 @@ function ProductFieldEdit( props ) {
 				{ /* Product Selection Panel - unified across all product blocks */ }
 				<ProductSelectionPanel
 					productData={ productData }
-					isLoading={ isLoading }
+					isLoading={ productLoading }
 					error={ error }
 					hasProductDetailAncestor={ hasProductDetailAncestor }
 					selectedProductId={ selectedProductId }
@@ -533,9 +782,21 @@ function ProductFieldEdit( props ) {
 						label={ __( 'Field Type', 'ecwid-shopping-cart' ) }
 						value={ fieldType }
 						options={ FIELD_TYPES }
-						onChange={ ( value ) =>
-							setAttributes( { fieldType: value } )
-						}
+						onChange={ ( value ) => {
+							setAttributes( { fieldType: value } );
+							// Reset line-specific settings when switching away from lines
+							if (
+								value !== 'lines' &&
+								value !== 'lines_filtered'
+							) {
+								setAttributes( {
+									lineType: '',
+									displayMode: 'badges',
+									showLineDescriptions: false,
+									showImage: false,
+								} );
+							}
+						} }
 					/>
 
 					{ /* Custom Field Key Input - only for custom field type */ }
@@ -568,141 +829,222 @@ function ProductFieldEdit( props ) {
 						onChange={ ( value ) =>
 							setAttributes( { htmlTag: value } )
 						}
+						help={ __(
+							'Choose the HTML element for semantic markup',
+							'ecwid-shopping-cart'
+						) }
 					/>
-				</PanelBody>
 
-				{ /* Line Filter Options - only for filtered lines mode */ }
-				{ fieldType === 'lines_filtered' && (
-					<PanelBody
-						title={ __( 'Line Filter Options', 'peaches' ) }
-						initialOpen={ true }
-					>
-						<SelectControl
-							label={ __( 'Line Type', 'peaches' ) }
-							value={ lineType }
-							options={ [
-								{
-									label: __( 'All Types', 'peaches' ),
-									value: '',
-								},
-								...lineTypes.map( ( type ) => ( {
-									label: type
-										.split( '_' )
-										.map(
-											( word ) =>
-												word.charAt( 0 ).toUpperCase() +
-												word.slice( 1 )
-										)
-										.join( ' ' ),
-									value: type,
-								} ) ),
-							] }
-							onChange={ ( value ) =>
-								setAttributes( { lineType: value } )
-							}
-							help={
-								isLoadingLineTypes
-									? __( 'Loading line types…', 'peaches' )
-									: __(
-											'Filter which type of product lines to display',
-											'peaches'
-									  )
-							}
-							disabled={ isLoadingLineTypes }
-						/>
-
-						<RangeControl
-							label={ __( 'Maximum Lines', 'peaches' ) }
-							value={ maxLines }
-							onChange={ ( value ) =>
-								setAttributes( { maxLines: value } )
-							}
-							min={ 0 }
-							max={ 10 }
-							help={
-								maxLines === 0
-									? __(
-											'Show all lines (unlimited)',
-											'peaches'
-									  )
-									: sprintf(
-											__(
-												'Show maximum %d lines',
-												'peaches'
-											),
-											maxLines
-									  )
-							}
-						/>
-					</PanelBody>
-				) }
-
-				{ /* Display Options - for all line field types */ }
-				{ isLineField && (
-					<PanelBody
-						title={ __( 'Display Options', 'peaches' ) }
-						initialOpen={ true }
-					>
-						<SelectControl
-							label={ __( 'Display Mode', 'peaches' ) }
-							value={ displayMode }
-							options={ DISPLAY_MODES }
-							onChange={ ( value ) =>
-								setAttributes( { displayMode: value } )
-							}
-							help={ __(
-								'Choose how product lines are displayed',
-								'peaches'
-							) }
-						/>
-
-						{ displayMode === 'inline' && (
-							<TextControl
-								label={ __( 'Separator', 'peaches' ) }
-								value={ lineSeparator }
+					{ /* Line-specific Controls */ }
+					{ isLineField && (
+						<>
+							<SelectControl
+								__nextHasNoMarginBottom
+								__next40pxDefaultSize
+								label={ __( 'Display Mode', 'peaches' ) }
+								value={ displayMode }
+								options={ DISPLAY_MODES }
 								onChange={ ( value ) =>
-									setAttributes( { lineSeparator: value } )
+									setAttributes( { displayMode: value } )
 								}
 								help={ __(
-									'Character(s) to separate line names (e.g., ", " or " | " or " - ")',
+									'Choose how product lines are displayed',
 									'peaches'
 								) }
-								placeholder=", "
 							/>
-						) }
 
-						<ToggleControl
-							label={ __( 'Show Descriptions', 'peaches' ) }
-							checked={ showLineDescriptions }
-							onChange={ ( value ) =>
-								setAttributes( { showLineDescriptions: value } )
-							}
-							help={ __(
-								'Display line descriptions when available',
-								'peaches'
+							{ fieldType === 'lines_filtered' && (
+								<SelectControl
+									__nextHasNoMarginBottom
+									__next40pxDefaultSize
+									label={ __(
+										'Filter by Line Type',
+										'peaches'
+									) }
+									value={ lineType }
+									options={ [
+										{
+											label: __(
+												'All line types',
+												'peaches'
+											),
+											value: '',
+										},
+										...lineTypes.map( ( type ) => ( {
+											label: type,
+											value: type,
+										} ) ),
+									] }
+									onChange={ ( value ) =>
+										setAttributes( { lineType: value } )
+									}
+									help={ __(
+										'Only show lines of the selected type',
+										'peaches'
+									) }
+								/>
 							) }
-						/>
 
-						{ showLineDescriptions && (
-							<TextControl
-								label={ __( 'Separator', 'peaches' ) }
-								value={ descriptionSeparator }
+							<ToggleControl
+								__nextHasNoMarginBottom
+								label={ __(
+									'Show Line Descriptions',
+									'peaches'
+								) }
+								checked={ showLineDescriptions }
 								onChange={ ( value ) =>
 									setAttributes( {
-										descriptionSeparator: value,
+										showLineDescriptions: value,
 									} )
 								}
 								help={ __(
-									'Character(s) to separate description from name (e.g., ", " or " | " or " - ")',
+									'Include line descriptions with names',
 									'peaches'
 								) }
-								placeholder=" | "
 							/>
+
+							{ showLineDescriptions && (
+								<TextControl
+									__nextHasNoMarginBottom
+									__next40pxDefaultSize
+									label={ __(
+										'Description Separator',
+										'peaches'
+									) }
+									value={ descriptionSeparator }
+									onChange={ ( value ) =>
+										setAttributes( {
+											descriptionSeparator: value,
+										} )
+									}
+									help={ __(
+										'Text between line name and description',
+										'peaches'
+									) }
+								/>
+							) }
+
+							<RangeControl
+								__nextHasNoMarginBottom
+								__next40pxDefaultSize
+								label={ __( 'Maximum Lines', 'peaches' ) }
+								value={ maxLines }
+								onChange={ ( value ) =>
+									setAttributes( { maxLines: value } )
+								}
+								min={ 0 }
+								max={ 20 }
+								help={ __(
+									'Limit number of lines shown (0 = unlimited)',
+									'peaches'
+								) }
+							/>
+
+							{ displayMode === 'inline' && (
+								<TextControl
+									__nextHasNoMarginBottom
+									__next40pxDefaultSize
+									label={ __( 'Line Separator', 'peaches' ) }
+									value={ lineSeparator }
+									onChange={ ( value ) =>
+										setAttributes( {
+											lineSeparator: value,
+										} )
+									}
+									help={ __(
+										'Text between lines in inline mode',
+										'peaches'
+									) }
+								/>
+							) }
+						</>
+					) }
+				</PanelBody>
+
+				{ /* Image Settings Panel - only for product lines */ }
+				{ isLineField && (
+					<PanelBody
+						title={ __( 'Image Settings', 'peaches' ) }
+						initialOpen={ false }
+					>
+						<ToggleControl
+							__nextHasNoMarginBottom
+							label={ __( 'Show Images', 'peaches' ) }
+							checked={ showImage }
+							onChange={ ( value ) => {
+								setAttributes( { showImage: value } );
+								if ( ! value ) {
+									setAttributes( {
+										imageMediaTag: '',
+										imageSize: 'small',
+										imagePosition: 'before',
+									} );
+								}
+							} }
+							help={ __(
+								'Display media images for product lines',
+								'peaches'
+							) }
+						/>
+
+						{ showImage && (
+							<>
+								<SelectControl
+									__nextHasNoMarginBottom
+									__next40pxDefaultSize
+									label={ __( 'Media Tag', 'peaches' ) }
+									value={ imageMediaTag }
+									options={ getAvailableMediaTags(
+										productLines
+									) }
+									onChange={ ( value ) =>
+										setAttributes( {
+											imageMediaTag: value,
+										} )
+									}
+									help={ __(
+										'Select which media tag to display as icon',
+										'peaches'
+									) }
+								/>
+
+								<SelectControl
+									__nextHasNoMarginBottom
+									__next40pxDefaultSize
+									label={ __( 'Image Size', 'peaches' ) }
+									value={ imageSize }
+									options={ IMAGE_SIZE_OPTIONS }
+									onChange={ ( value ) =>
+										setAttributes( { imageSize: value } )
+									}
+									help={ __(
+										'Choose the thumbnail size',
+										'peaches'
+									) }
+								/>
+
+								<SelectControl
+									__nextHasNoMarginBottom
+									__next40pxDefaultSize
+									label={ __( 'Image Position', 'peaches' ) }
+									value={ imagePosition }
+									options={ IMAGE_POSITION_OPTIONS }
+									onChange={ ( value ) =>
+										setAttributes( {
+											imagePosition: value,
+										} )
+									}
+									help={ __(
+										'Position relative to text content',
+										'peaches'
+									) }
+								/>
+							</>
 						) }
 					</PanelBody>
 				) }
 
-				{ /* Bootstrap Settings Panel - styling controls */ }
+				{ /* Bootstrap Settings Panel */ }
 				<BootstrapSettingsPanels
 					setAttributes={ setAttributes }
 					attributes={ attributes }
@@ -710,31 +1052,37 @@ function ProductFieldEdit( props ) {
 				/>
 			</InspectorControls>
 
-			{ /* Block Content - renders based on field type */ }
-			<div { ...blockProps }>
-				{ isLineField ? (
-					<>
-						{ /* Product Lines Rendering - shows exactly as frontend will */ }
-						{ getProductLinesPreview() }
-					</>
-				) : (
-					<>
-						{ fieldType === 'description' &&
-						productData?.description
-							? React.createElement( htmlTag, {
-									className: computedClassName,
-									dangerouslySetInnerHTML: {
-										__html: productData.description,
-									},
-							  } )
-							: React.createElement(
-									htmlTag,
-									{ className: computedClassName },
-									getPreviewText()
-							  ) }
-					</>
-				) }
-			</div>
+			{ isLoading && (
+				<div { ...blockProps }>
+					{ __( 'Loading…', 'ecwid-shopping-cart' ) }
+				</div>
+			) }
+
+			{ ! isLoading && error && <div { ...blockProps }>{ error }</div> }
+
+			{ ! isLoading && ! error && (
+				<div { ...blockProps }>
+					{ isLineField ? (
+						<>{ getProductLinesPreview() }</>
+					) : (
+						<>
+							{ fieldType === 'description' &&
+							productData?.description
+								? React.createElement( htmlTag, {
+										className: computedClassName,
+										dangerouslySetInnerHTML: {
+											__html: productData.description,
+										},
+								  } )
+								: React.createElement(
+										htmlTag,
+										{ className: computedClassName },
+										getPreviewText()
+								  ) }
+						</>
+					) }
+				</div>
+			) }
 		</>
 	);
 }

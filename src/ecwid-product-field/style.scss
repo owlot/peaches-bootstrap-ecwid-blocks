@@ -1,0 +1,38 @@
+/**
+ * Product Line Image Styles
+ *
+ * Bootstrap utility classes for consistent image sizing
+ * Add this to your theme's style.css or a separate CSS file
+ *
+ * @since 0.3.2
+ */
+.wp-block-peaches-ecwid-product-field {
+	h1, h2, h3, h4, h5, h6 {
+		margin: 0;
+	}
+}
+
+/* Image size utilities for product line icons */
+.width-32 {
+	width: 32px !important;
+}
+
+.height-32 {
+	height: 32px !important;
+}
+
+.width-48 {
+	width: 48px !important;
+}
+
+.height-48 {
+	height: 48px !important;
+}
+
+.width-64 {
+	width: 64px !important;
+}
+
+.height-64 {
+	height: 64px !important;
+}

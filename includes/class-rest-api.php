@@ -158,11 +158,61 @@ class Peaches_REST_API {
 						'required'    => true,
 						'minimum'     => 1,
 					),
-					'line_type'  => array(
-						'description' => __('Filter by line type.', 'peaches'),
+					'lang'       => array(
+						'description' => __('Language code for multilingual sites.', 'peaches'),
 						'type'        => 'string',
 						'required'    => false,
 						'sanitize_callback' => 'sanitize_text_field',
+					),
+				),
+			)
+		);
+
+		// Product lines by type endpoint
+		register_rest_route(
+			self::NAMESPACE,
+			'/product-lines/(?P<product_id>\d+)/type/(?P<line_type>[a-zA-Z0-9_-]+)',
+			array(
+				'methods'             => WP_REST_Server::READABLE,
+				'callback'            => array($this, 'get_product_lines'),
+				'permission_callback' => array($this, 'check_public_permissions'),
+				'args'                => array(
+					'product_id' => array(
+						'description' => __('Ecwid product ID.', 'peaches'),
+						'type'        => 'integer',
+						'required'    => true,
+						'minimum'     => 1,
+					),
+					'line_type'  => array(
+						'description' => __('Filter by line type.', 'peaches'),
+						'type'        => 'string',
+						'required'    => true,
+						'sanitize_callback' => 'sanitize_text_field',
+					),
+					'lang'       => array(
+						'description' => __('Language code for multilingual sites.', 'peaches'),
+						'type'        => 'string',
+						'required'    => false,
+						'sanitize_callback' => 'sanitize_text_field',
+					),
+				),
+			)
+		);
+
+		// Product line media endpoint
+		register_rest_route(
+			self::NAMESPACE,
+			'/product-lines/(?P<line_id>\d+)/media',
+			array(
+				'methods'             => WP_REST_Server::READABLE,
+				'callback'            => array($this, 'get_product_line_media'),
+				'permission_callback' => array($this, 'check_public_permissions'),
+				'args'                => array(
+					'line_id' => array(
+						'description' => __('Product line ID.', 'peaches'),
+						'type'        => 'integer',
+						'required'    => true,
+						'minimum'     => 1,
 					),
 				),
 			)
@@ -447,6 +497,94 @@ class Peaches_REST_API {
 			return new WP_Error(
 				'server_error',
 				__('Internal server error.', 'peaches'),
+				array('status' => 500)
+			);
+		}
+	}
+
+	/**
+	 * Get media for a specific product line.
+	 *
+	 * @since 0.3.2
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 *
+	 * @return WP_REST_Response|WP_Error Response object or error.
+	 */
+	public function get_product_line_media($request) {
+		try {
+			$line_id = $request->get_param('line_id');
+
+			if (!$line_id || !is_numeric($line_id)) {
+				return new WP_Error(
+					'invalid_line_id',
+					__('Invalid line ID provided.', 'peaches'),
+					array('status' => 400)
+				);
+			}
+
+			// Verify line exists
+			$term = get_term($line_id, 'product_line');
+			if (is_wp_error($term) || !$term) {
+				return new WP_Error(
+					'line_not_found',
+					__('Product line not found.', 'peaches'),
+					array('status' => 404)
+				);
+			}
+
+			// Get line media using the product lines manager
+			$media = $this->product_lines_manager->get_line_media($line_id);
+
+			// Enhance media data with WordPress attachment info
+			$enhanced_media = array();
+			foreach ($media as $media_item) {
+				if (isset($media_item['attachment_id']) && $media_item['attachment_id']) {
+					$attachment_id = $media_item['attachment_id'];
+					$attachment = get_post($attachment_id);
+
+					if ($attachment) {
+						$enhanced_item = array(
+							'tag' => $media_item['tag'],
+							'attachment_id' => $attachment_id,
+							'url' => wp_get_attachment_url($attachment_id),
+							'thumbnail_url' => wp_get_attachment_image_url($attachment_id, 'thumbnail'),
+							'medium_url' => wp_get_attachment_image_url($attachment_id, 'medium'),
+							'alt' => get_post_meta($attachment_id, '_wp_attachment_image_alt', true),
+							'title' => $attachment->post_title,
+							'mime_type' => $attachment->post_mime_type,
+					);
+
+						// Add size information if it's an image
+						if (strpos($attachment->post_mime_type, 'image') === 0) {
+							$metadata = wp_get_attachment_metadata($attachment_id);
+							if ($metadata) {
+								$enhanced_item['width'] = $metadata['width'] ?? 0;
+								$enhanced_item['height'] = $metadata['height'] ?? 0;
+								$enhanced_item['sizes'] = $metadata['sizes'] ?? array();
+							}
+						}
+
+						$enhanced_media[] = $enhanced_item;
+					}
+				}
+			}
+
+			return new WP_REST_Response(
+				array(
+					'success' => true,
+					'data'    => $enhanced_media,
+					'count'   => count($enhanced_media),
+				),
+				200
+			);
+
+		} catch (Exception $e) {
+			error_log('Peaches Ecwid: Error in get_product_line_media: ' . $e->getMessage());
+
+			return new WP_Error(
+				'media_fetch_error',
+				__('Error fetching line media.', 'peaches'),
 				array('status' => 500)
 			);
 		}

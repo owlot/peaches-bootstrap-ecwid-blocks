@@ -5,6 +5,33 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.2] - 2025-06-30
+
+### Added
+- **Product Lines Image Support**: Enhanced `ecwid-product-field` block with media image display for product lines
+  - Media tag selection dropdown populated from available line media
+  - Image size options: Small (32px), Medium (48px), Large (64px) thumbnails
+  - Image position control: Before or after text content
+  - Bootstrap integration for consistent styling and responsive design
+- **Enhanced Media Integration**: New REST API endpoint for product line media
+  - `/wp-json/peaches/v1/product-lines/{line_id}/media` - Get media with attachment info
+  - Enhanced media data includes thumbnail URLs, alt text, and attachment metadata
+- **Editor Preview Enhancement**: True WYSIWYG image preview in block editor
+  - Real-time media tag dropdown updates based on available line media
+  - Consistent image rendering between editor and frontend
+- **CSS Utility Classes**: New Bootstrap-compatible size utilities
+  - `.width-32`, `.width-48`, `.width-64` for consistent image sizing
+  - `.height-32`, `.height-48`, `.height-64` with responsive adjustments
+- **Performance Optimization**: Smart media fetching
+  - Media only loaded when image display is enabled and media tag is selected
+  - Efficient API calls prevent unnecessary data transfer
+
+### Enhanced
+- **Product Field Block**: Extended with comprehensive image support while maintaining full backward compatibility
+- **Media Tag System**: Leveraged existing product line media infrastructure for seamless integration
+- **Bootstrap Settings Integration**: Image alignment managed through existing Bootstrap utility panels
+- **Template Architecture**: Clean separation between structural rendering (save.js) and dynamic data binding (view.js)
+
 ## [0.3.1] - 2025-06-29
 
 ### Added
