@@ -173,15 +173,25 @@ class Peaches_Enhanced_Navigation {
 
 	/**
 	 * Render the navigation notice
+	 *
+	 * @since 0.2.0
+	 * @since 0.3.2 Fixed button text concatenation issue
+	 *
+	 * @param array $config Navigation configuration with tab and title.
+	 *
+	 * @return void
 	 */
 	private function render_navigation_notice($config) {
 		$main_page_url = admin_url('admin.php?page=peaches-ecwid-product-settings&tab=' . $config['tab']);
 
 		?>
-			<a href="<?php echo esc_url($main_page_url); ?>" class="button button-primary">
-				<span class="dashicons dashicons-arrow-left-alt2"></span>
-				<?php _e('Back to', 'peaches') . ' ' . $config['title']; ?>
-			</a>
+		<a href="<?php echo esc_url($main_page_url); ?>" class="button button-primary">
+			<span class="dashicons dashicons-arrow-left-alt2"></span>
+			<?php
+			/* translators: %s: destination page title (e.g., "Product Settings", "Product Lines") */
+			printf(__('Back to %s', 'peaches'), esc_html($config['title']));
+			?>
+		</a>
 		<?php
 	}
 

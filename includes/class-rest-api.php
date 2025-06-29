@@ -164,6 +164,12 @@ class Peaches_REST_API {
 						'required'    => false,
 						'sanitize_callback' => 'sanitize_text_field',
 					),
+					'lang'       => array(
+						'description' => __('Language code for multilingual sites.', 'peaches'),
+						'type'        => 'string',
+						'required'    => false,
+						'sanitize_callback' => 'sanitize_text_field',
+					),
 				),
 			)
 		);

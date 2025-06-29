@@ -140,6 +140,40 @@ function decodeHtmlEntities( text ) {
 }
 
 /**
+ * Generate mock product lines for preview
+ *
+ * Creates fictional product lines to demonstrate how the block will look
+ * when actual product lines are assigned. Used when no product is selected
+ * or when a product has no lines.
+ *
+ * @since 0.3.2
+ *
+ * @return {Array} Array of mock product line objects
+ */
+const generateMockProductLines = () => {
+	return [
+		{
+			id: 1,
+			name: 'Ylang Ylang & Sandalwood',
+			line_type: 'fragrance',
+			description: 'Exotic floral notes with warm woody undertones'
+		},
+		{
+			id: 2,
+			name: 'Ocean Breeze Collection',
+			line_type: 'design_collection',
+			description: 'Fresh aquatic scents inspired by coastal waters'
+		},
+		{
+			id: 3,
+			name: 'Sunset Warmth',
+			line_type: 'color_scheme',
+			description: 'Rich amber and golden tones'
+		}
+	];
+};
+
+/**
  * Product Field Edit Component
  *
  * Main edit component for the product field block. Handles display of various
@@ -181,7 +215,7 @@ function ProductFieldEdit( props ) {
 	// Use unified product data hook for consistent product data handling
 	const {
 		productData,
-		isLoading,
+		isLoading: productLoading,
 		error,
 		hasProductDetailAncestor,
 		selectedProductId,
@@ -189,6 +223,10 @@ function ProductFieldEdit( props ) {
 		openEcwidProductPopup,
 		clearSelectedProduct,
 	} = useEcwidProductData( context, attributes, setAttributes, clientId );
+
+	const isLoading = useMemo( () => {
+		return productLoading ||  isLoadingLines || isLoadingLineTypes;
+	}, [productLoading, isLoadingLineTypes, isLoadingLines] );
 
 	/**
 	 * Compute Bootstrap classes based on block attributes
@@ -279,74 +317,6 @@ function ProductFieldEdit( props ) {
 	};
 
 	/**
-	 * Load product lines from REST API for a specific product
-	 *
-	 * Fetches product line data for the given product ID with language support.
-	 * Handles 404 responses gracefully and manages loading/error states.
-	 *
-	 * @since 0.3.1
-	 *
-	 * @param {number} productId - Ecwid product ID to fetch lines for
-	 *
-	 * @return {Promise<void>} Async function that updates productLines state
-	 */
-	const loadProductLines = async ( productId ) => {
-		if ( ! productId ) {
-			setProductLines( [] );
-			return;
-		}
-
-		setIsLoadingLines( true );
-		setLinesError( null );
-
-		// Build API URL with language parameter for multilingual sites
-		const apiUrl = `/wp-json/peaches/v1/product-lines/${ productId }?lang=${ encodeURIComponent(
-			currentLanguage
-		) }`;
-
-		fetch( apiUrl, {
-			headers: {
-				Accept: 'application/json',
-			},
-			credentials: 'same-origin',
-		} )
-			.then( ( response ) => {
-				// Handle 404 as empty result (product has no lines)
-				if ( response.status === 404 ) {
-					setProductLines( [] );
-					setIsLoadingLines( false );
-					return;
-				}
-				if ( ! response.ok ) {
-					throw new Error(
-						`HTTP error! status: ${ response.status }`
-					);
-				}
-				return response.json();
-			} )
-			.then( ( responseData ) => {
-				if (
-					responseData &&
-					responseData.success &&
-					responseData.data
-				) {
-					setProductLines( responseData.data );
-				} else {
-					setProductLines( [] );
-				}
-				setIsLoadingLines( false );
-			} )
-			.catch( ( fetchError ) => {
-				console.error( 'Error loading product lines:', fetchError );
-				setLinesError(
-					__( 'Failed to load product lines', 'peaches' )
-				);
-				setProductLines( [] );
-				setIsLoadingLines( false );
-			} );
-	};
-
-	/**
 	 * Effect: Load line types when field type changes to lines-related
 	 *
 	 * Automatically fetches available line types when user selects a product lines
@@ -361,23 +331,71 @@ function ProductFieldEdit( props ) {
 	}, [ fieldType ] );
 
 	/**
-	 * Effect: Load product lines when product or settings change
+	 * Fetch product lines from when test product data changes
 	 *
-	 * Fetches product line data when:
-	 * - Field type is set to lines/lines_filtered
-	 * - Product ID changes (from selection or context)
-	 * - Language changes (for multilingual sites)
+	 * Fetches product line data for the given product ID with language support.
+	 * Handles 404 responses gracefully and manages loading/error states.
+     * Uses mock data if no (test) product is set.
 	 *
 	 * @since 0.3.1
 	 */
 	useEffect( () => {
-		if ( fieldType === 'lines' || fieldType === 'lines_filtered' ) {
-			const productId = selectedProductId || productData?.id;
-			if ( productId ) {
-				loadProductLines( productId );
-			}
+		if ( productData?.id ) {
+			setIsLoadingLines( true );
+			setLinesError( null );
+
+			// Build API URL with language parameter for multilingual sites
+			const apiUrl = `/wp-json/peaches/v1/product-lines/${ productData.id }?lang=${ encodeURIComponent(
+				currentLanguage
+			) }`;
+
+			console.log("apiUrl", apiUrl);
+			fetch( apiUrl, {
+				headers: {
+					Accept: 'application/json',
+				},
+				credentials: 'same-origin',
+			} )
+				.then( ( response ) => {
+					// Handle 404 as empty result (product has no lines)
+					if ( response.status === 404 ) {
+						setProductLines( [] );
+						return;
+					}
+					if ( ! response.ok ) {
+						throw new Error(
+							`HTTP error! status: ${ response.status }`
+						);
+					}
+					return response.json();
+				} )
+				.then( ( responseData ) => {
+					console.log("responseData", responseData);
+					if (
+						responseData &&
+						responseData.success &&
+						responseData.data
+					) {
+						setProductLines( responseData.data );
+					} else {
+						setProductLines( [] );
+					}
+				} )
+				.catch( ( fetchError ) => {
+					console.error( 'Error loading product lines:', fetchError );
+					setLinesError(
+						__( 'Failed to load product lines', 'peaches' )
+					);
+					setProductLines( [] );
+				} )
+				.finally( () => {
+					setIsLoadingLines( false );
+				} );
+		} else {
+			setProductLines( generateMockProductLines() );
+			setLinesError( null );
 		}
-	}, [ fieldType, selectedProductId, productData?.id, currentLanguage ] );
+	}, [ productData?.id ] );
 
 	/**
 	 * Get preview text for standard (non-line) field types
@@ -412,11 +430,13 @@ function ProductFieldEdit( props ) {
 
 		// Handle error state
 		if ( linesError ) {
+			console.log("linesError", linesError);
 			return linesError;
 		}
 
 		// Handle empty data
 		if ( productLines.length === 0 ) {
+			console.log("No lines found for product", productData, productLines);
 			return __( 'No product lines found', 'peaches' );
 		}
 
@@ -509,7 +529,7 @@ function ProductFieldEdit( props ) {
 				{ /* Product Selection Panel - unified across all product blocks */ }
 				<ProductSelectionPanel
 					productData={ productData }
-					isLoading={ isLoading }
+					isLoading={ productLoading }
 					error={ error }
 					hasProductDetailAncestor={ hasProductDetailAncestor }
 					selectedProductId={ selectedProductId }
@@ -710,31 +730,47 @@ function ProductFieldEdit( props ) {
 				/>
 			</InspectorControls>
 
-			{ /* Block Content - renders based on field type */ }
-			<div { ...blockProps }>
-				{ isLineField ? (
-					<>
-						{ /* Product Lines Rendering - shows exactly as frontend will */ }
-						{ getProductLinesPreview() }
-					</>
-				) : (
-					<>
-						{ fieldType === 'description' &&
-						productData?.description
-							? React.createElement( htmlTag, {
-									className: computedClassName,
-									dangerouslySetInnerHTML: {
-										__html: productData.description,
-									},
-							  } )
-							: React.createElement(
-									htmlTag,
-									{ className: computedClassName },
-									getPreviewText()
-							  ) }
-					</>
-				) }
-			</div>
+			{ isLoading && (
+				<div className="text-center p-2">
+					<div
+						className="spinner-border spinner-border-sm"
+						role="status"
+					>
+						<span>
+							{ __(
+								'Loading product data…',
+								'ecwid-shopping-cart'
+							) }
+						</span>
+					</div>
+				</div>
+			) }
+
+			{ ! isLoading && (
+				<div { ...blockProps }>
+					{ isLineField ? (
+						<>
+							{ getProductLinesPreview() }
+						</>
+					) : (
+						<>
+							{ fieldType === 'description' &&
+							productData?.description
+								? React.createElement( htmlTag, {
+										className: computedClassName,
+										dangerouslySetInnerHTML: {
+											__html: productData.description,
+										},
+								  } )
+								: React.createElement(
+										htmlTag,
+										{ className: computedClassName },
+										getPreviewText()
+								  ) }
+						</>
+					) }
+				</div>
+			) }
 		</>
 	);
 }
