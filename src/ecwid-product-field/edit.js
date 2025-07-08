@@ -58,7 +58,16 @@ const SUPPORTED_SETTINGS = {
 	},
 	general: {
 		border: { rounded: true, color: true, width: true },
+		spacings: { gaps: true },
 		colors: { background: true, text: true },
+		text: {
+			fontSize: true,
+			fontWeight: true,
+			fontStyle: true,
+			textDecoration: true,
+			textTransform: true,
+			lineHeight: true,
+		},
 	},
 };
 
@@ -124,6 +133,7 @@ const DISPLAY_MODES = [
  * @since 0.3.2
  */
 const IMAGE_SIZE_OPTIONS = [
+	{ label: __( 'Tiny (16px)', 'peaches' ), value: 'tiny' },
 	{ label: __( 'Small (32px)', 'peaches' ), value: 'small' },
 	{ label: __( 'Medium (48px)', 'peaches' ), value: 'medium' },
 	{ label: __( 'Large (64px)', 'peaches' ), value: 'large' },
@@ -304,14 +314,15 @@ const renderLineImage = ( line, imageMediaTag, imageSize, imagePosition ) => {
 	}
 
 	const sizeClasses = {
-		small: 'width-32 height-32',
-		medium: 'width-48 height-48',
-		large: 'width-64 height-64',
+		tiny: 'height-16',
+		small: 'height-32',
+		medium: 'height-48',
+		large: 'height-64',
 	};
 
-	const imageClasses = `object-fit-cover ${
-		sizeClasses[ imageSize ] || sizeClasses.small
-	} ${ imagePosition === 'after' ? 'ms-2' : 'me-2' }`;
+	const imageClasses = `${ sizeClasses[ imageSize ] || sizeClasses.small } ${
+		imagePosition === 'after' ? 'ms-2' : 'me-2'
+	}`;
 
 	console.log( 'Using image url', imageInfo );
 	return (
@@ -669,7 +680,7 @@ function ProductFieldEdit( props ) {
 				{
 					id: 0,
 					name: lines,
-					media: [],
+					media: filteredLines[ 0 ]?.media,
 				},
 			];
 		}

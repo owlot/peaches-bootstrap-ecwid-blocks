@@ -110,7 +110,15 @@
 				"type_location": {}
 			}
 		},
+		"spacings": {
+			"type": "object",
+			"default": {}
+		},
 		"colors": {
+			"type": "object",
+			"default": {}
+		},
+		"text": {
 			"type": "object",
 			"default": {}
 		}

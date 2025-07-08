@@ -78,11 +78,12 @@ export default function save( { attributes } ) {
 	 */
 	const getProductLinesContent = () => {
 		const sizeClasses = {
-			small: 'width-32 height-32',
-			medium: 'width-48 height-48',
-			large: 'width-64 height-64',
+			tiny: 'height-16',
+			small: 'height-32',
+			medium: 'height-48',
+			large: 'height-64',
 		};
-		const imageClasses = `object-fit-cover ${
+		const imageClasses = `${
 			sizeClasses[ imageSize ] || sizeClasses.small
 		} ${ imagePosition === 'after' ? 'ms-2' : 'me-2' }`;
 
@@ -162,6 +163,7 @@ export default function save( { attributes } ) {
 	const elementProps = {
 		'data-wp-init': 'callbacks.initProductField',
 		'data-wp-text': 'context.fieldValue',
+		className: computedClassName,
 	};
 
 	return (

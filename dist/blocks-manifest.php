@@ -102,9 +102,19 @@ return array(
 			'id' => array(
 				'type' => 'integer'
 			),
+			'translations' => array(
+				'type' => 'object',
+				'default' => array(
+					
+				)
+			),
 			'showAddToCart' => array(
 				'type' => 'boolean',
 				'default' => true
+			),
+			'buttonText' => array(
+				'type' => 'string',
+				'default' => 'Add to cart'
 			),
 			'showCardHoverShadow' => array(
 				'type' => 'boolean',
@@ -653,7 +663,19 @@ return array(
 					)
 				)
 			),
+			'spacings' => array(
+				'type' => 'object',
+				'default' => array(
+					
+				)
+			),
 			'colors' => array(
+				'type' => 'object',
+				'default' => array(
+					
+				)
+			),
+			'text' => array(
 				'type' => 'object',
 				'default' => array(
 					

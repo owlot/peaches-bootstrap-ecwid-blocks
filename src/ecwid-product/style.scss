@@ -51,9 +51,9 @@
 }
 
 // Add room in parent for hover effect
-*:has(> .wp-block-peaches-ecwid-product.card) {
-	padding-top: 10px;
-	padding-bottom: 10px;
+*:has(> .wp-block-peaches-ecwid-product.card.hover-shadow) {
+	padding-top: 1.5rem;
+	padding-bottom: 1.5rem;
 }
 // Enhanced hover effects for the entire card
 .wp-block-peaches-ecwid-product.card {
@@ -63,7 +63,7 @@
 		transform: translateY(-2px);
 	}
 	&.hover-shadow:hover {
-		box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+		box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.1), 0 10px 10px 0 rgba(0, 0, 0, 0.2);
 	}
 }
 

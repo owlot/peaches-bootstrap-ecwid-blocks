@@ -109,8 +109,38 @@ class Peaches_REST_API {
 	 */
 	private function init_hooks() {
 		add_action('rest_api_init', array($this, 'register_routes'));
+		add_filter('rest_authentication_errors', array($this, 'allow_public_endpoints'));
 	}
-/**
+
+	/**
+	 * Allow public access to our specific endpoints even if REST API is restricted globally.
+	 *
+	 * @since 0.2.5
+	 *
+	 * @param WP_Error|null|true $result Error from another authentication handler, null if we should handle it, or true if no problems.
+	 *
+	 * @return WP_Error|null|true Modified result.
+	 */
+	public function allow_public_endpoints($result) {
+		// If there's already an error and it's not a 401 authentication error, pass it through
+		if (is_wp_error($result) && $result->get_error_code() !== 'rest_forbidden') {
+			return $result;
+		}
+
+		// Get the current request
+		$current_route = $GLOBALS['wp']->query_vars['rest_route'] ?? '';
+
+		// Check if this is one of our public endpoints
+		if (strpos($current_route, '/' . self::NAMESPACE . '/') === 0) {
+			// Allow access to our endpoints
+			return true;
+		}
+
+		// For all other endpoints, maintain the existing restriction
+		return $result;
+	}
+
+	/**
 	 * Register all REST API routes.
 	 *
 	 * @since 0.2.5

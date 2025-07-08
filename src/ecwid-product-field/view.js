@@ -518,6 +518,7 @@ store( 'peaches-ecwid-product-lines', {
 							{
 								id: 0,
 								name: lines,
+								media: filteredLines[ 0 ]?.media,
 							},
 						];
 					}

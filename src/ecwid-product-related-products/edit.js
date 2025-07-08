@@ -33,7 +33,6 @@ import {
 	computeClassName,
 } from '../../../peaches-bootstrap-blocks/src/utils/bootstrap_settings';
 import {
-	getCurrentLanguageForAPI,
 	useEcwidProductData,
 	ProductSelectionPanel,
 } from '../utils/ecwid-product-utils';

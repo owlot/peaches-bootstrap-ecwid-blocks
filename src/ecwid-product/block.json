@@ -25,9 +25,17 @@
 		"id": {
 			"type": "integer"
 		},
+		"translations": {
+			"type": "object",
+			"default": {}
+		},
 		"showAddToCart": {
 			"type": "boolean",
 			"default": true
+		},
+		"buttonText": {
+			"type": "string",
+			"default": "Add to cart"
 		},
 		"showCardHoverShadow": {
 			"type": "boolean",

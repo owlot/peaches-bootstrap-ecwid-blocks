@@ -79,6 +79,11 @@ if (!empty($product->attributes)) {
 	}
 }
 
+$button_text = __('Add to cart', 'peaches');
+if (isset($attributes['showAddToCart']) && isset($attributes['buttonText'])) {
+	$button_text = $attributes['buttonText'];
+}
+
 // Format price
 $formatted_price = '';
 if (isset($product->price)) {
