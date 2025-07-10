@@ -28,6 +28,10 @@
 		"selectedProductId": {
 			"type": "number"
 		},
+		"translations": {
+			"type": "object",
+			"default": {}
+		},
 		"showTitle": {
 			"type": "boolean",
 			"default": true
@@ -43,6 +47,22 @@
 		"showAddToCart": {
 			"type": "boolean",
 			"default": true
+		},
+		"buttonText": {
+			"type": "string",
+			"default": "Add to cart"
+		},
+		"showCardHoverShadow": {
+			"type": "boolean",
+			"default": true
+		},
+		"showCardHoverJump": {
+			"type": "boolean",
+			"default": true
+		},
+		"hoverMediaTag": {
+			"type": "string",
+			"default": ""
 		},
 		"computedClassName": {
 			"type": "string",

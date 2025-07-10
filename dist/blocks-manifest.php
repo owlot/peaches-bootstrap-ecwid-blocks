@@ -915,6 +915,12 @@ return array(
 			'selectedProductId' => array(
 				'type' => 'number'
 			),
+			'translations' => array(
+				'type' => 'object',
+				'default' => array(
+					
+				)
+			),
 			'showTitle' => array(
 				'type' => 'boolean',
 				'default' => true
@@ -930,6 +936,22 @@ return array(
 			'showAddToCart' => array(
 				'type' => 'boolean',
 				'default' => true
+			),
+			'buttonText' => array(
+				'type' => 'string',
+				'default' => 'Add to cart'
+			),
+			'showCardHoverShadow' => array(
+				'type' => 'boolean',
+				'default' => true
+			),
+			'showCardHoverJump' => array(
+				'type' => 'boolean',
+				'default' => true
+			),
+			'hoverMediaTag' => array(
+				'type' => 'string',
+				'default' => ''
 			),
 			'computedClassName' => array(
 				'type' => 'string',

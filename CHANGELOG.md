@@ -5,6 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.3] - 2025-07-12
+
+### Added
+- **Enhanced Multilingual Support** (@since 0.3.3)
+  - Multilingual configuration for `ecwid-product` and `ecwid-product-add-to-cart` blocks
+  - Button text and out-of-stock text translation support
+  - JavaScript multilingual configuration integration (`add_js_multilingual_config()`)
+  - Runtime block translation application (`apply_block_translations()`)
+
+### Changed
+- **Block Registration**: Optimized block registration process
+  - Added fallback support for older WordPress versions
+  - Improved error handling for missing block metadata files
+  - Improved path resolution for build vs. source directories
+
+### Enhanced
+- **New Helper Methods** (@since 0.3.3)
+  - `register_single_block()` for individual block registration
+  - `register_multilingual_blocks()` for multilingual system integration
+  - `get_registered_blocks()`, `has_multilingual_support()`, `get_block_multilingual_config()` utility methods
+  - `log_info()` and `log_error()` methods for enhanced debugging
+
 ## [0.3.2] - 2025-06-30
 
 ### Added
@@ -57,7 +79,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **REST API Architecture**: Added product lines manager dependency injection for better maintainability
 - **Editor Experience**: True WYSIWYG rendering - product lines display exactly as they appear on frontend
 - **Code Consistency**: Standardized fetch patterns across blocks for improved maintainability
-# Changelog
 
 ## [0.3.0] - 2025-06-28
 

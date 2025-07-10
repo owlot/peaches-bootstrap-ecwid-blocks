@@ -23,7 +23,7 @@ $show_add_to_cart = isset($attributes['showAddToCart']) ? $attributes['showAddTo
 $hover_media_tag = isset($attributes['hoverMediaTag']) ? sanitize_text_field($attributes['hoverMediaTag']) : '';
 
 // Get computed className from attributes
-$computed_class_name = isset($attributes['computedClassName']) ? $attributes['computedClassName'] : '';
+$computed_class_name = peaches_get_safe_string_attribute($attributes, 'computedClassName');
 
 // Get the main plugin instance and fetch product data
 $ecwid_blocks = Peaches_Ecwid_Blocks::get_instance();
@@ -64,24 +64,56 @@ if (!empty($hover_media_tag)) {
 	}
 }
 
-// Extract product subtitle from attributes
+// Extract product subtitle from attributes - ensure values are strings
 $product_subtitle = '';
 if (!empty($product->attributes)) {
 	foreach ($product->attributes as $attr) {
-		$attr_name = strtolower($attr->name);
+		// Ensure attr has required properties and they're not null
+		if (!isset($attr->name) || !isset($attr->value)) {
+			continue;
+		}
+
+		$attr_name = strtolower((string)$attr->name);
 		if (strpos($attr_name, 'ondertitel') !== false ||
 			strpos($attr_name, 'subtitle') !== false ||
 			strpos($attr_name, 'sub-title') !== false ||
 			strpos($attr_name, 'tagline') !== false) {
-			$product_subtitle = $attr->value;
+			// Ensure the value is a string and not null
+			$product_subtitle = (string)$attr->value;
 			break;
 		}
 	}
 }
 
+// Handle button text with new multilingual system support
 $button_text = __('Add to cart', 'peaches');
-if (isset($attributes['showAddToCart']) && isset($attributes['buttonText'])) {
-	$button_text = $attributes['buttonText'];
+if (isset($attributes['buttonText'])) {
+	// Ensure buttonText is a string, never null
+	$button_text = peaches_get_safe_string_attribute($attributes, 'buttonText');
+
+	// Only proceed if we have a non-empty buttonText
+	if (!empty($button_text)) {
+		// Check for new multilingual system first (preferred)
+		if (!empty($attributes['translations']['buttonText'])) {
+			$current_language = peaches_get_render_language();
+			$default_language = peaches_default_language();
+
+			// If not default language, look for translation
+			if ($current_language !== $default_language) {
+				$button_translations = $attributes['translations']['buttonText'];
+				if (isset($button_translations[$current_language]) && !empty($button_translations[$current_language])) {
+					$button_text = (string)$button_translations[$current_language];
+				}
+			}
+		}
+		// Fallback to old system for backward compatibility
+		elseif (function_exists('peaches_get_translated_content') && !empty($attributes['translations'])) {
+			$translated_button_text = peaches_get_translated_content($attributes, 'buttonText');
+			if (!empty($translated_button_text)) {
+				$button_text = (string)$translated_button_text;
+			}
+		}
+	}
 }
 
 // Format price
@@ -103,7 +135,7 @@ $wrapper_attributes = get_block_wrapper_attributes(array(
 			'thumbnailUrl' => $product->thumbnailUrl ?? '',
 			'price' => $product->price ?? 0,
 			'url' => $product_url,
-			'subtitle' => $product_subtitle
+			'subtitle' => (string)$product_subtitle
 		),
 		'hoverImageUrl' => $hover_image_url,
 		'isHovering' => false
@@ -145,9 +177,9 @@ $wrapper_attributes = get_block_wrapper_attributes(array(
 			<?php echo esc_html($formatted_price); ?>
 		</div>
 		<?php if ($show_add_to_cart): ?>
-			<button title="<?php echo esc_attr__('Add to cart', 'peaches'); ?>"
+			<button title="<?php echo esc_html($button_text); ?>"
 					class="add-to-cart btn pe-0"
-					aria-label="<?php echo esc_attr__('Add to cart', 'peaches'); ?>"
+					aria-label="<?php echo esc_html($button_text); ?>"
 					data-wp-on--click="actions.addToCart"></button>
 		<?php endif; ?>
 	</div>

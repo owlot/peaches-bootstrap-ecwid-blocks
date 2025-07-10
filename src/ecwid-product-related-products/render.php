@@ -1,24 +1,33 @@
 <?php
 /**
- * PHP file to use when rendering the block type on the server to show on the front end.
+ * Enhanced PHP file for rendering the related products block with all product settings
  */
 
 /**
- * Generate bs-col block with ecwid-product inside
+ * Generate bs-col block with ecwid-product inside, passing through all settings
  *
- * @param int $product_id Product ID
+ * @param int   $product_id Product ID
+ * @param array $attributes Parent block attributes to pass through
  *
  * @return string Rendered block HTML
  */
 if (!function_exists('peaches_generate_product_col_block')) {
-	function peaches_generate_product_col_block($product_id) {
-		// Render the product block first
+	function peaches_generate_product_col_block($product_id, $attributes = array()) {
+		// Extract product-specific settings from parent attributes
+		$product_attrs = array(
+			'id' => $product_id,
+			'showAddToCart' => isset($attributes['showAddToCart']) ? $attributes['showAddToCart'] : true,
+			'buttonText' => isset($attributes['buttonText']) ? $attributes['buttonText'] : 'Add to cart',
+			'showCardHoverShadow' => isset($attributes['showCardHoverShadow']) ? $attributes['showCardHoverShadow'] : true,
+			'showCardHoverJump' => isset($attributes['showCardHoverJump']) ? $attributes['showCardHoverJump'] : true,
+			'hoverMediaTag' => isset($attributes['hoverMediaTag']) ? $attributes['hoverMediaTag'] : '',
+			'translations' => isset($attributes['translations']) ? $attributes['translations'] : null,
+		);
+
+		// Render the product block with all settings
 		$product_html = render_block(array(
 			'blockName' => 'peaches/ecwid-product',
-			'attrs' => array(
-				'id' => $product_id,
-				'showAddToCart' => true
-			)
+			'attrs' => $product_attrs
 		));
 
 		// If product rendering fails, return empty
@@ -38,9 +47,10 @@ if (!function_exists('peaches_generate_product_col_block')) {
 $ecwid_blocks = Peaches_Ecwid_Blocks::get_instance();
 $ecwid_api = $ecwid_blocks->get_ecwid_api();
 
-// Get product ID from the parent product detail store
+// Get product ID from the parent product detail store or attributes
 $product_detail_state = wp_interactivity_state('peaches-ecwid-product-detail');
 $product_id = $attributes['selectedProductId'];
+
 // Use state product id if available
 if($product_detail_state) {
 	$product_id = isset($product_detail_state['productId']) ? $product_detail_state['productId'] : null;
@@ -69,19 +79,23 @@ if (empty($related_ids)) {
 	return;
 }
 
-// Use the isInCarousel attribute set by the editor (much more reliable!)
+// Get computed className from attributes
+$computed_class_name = peaches_get_safe_string_attribute($attributes, 'computedClassName');
+
+// Use the isInCarousel attribute set by the editor
 $is_in_carousel = isset($attributes['isInCarousel']) ? $attributes['isInCarousel'] : false;
 
-// Get computedClassName setting
-$computed_classname = isset($attributes['computedClassName']) ? $attributes['computedClassName'] : '';
+// Extract display settings
+$show_title = isset($attributes['showTitle']) ? $attributes['showTitle'] : true;
+$custom_title = peaches_get_safe_string_attribute($attributes, 'customTitle');
 
 if ($is_in_carousel) {
 	// In carousel: render bs-col blocks directly without any wrapper
 	// Title and status messages can't be shown in carousel mode
 
 	foreach ($related_ids as $related_product_id) {
-		// Create bs-col block with product inside
-		$col_block_html = peaches_generate_product_col_block($related_product_id);
+		// Create bs-col block with product inside, passing all settings
+		$col_block_html = peaches_generate_product_col_block($related_product_id, $attributes);
 		echo wp_interactivity_process_directives($col_block_html);
 	}
 
@@ -92,22 +106,22 @@ if ($is_in_carousel) {
 	// Prepare block attributes
 	$block_props = get_block_wrapper_attributes();
 
-	$title_text = !empty($attributes['customTitle']) ?
-		$attributes['customTitle'] : __('Related Products', 'peaches-bootstrap-ecwid-blocks');
+	// Determine title text
+	$title_text = !empty($custom_title) ? $custom_title : __('Related Products', 'peaches-bootstrap-ecwid-blocks');
 	?>
 
 	<div <?php echo $block_props; ?>>
-		<?php if ($attributes['showTitle']): ?>
+		<?php if ($show_title): ?>
 			<h3 class="related-products-title mb-4">
 				<?php echo esc_html($title_text); ?>
 			</h3>
 		<?php endif; ?>
 
-		<div class="related-products-container row <?php echo esc_attr($computed_classname); ?>">
+		<div class="related-products-container row <?php echo esc_attr($computed_class_name); ?>">
 			<?php foreach ($related_ids as $related_product_id): ?>
 				<?php
-				// Always create bs-col blocks with products inside
-				$col_block_html = peaches_generate_product_col_block($related_product_id);
+				// Always create bs-col blocks with products inside, passing all settings
+				$col_block_html = peaches_generate_product_col_block($related_product_id, $attributes);
 				echo wp_interactivity_process_directives($col_block_html);
 				?>
 			<?php endforeach; ?>

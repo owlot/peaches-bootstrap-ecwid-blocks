@@ -150,3 +150,20 @@ function peaches_get_available_media_tags($category = '') {
 
 	return $all_tags;
 }
+
+/**
+ * Safely get string value from attributes to prevent null parameter errors.
+ *
+ * @param array  $attributes The block attributes.
+ * @param string $key        The attribute key.
+ * @param string $default    Default value if key doesn't exist or isn't a string.
+ *
+ * @return string Safe string value.
+ */
+function peaches_get_safe_string_attribute($attributes, $key, $default = '') {
+	if (!isset($attributes[$key])) {
+		return $default;
+	}
+
+	return is_string($attributes[$key]) ? $attributes[$key] : $default;
+}
