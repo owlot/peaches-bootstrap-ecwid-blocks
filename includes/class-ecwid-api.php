@@ -65,7 +65,7 @@ class Peaches_Ecwid_API implements Peaches_Ecwid_API_Interface {
 
 		// Only try Redis if enabled in settings and Redis extension is available
 		if (!$settings['enable_redis'] || !extension_loaded('redis')) {
-			$this->debug_log('Redis not enabled or extension not available');
+			$this->log_info('Redis not enabled or extension not available');
 			return;
 		}
 
@@ -92,10 +92,10 @@ class Peaches_Ecwid_API implements Peaches_Ecwid_API_Interface {
 				// Test the connection
 				$this->redis->ping();
 				$this->redis_available = true;
-				$this->debug_log('Redis connection established: ' . $host . ':' . $port);
+				$this->log_info('Redis connection established: ' . $host . ':' . $port);
 			}
 		} catch (Exception $e) {
-			$this->debug_log('Redis connection failed: ' . $e->getMessage());
+			$this->log_info('Redis connection failed: ' . $e->getMessage());
 			$this->redis = null;
 			$this->redis_available = false;
 		}
@@ -120,33 +120,6 @@ class Peaches_Ecwid_API implements Peaches_Ecwid_API_Interface {
 			'debug_mode' => false,
 			'enable_redis' => false,
 		);
-	}
-
-	/**
-	 * Log debug message if debug mode is enabled
-	 *
-	 * @since 0.1.2
-	 *
-	 * @param string $message Debug message
-	 * @param mixed  $data    Optional data to log
-	 *
-	 * @return void
-	 */
-	private function debug_log($message, $data = null) {
-		$settings = $this->get_settings();
-
-		if (!$settings['debug_mode']) {
-			return;
-		}
-
-		$cache_method = $this->redis_available ? 'Redis' : 'Transients';
-		$log_message = '[Peaches Ecwid API/' . $cache_method . '] ' . $message;
-
-		if ($data !== null) {
-			$log_message .= ' - Data: ' . print_r($data, true);
-		}
-
-		error_log($log_message);
 	}
 
 	/**
@@ -186,14 +159,14 @@ class Peaches_Ecwid_API implements Peaches_Ecwid_API_Interface {
 				$cached_data = $this->redis->get($cache_key);
 
 				if ($cached_data !== false) {
-					$this->debug_log('Redis cache HIT for key: ' . $cache_key);
+					$this->log_info('Redis cache HIT for key: ' . $cache_key);
 					return unserialize($cached_data);
 				}
 
-				$this->debug_log('Redis cache MISS for key: ' . $cache_key);
+				$this->log_info('Redis cache MISS for key: ' . $cache_key);
 				return false;
 			} catch (Exception $e) {
-				$this->debug_log('Redis get error: ' . $e->getMessage());
+				$this->log_info('Redis get error: ' . $e->getMessage());
 				// Fall back to transients
 				return $this->get_transient_data($cache_key);
 			}
@@ -215,11 +188,11 @@ class Peaches_Ecwid_API implements Peaches_Ecwid_API_Interface {
 		$cached_data = get_transient($cache_key);
 
 		if ($cached_data !== false) {
-			$this->debug_log('Transient cache HIT for key: ' . $cache_key);
+			$this->log_info('Transient cache HIT for key: ' . $cache_key);
 			return $cached_data;
 		}
 
-		$this->debug_log('Transient cache MISS for key: ' . $cache_key);
+		$this->log_info('Transient cache MISS for key: ' . $cache_key);
 		return false;
 	}
 
@@ -240,16 +213,16 @@ class Peaches_Ecwid_API implements Peaches_Ecwid_API_Interface {
 		if ($this->redis_available) {
 			try {
 				$this->redis->setex($cache_key, $cache_duration, serialize($data));
-				$this->debug_log('Redis cached data for key: ' . $cache_key . ' (Duration: ' . $cache_duration . 's)');
+				$this->log_info('Redis cached data for key: ' . $cache_key . ' (Duration: ' . $cache_duration . 's)');
 				return;
 			} catch (Exception $e) {
-				$this->debug_log('Redis set error: ' . $e->getMessage());
+				$this->log_info('Redis set error: ' . $e->getMessage());
 				// Fall back to transients
 			}
 		}
 
 		set_transient($cache_key, $data, $cache_duration);
-		$this->debug_log('Transient cached data for key: ' . $cache_key . ' (Duration: ' . $cache_duration . 's)');
+		$this->log_info('Transient cached data for key: ' . $cache_key . ' (Duration: ' . $cache_duration . 's)');
 	}
 
 	/**
@@ -260,14 +233,14 @@ class Peaches_Ecwid_API implements Peaches_Ecwid_API_Interface {
 	 * @return object|null The product data or null if not found.
 	 */
 	public function get_product_by_id($product_id) {
-		$this->debug_log('Getting product with ID: ' . $product_id);
+		$this->log_info('Getting product with ID: ' . $product_id);
 
 		// Check cache first
 		$cache_key = $this->get_cache_key('product', $product_id);
 		$cached_product = $this->get_cached_data($cache_key);
 
 		if ($cached_product !== false) {
-			$this->debug_log('Returning cached product: ' . $cached_product->name);
+			$this->log_info('Returning cached product: ' . $cached_product->name);
 			return $cached_product;
 		}
 
@@ -278,15 +251,15 @@ class Peaches_Ecwid_API implements Peaches_Ecwid_API_Interface {
 				$product = Ecwid_Product::get_by_id($product_id);
 
 				if ($product) {
-					$this->debug_log('Product found via Ecwid_Product::get_by_id - ' . $product->name);
+					$this->log_info('Product found via Ecwid_Product::get_by_id - ' . $product->name);
 				} else {
-					$this->debug_log('Product not found via Ecwid_Product::get_by_id for ID: ' . $product_id);
+					$this->log_info('Product not found via Ecwid_Product::get_by_id for ID: ' . $product_id);
 				}
 			} catch (Exception $e) {
-				$this->debug_log('Error with Ecwid_Product::get_by_id - ' . $e->getMessage());
+				$this->log_info('Error with Ecwid_Product::get_by_id - ' . $e->getMessage());
 			}
 		} else {
-			$this->debug_log('Ecwid_Product::get_by_id function not available');
+			$this->log_info('Ecwid_Product::get_by_id function not available');
 
 			// Try alternative method using Ecwid API if available
 			if (class_exists('Ecwid_Api_V3')) {
@@ -295,12 +268,12 @@ class Peaches_Ecwid_API implements Peaches_Ecwid_API_Interface {
 					$product = $api->get_product($product_id);
 
 					if ($product) {
-						$this->debug_log('Product found via Ecwid_Api_V3 - ' . $product->name);
+						$this->log_info('Product found via Ecwid_Api_V3 - ' . $product->name);
 					} else {
-						$this->debug_log('Product not found via Ecwid_Api_V3 for ID: ' . $product_id);
+						$this->log_info('Product not found via Ecwid_Api_V3 for ID: ' . $product_id);
 					}
 				} catch (Exception $e) {
-					$this->debug_log('Error with Ecwid_Api_V3 - ' . $e->getMessage());
+					$this->log_info('Error with Ecwid_Api_V3 - ' . $e->getMessage());
 				}
 			}
 		}
@@ -329,21 +302,21 @@ class Peaches_Ecwid_API implements Peaches_Ecwid_API_Interface {
 			return 0;
 		}
 
-		$this->debug_log('Getting product ID for slug: ' . $slug);
+		$this->log_info('Getting product ID for slug: ' . $slug);
 
 		// Check cache first
 		$cache_key = $this->get_cache_key('slug', $slug);
 		$cached_id = $this->get_cached_data($cache_key);
 
 		if ($cached_id !== false) {
-			$this->debug_log('Returning cached product ID: ' . $cached_id);
+			$this->log_info('Returning cached product ID: ' . $cached_id);
 			return intval($cached_id);
 		}
 
 		$ecwid_store_id = EcwidPlatform::get_store_id();
 		$slug_api_url = "https://app.ecwid.com/storefront/api/v1/{$ecwid_store_id}/catalog/slug";
 
-		$this->debug_log('Making API request to: ' . $slug_api_url);
+		$this->log_info('Making API request to: ' . $slug_api_url);
 
 		$slug_response = wp_remote_post($slug_api_url, array(
 			'headers' => array(
@@ -355,16 +328,16 @@ class Peaches_Ecwid_API implements Peaches_Ecwid_API_Interface {
 		));
 
 		if (is_wp_error($slug_response)) {
-			$this->debug_log('API request failed: ' . $slug_response->get_error_message());
+			$this->log_info('API request failed: ' . $slug_response->get_error_message());
 			return 0;
 		}
 
 		$response_code = wp_remote_retrieve_response_code($slug_response);
-		$this->debug_log('API response code: ' . $response_code);
+		$this->log_info('API response code: ' . $response_code);
 
 		if ($response_code === 200) {
 			$slug_data = json_decode(wp_remote_retrieve_body($slug_response), true);
-			$this->debug_log('API response data', $slug_data);
+			$this->log_info('API response data', $slug_data);
 
 			// Check if we found a valid product
 			if (!empty($slug_data) && $slug_data['type'] === 'product' && !empty($slug_data['entityId'])) {
@@ -373,14 +346,14 @@ class Peaches_Ecwid_API implements Peaches_Ecwid_API_Interface {
 				// Cache the result
 				$this->set_cached_data($cache_key, $product_id);
 
-				$this->debug_log('Found product ID: ' . $product_id);
+				$this->log_info('Found product ID: ' . $product_id);
 				return $product_id;
 			}
 		}
 
 		// Cache null results for a shorter duration
 		set_transient($cache_key . '_null', 0, 5 * MINUTE_IN_SECONDS);
-		$this->debug_log('No product found for slug: ' . $slug);
+		$this->log_info('No product found for slug: ' . $slug);
 
 		return 0;
 	}
@@ -389,19 +362,20 @@ class Peaches_Ecwid_API implements Peaches_Ecwid_API_Interface {
 	 * Search for products in Ecwid store.
 	 *
 	 * @since 0.1.2
+	 *
 	 * @param string $query The search query.
 	 * @param array  $options Optional search parameters.
 	 * @return array Array of matching products.
 	 */
 	public function search_products($query, $options = array()) {
-		$this->debug_log('Searching products with query: ' . $query, $options);
+		$this->log_info('Searching products with query: ' . $query, $options);
 
 		// Check cache first
 		$cache_key = $this->get_cache_key('search', array('query' => $query, 'options' => $options));
 		$cached_results = $this->get_cached_data($cache_key);
 
 		if ($cached_results !== false) {
-			$this->debug_log('Returning cached search results (' . count($cached_results) . ' products)');
+			$this->log_info('Returning cached search results (' . count($cached_results) . ' products)');
 			return $cached_results;
 		}
 
@@ -417,9 +391,21 @@ class Peaches_Ecwid_API implements Peaches_Ecwid_API_Interface {
 					'enabled' => true,
 				), $options);
 
-				// First, search by product name
-				$search_params['keyword'] = $query;
-				$result = $api->get_products($search_params);
+				// Add keyword only if query is provided
+				if (!empty($query)) {
+					$search_params['keyword'] = $query;
+				}
+
+				$this->log_info('Final search params for Ecwid API', $search_params);
+
+				$result = $api->search_products($search_params);
+
+				$this->log_info('Ecwid API response', array(
+					'has_result' => !empty($result),
+					'has_items' => isset($result->items),
+					'total' => isset($result->total) ? $result->total : 'no total',
+					'count' => isset($result->items) ? count($result->items) : 'no items'
+				));
 
 				if ($result && isset($result->items)) {
 					foreach ($result->items as $product) {
@@ -428,16 +414,21 @@ class Peaches_Ecwid_API implements Peaches_Ecwid_API_Interface {
 							'name' => $product->name,
 							'sku' => $product->sku,
 							'price' => isset($product->price) ? $product->price : null,
-							'matchType' => 'name'
+							'categoryIds' => isset($product->categoryIds) ? $product->categoryIds : array(),
+							'matchType' => !empty($query) ? 'keyword' : 'category'
 						);
 					}
-					$this->debug_log('Found ' . count($products) . ' products by name search');
+					$this->log_info('Found ' . count($products) . ' products');
 				}
 
-				// If no results, try searching by SKU
-				if (empty($products)) {
+				// Only try SKU search if we had a keyword query but no results
+				if (empty($products) && !empty($query)) {
+					$this->log_info('No results for keyword, trying SKU search');
+
+					// Remove keyword and add SKU for second attempt
 					unset($search_params['keyword']);
 					$search_params['sku'] = $query;
+
 					$result = $api->get_products($search_params);
 
 					if ($result && isset($result->items)) {
@@ -447,20 +438,21 @@ class Peaches_Ecwid_API implements Peaches_Ecwid_API_Interface {
 								'name' => $product->name,
 								'sku' => $product->sku,
 								'price' => isset($product->price) ? $product->price : null,
+								'categoryIds' => isset($product->categoryIds) ? $product->categoryIds : array(),
 								'matchType' => 'sku'
 							);
 						}
-						$this->debug_log('Found ' . count($products) . ' products by SKU search');
+						$this->log_info('Found ' . count($products) . ' products by SKU search');
 					}
 				}
 			} catch (Exception $e) {
-				$this->debug_log('Error during product search: ' . $e->getMessage());
+				$this->log_info('Error during product search: ' . $e->getMessage());
 			}
 		}
 
 		// Cache the results
 		$this->set_cached_data($cache_key, $products);
-		$this->debug_log('Search completed, returning ' . count($products) . ' products');
+		$this->log_info('Search completed, returning ' . count($products) . ' products');
 
 		return $products;
 	}
@@ -473,14 +465,14 @@ class Peaches_Ecwid_API implements Peaches_Ecwid_API_Interface {
 	 * @return array Array of categories.
 	 */
 	public function get_categories($options = array()) {
-		$this->debug_log('Getting categories', $options);
+		$this->log_info('Getting categories', $options);
 
 		// Check cache first
 		$cache_key = $this->get_cache_key('categories', $options);
 		$cached_categories = $this->get_cached_data($cache_key);
 
 		if ($cached_categories !== false) {
-			$this->debug_log('Returning cached categories (' . count($cached_categories) . ' categories)');
+			$this->log_info('Returning cached categories (' . count($cached_categories) . ' categories)');
 			return $cached_categories;
 		}
 
@@ -493,10 +485,10 @@ class Peaches_Ecwid_API implements Peaches_Ecwid_API_Interface {
 
 				if ($categories_result && isset($categories_result->items)) {
 					$categories = $categories_result->items;
-					$this->debug_log('Found ' . count($categories) . ' categories');
+					$this->log_info('Found ' . count($categories) . ' categories');
 				}
 			} catch (Exception $e) {
-				$this->debug_log('Error getting categories: ' . $e->getMessage());
+				$this->log_info('Error getting categories: ' . $e->getMessage());
 			}
 		}
 
@@ -514,7 +506,7 @@ class Peaches_Ecwid_API implements Peaches_Ecwid_API_Interface {
 	 * @return void
 	 */
 	public function clear_cache() {
-		$this->debug_log('Clearing all Ecwid cache');
+		$this->log_info('Clearing all Ecwid cache');
 
 		if ($this->redis_available) {
 			try {
@@ -527,14 +519,14 @@ class Peaches_Ecwid_API implements Peaches_Ecwid_API_Interface {
 
 				if (!empty($keys)) {
 					$deleted = $this->redis->del($keys);
-					$this->debug_log('Redis cache cleared: ' . $deleted . ' keys deleted');
+					$this->log_info('Redis cache cleared: ' . $deleted . ' keys deleted');
 				} else {
-					$this->debug_log('Redis cache: No keys found to delete');
+					$this->log_info('Redis cache: No keys found to delete');
 				}
 
 				return;
 			} catch (Exception $e) {
-				$this->debug_log('Redis cache clear error: ' . $e->getMessage());
+				$this->log_info('Redis cache clear error: ' . $e->getMessage());
 				// Fall back to clearing transients
 			}
 		}
@@ -556,7 +548,7 @@ class Peaches_Ecwid_API implements Peaches_Ecwid_API_Interface {
 			)
 		);
 
-		$this->debug_log('Transient cache cleared: ' . $deleted . ' transients deleted');
+		$this->log_info('Transient cache cleared: ' . $deleted . ' transients deleted');
 	}
 
 	/**
@@ -599,7 +591,7 @@ class Peaches_Ecwid_API implements Peaches_Ecwid_API_Interface {
 					'connected_clients' => $redis_info['connected_clients'] ?? 'unknown',
 				);
 			} catch (Exception $e) {
-				$this->debug_log('Error getting Redis cache info: ' . $e->getMessage());
+				$this->log_info('Error getting Redis cache info: ' . $e->getMessage());
 			}
 		} else {
 			// Get transient count
@@ -626,14 +618,14 @@ class Peaches_Ecwid_API implements Peaches_Ecwid_API_Interface {
 	 * @return array Array containing products and pagination info
 	 */
 	public function get_all_products($options = array()) {
-		$this->debug_log('Getting all products with options', $options);
+		$this->log_info('Getting all products with options', $options);
 
 		// Check cache first
 		$cache_key = $this->get_cache_key('all_products', $options);
 		$cached_products = $this->get_cached_data($cache_key);
 
 		if ($cached_products !== false) {
-			$this->debug_log('Returning cached products (' . count($cached_products) . ' products)');
+			$this->log_info('Returning cached products (' . count($cached_products) . ' products)');
 			return $cached_products;
 		}
 
@@ -697,11 +689,11 @@ class Peaches_Ecwid_API implements Peaches_Ecwid_API_Interface {
 						$api_params['sortBy'] = ($sort_order === 'DESC') ? 'CREATED_TIME_DESC' : 'CREATED_TIME';
 					} else {
 						// If invalid sort, just omit it and let Ecwid use default
-						$this->debug_log('Invalid sortBy value, using default: ' . $sort_by);
+						$this->log_info('Invalid sortBy value, using default: ' . $sort_by);
 					}
 				}
 
-				$this->debug_log('API parameters after cleanup', $api_params);
+				$this->log_info('API parameters after cleanup', $api_params);
 
 				$all_products = array();
 				$has_more = true;
@@ -711,13 +703,13 @@ class Peaches_Ecwid_API implements Peaches_Ecwid_API_Interface {
 				// Fetch all products with pagination
 				while ($has_more && $safety_counter < 100) { // Safety limit to prevent infinite loops
 					$api_params['offset'] = $current_offset;
-					$this->debug_log('Fetching products with offset: ' . $current_offset);
+					$this->log_info('Fetching products with offset: ' . $current_offset);
 
 					$result = $api->get_products($api_params);
-					$this->debug_log('API result type: ' . gettype($result));
+					$this->log_info('API result type: ' . gettype($result));
 
 					if ($result && is_object($result) && isset($result->items) && is_array($result->items)) {
-						$this->debug_log('Received ' . count($result->items) . ' products from API');
+						$this->log_info('Received ' . count($result->items) . ' products from API');
 
 						foreach ($result->items as $product) {
 							$products[] = array(
@@ -741,16 +733,16 @@ class Peaches_Ecwid_API implements Peaches_Ecwid_API_Interface {
 						if (isset($result->total) && isset($result->count) && isset($result->offset)) {
 							$current_offset += $result->count;
 							$has_more = ($current_offset < $result->total) && (count($result->items) > 0);
-							$this->debug_log('Pagination info - offset: ' . $current_offset . ', total: ' . $result->total . ', has_more: ' . ($has_more ? 'yes' : 'no'));
+							$this->log_info('Pagination info - offset: ' . $current_offset . ', total: ' . $result->total . ', has_more: ' . ($has_more ? 'yes' : 'no'));
 						} else {
 							$has_more = false;
 						}
 					} else {
-						$this->debug_log('No valid result or items in API response');
+						$this->log_info('No valid result or items in API response');
 
 						// If this is the first attempt and we have sorting, try without sorting
 						if ($current_offset === $api_params['offset'] && isset($api_params['sortBy'])) {
-							$this->debug_log('Retrying without sortBy parameter');
+							$this->log_info('Retrying without sortBy parameter');
 							unset($api_params['sortBy']);
 							$safety_counter++; // Increment counter but try again
 							continue;
@@ -762,14 +754,14 @@ class Peaches_Ecwid_API implements Peaches_Ecwid_API_Interface {
 					$safety_counter++;
 				}
 
-				$this->debug_log('Total products fetched: ' . count($products));
+				$this->log_info('Total products fetched: ' . count($products));
 
 			} catch (Exception $e) {
-				$this->debug_log('Error fetching all products: ' . $e->getMessage());
+				$this->log_info('Error fetching all products: ' . $e->getMessage());
 				return array(); // Return empty array on error, don't cache
 			}
 		} else {
-			$this->debug_log('Ecwid_Api_V3 class not available');
+			$this->log_info('Ecwid_Api_V3 class not available');
 			return array();
 		}
 
@@ -777,12 +769,12 @@ class Peaches_Ecwid_API implements Peaches_Ecwid_API_Interface {
 		if (!empty($products)) {
 			$cache_expiration = isset($options['cache_expiration']) ? $options['cache_expiration'] : (6 * HOUR_IN_SECONDS);
 			$this->set_cached_data($cache_key, $products, $cache_expiration);
-			$this->debug_log('Products cached successfully');
+			$this->log_info('Products cached successfully');
 		} else {
-			$this->debug_log('No products to cache - not caching empty result');
+			$this->log_info('No products to cache - not caching empty result');
 		}
 
-		$this->debug_log('get_all_products completed, returning ' . count($products) . ' products');
+		$this->log_info('get_all_products completed, returning ' . count($products) . ' products');
 
 		return $products;
 	}
@@ -1003,9 +995,45 @@ class Peaches_Ecwid_API implements Peaches_Ecwid_API_Interface {
 			}
 
 		} catch (Exception $e) {
-			error_log('Peaches API: Error fetching related products by category: ' . $e->getMessage());
+			$this->log_error('Error fetching related products by category: ' . $e->getMessage());
 		}
 
 		return $related_ids;
+	}
+
+
+	/**
+	 * Log informational messages.
+	 *
+	 * @since 0.3.4
+	 *
+	 * @param string $message Log message.
+	 * @param array  $context Additional context data.
+	 *
+	 * @return void
+	 */
+	private function log_info($message, $context = array()) {
+		if (class_exists('Peaches_Ecwid_Utilities') && Peaches_Ecwid_Utilities::is_debug_mode()) {
+			Peaches_Ecwid_Utilities::log_error('[INFO] [ECWID API] ' . $message, $context);
+		}
+	}
+
+	/**
+	 * Log error messages.
+	 *
+	 * @since 0.3.4
+	 *
+	 * @param string $message Error message.
+	 * @param array  $context Additional context data.
+	 *
+	 * @return void
+	 */
+	private function log_error($message, $context = array()) {
+		if (class_exists('Peaches_Ecwid_Utilities')) {
+			Peaches_Ecwid_Utilities::log_error('[ECWID API] ' . $message, $context);
+		} else {
+			// Fallback logging if utilities class is not available
+			$this->log_error('[Peaches Ecwid] [ECWID API] ' . $message . (empty($context) ? '' : ' - Context: ' . wp_json_encode($context)));
+		}
 	}
 }

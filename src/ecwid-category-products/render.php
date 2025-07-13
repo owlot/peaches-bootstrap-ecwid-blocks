@@ -7,8 +7,8 @@
  *
  * @return string Rendered block HTML
  */
-if (!function_exists('peaches_generate_related_product_col_block')) {
-	function peaches_generate_related_product_col_block($product_id, $attributes = array()) {
+if (!function_exists('peaches_generate_category_product_col_block')) {
+	function peaches_generate_category_product_col_block($product_id, $attributes = array()) {
 		// Extract product-specific settings from parent attributes
 		$show_hover_shadow = isset($attributes['showCardHoverShadow']) ? $attributes['showCardHoverShadow'] : true;
 		$show_hover_jump = isset($attributes['showCardHoverJump']) ? $attributes['showCardHoverJump'] : true;
@@ -61,35 +61,48 @@ if (!function_exists('peaches_generate_related_product_col_block')) {
 $ecwid_blocks = Peaches_Ecwid_Blocks::get_instance();
 $ecwid_api = $ecwid_blocks->get_ecwid_api();
 
-// Get product ID from the parent product detail store or attributes
-$product_detail_state = wp_interactivity_state('peaches-ecwid-product-detail');
-$product_id = $attributes['selectedProductId'];
+// Get category ID from attributes
+$selected_category_id = isset($attributes['selectedCategoryId']) ? $attributes['selectedCategoryId'] : 0;
 
-// Use state product id if available
-if($product_detail_state) {
-	$product_id = isset($product_detail_state['productId']) ? $product_detail_state['productId'] : null;
-}
-
-// If no product ID, don't render anything
-if (empty($product_id)) {
+// If no category ID, don't render anything
+if ($selected_category_id === null || $selected_category_id === '') {
 	return;
 }
 
-// Get the main product
-$product = $ecwid_api->get_product_by_id($product_id);
-if (!$product) {
-	return;
-}
-
-// Get related product IDs using the centralized method
-$related_ids = $ecwid_api->get_related_product_ids($product);
-
-// Convert to integers and limit by maxProducts
+// Get category products using search_products method
 $max_products = isset($attributes['maxProducts']) ? $attributes['maxProducts'] : 4;
-$related_ids = array_slice($related_ids, 0, $max_products);
 
-// If no related products, don't render anything
-if (empty($related_ids)) {
+try {
+	// Build search options for the selected category
+	$search_options = array(
+		'category' => (int) $selected_category_id,
+		'limit' => $max_products,
+		'enabled' => true,
+	);
+
+	// Get products from the specified category
+	$category_products = $ecwid_api->search_products('', $search_options);
+
+	// Extract product IDs
+	$category_product_ids = array();
+	if (!empty($category_products) && is_array($category_products)) {
+		foreach ($category_products as $product) {
+			if (isset($product['id'])) {
+				$category_product_ids[] = (int) $product['id'];
+			}
+		}
+	}
+
+	// Limit to max products
+	$category_product_ids = array_slice($category_product_ids, 0, $max_products);
+
+} catch (Exception $e) {
+	error_log('Category Products Block: Error fetching products: ' . $e->getMessage());
+	$category_product_ids = array();
+}
+
+// If no category products, don't render anything
+if (empty($category_product_ids)) {
 	return;
 }
 
@@ -107,9 +120,9 @@ if ($is_in_carousel) {
 	// In carousel: render bs-col blocks directly without any wrapper
 	// Title and status messages can't be shown in carousel mode
 
-	foreach ($related_ids as $related_product_id) {
+	foreach ($category_product_ids as $category_product_id) {
 		// Create bs-col block with product inside, passing all settings
-		$col_block_html = peaches_generate_related_product_col_block($related_product_id, $attributes);
+		$col_block_html = peaches_generate_category_product_col_block($category_product_id, $attributes);
 		echo wp_interactivity_process_directives($col_block_html);
 	}
 
@@ -120,22 +133,44 @@ if ($is_in_carousel) {
 	// Prepare block attributes
 	$block_props = get_block_wrapper_attributes();
 
-	// Determine title text
-	$title_text = !empty($custom_title) ? $custom_title : __('Related Products', 'peaches-bootstrap-ecwid-blocks');
+	// Determine title text based on category
+	if (!empty($custom_title)) {
+		$title_text = $custom_title;
+	} elseif ($selected_category_id === 0) {
+		$title_text = __('Featured Products', 'peaches-bootstrap-ecwid-blocks');
+	} else {
+		// Try to get category name
+		$category_name = null;
+		try {
+			$categories = $ecwid_api->get_categories();
+			if (!empty($categories) && is_array($categories)) {
+				foreach ($categories as $category) {
+					if (isset($category->id) && $category->id == $selected_category_id) {
+						$category_name = $category->name;
+						break;
+					}
+				}
+			}
+		} catch (Exception $e) {
+			// Fallback if category fetch fails
+		}
+
+		$title_text = $category_name ? $category_name : __('Category Products', 'peaches-bootstrap-ecwid-blocks');
+	}
 	?>
 
 	<div <?php echo $block_props; ?>>
 		<?php if ($show_title): ?>
-			<h3 class="related-products-title mb-4">
+			<h3 class="category-products-title mb-4">
 				<?php echo esc_html($title_text); ?>
 			</h3>
 		<?php endif; ?>
 
-		<div class="related-products-container row <?php echo esc_attr($computed_class_name); ?>">
-			<?php foreach ($related_ids as $related_product_id): ?>
+		<div class="category-products-container row <?php echo esc_attr($computed_class_name); ?>">
+			<?php foreach ($category_product_ids as $category_product_id): ?>
 				<?php
 				// Always create bs-col blocks with products inside, passing all settings
-				$col_block_html = peaches_generate_related_product_col_block($related_product_id, $attributes);
+				$col_block_html = peaches_generate_category_product_col_block($category_product_id, $attributes);
 				echo wp_interactivity_process_directives($col_block_html);
 				?>
 			<?php endforeach; ?>

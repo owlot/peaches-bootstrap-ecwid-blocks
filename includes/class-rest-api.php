@@ -148,6 +148,8 @@ class Peaches_REST_API {
 	 * @return void
 	 */
 	public function register_routes() {
+		$this->log_info('Starting to register REST API routes');
+
 		// Product ingredients endpoint
 		register_rest_route(
 			self::NAMESPACE,
@@ -434,6 +436,76 @@ class Peaches_REST_API {
 				),
 			)
 		);
+
+		$this->log_info('About to register category-products endpoint');
+
+		// Category products endpoint (generic - includes featured products when category_id = 0)
+		register_rest_route(
+			self::NAMESPACE,
+			'/category-products/(?P<category_id>\d+)',
+			array(
+				'methods'             => WP_REST_Server::READABLE,
+				'callback'            => array($this, 'get_category_products'),
+				'permission_callback' => array($this, 'check_public_permissions'),
+				'args'                => array(
+					'category_id' => array(
+						'description' => __('Category ID. Use 0 for featured products (Store Front Page).', 'peaches'),
+						'type'        => 'integer',
+						'required'    => true,
+						'minimum'     => 0,
+					),
+					'limit'       => array(
+						'description' => __('Number of products to return.', 'peaches'),
+						'type'        => 'integer',
+						'required'    => false,
+						'default'     => 20,
+						'minimum'     => 1,
+						'maximum'     => 100,
+					),
+					'offset'      => array(
+						'description' => __('Number of products to skip for pagination.', 'peaches'),
+						'type'        => 'integer',
+						'required'    => false,
+						'default'     => 0,
+						'minimum'     => 0,
+					),
+					'sort_by'     => array(
+						'description' => __('Sort products by field.', 'peaches'),
+						'type'        => 'string',
+						'required'    => false,
+						'default'     => 'name',
+						'enum'        => array('name', 'price', 'created', 'updated'),
+					),
+					'sort_order'  => array(
+						'description' => __('Sort order.', 'peaches'),
+						'type'        => 'string',
+						'required'    => false,
+						'default'     => 'asc',
+						'enum'        => array('asc', 'desc'),
+					),
+					'enabled'     => array(
+						'description' => __('Filter by enabled status.', 'peaches'),
+						'type'        => 'boolean',
+						'required'    => false,
+						'default'     => true,
+					),
+					'in_stock'    => array(
+						'description' => __('Filter by stock status.', 'peaches'),
+						'type'        => 'boolean',
+						'required'    => false,
+					),
+					'return_ids_only' => array(
+						'description' => __('Return only product IDs instead of full product data.', 'peaches'),
+						'type'        => 'boolean',
+						'required'    => false,
+						'default'     => false,
+					),
+				),
+			)
+		);
+
+		$this->log_info('Finished registering category-products endpoint');
+		$this->log_info('Completed registering all REST API routes');
 	}
 
 	/**
@@ -1651,6 +1723,189 @@ class Peaches_REST_API {
 	}
 
 	/**
+	 * Get products from a specific category.
+	 *
+	 * @since 0.3.4
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 *
+	 * @return WP_REST_Response|WP_Error Response object or error.
+	 */
+	public function get_category_products($request) {
+		$this->log_info('get_category_products method called');
+
+		try {
+			$category_id      = $request->get_param('category_id');
+			$limit            = $request->get_param('limit');
+			$offset           = $request->get_param('offset');
+			$sort_by          = $request->get_param('sort_by');
+			$sort_order       = $request->get_param('sort_order');
+			$enabled          = $request->get_param('enabled');
+			$in_stock         = $request->get_param('in_stock');
+			$return_ids_only  = $request->get_param('return_ids_only');
+
+			$this->log_info('Request parameters', array(
+				'category_id' => $category_id,
+				'limit' => $limit,
+				'offset' => $offset,
+				'sort_by' => $sort_by,
+				'sort_order' => $sort_order,
+				'enabled' => $enabled,
+				'in_stock' => $in_stock,
+				'return_ids_only' => $return_ids_only
+			));
+
+			// Validate category_id
+			if (!is_numeric($category_id) || $category_id < 0) {
+				$this->log_error('Invalid category_id provided', array('category_id' => $category_id));
+				return new WP_Error(
+					'invalid_category_id',
+					__('Invalid category ID provided.', 'peaches'),
+					array('status' => 400)
+				);
+			}
+
+			// Build search options for Ecwid API
+			$search_options = array(
+				'category'  => (int) $category_id,
+				'limit'     => $limit,
+				'offset'    => $offset,
+				'enabled'   => $enabled,
+			);
+
+			// Convert sort parameters to Ecwid format
+			if ($sort_by && $sort_order) {
+				$sort_by_upper = strtoupper($sort_by);
+				$sort_order_upper = strtoupper($sort_order);
+
+				switch ($sort_by_upper) {
+					case 'NAME':
+						$search_options['sortBy'] = ($sort_order_upper === 'DESC') ? 'NAME_DESC' : 'NAME_ASC';
+						break;
+					case 'PRICE':
+						$search_options['sortBy'] = ($sort_order_upper === 'DESC') ? 'PRICE_DESC' : 'PRICE_ASC';
+						break;
+					case 'CREATED':
+						$search_options['sortBy'] = ($sort_order_upper === 'DESC') ? 'ADDED_TIME_DESC' : 'ADDED_TIME_ASC';
+						break;
+					case 'UPDATED':
+						$search_options['sortBy'] = ($sort_order_upper === 'DESC') ? 'UPDATED_TIME_DESC' : 'UPDATED_TIME_ASC';
+						break;
+					default:
+						// Don't add sortBy parameter, let Ecwid use default
+						break;
+				}
+			}
+
+			// Add stock filter if specified
+			if ($in_stock !== null) {
+				$search_options['inStock'] = $in_stock;
+			}
+
+			$this->log_info('Search options for Ecwid API', $search_options);
+
+			// Check if ecwid_api exists
+			if (!$this->ecwid_api) {
+				$this->log_error('ecwid_api instance is null');
+				return new WP_Error(
+					'api_not_available',
+					__('Ecwid API not available.', 'peaches'),
+					array('status' => 500)
+				);
+			}
+
+			// Check if search_products method exists
+			if (!method_exists($this->ecwid_api, 'search_products')) {
+				$this->log_error('search_products method does not exist on ecwid_api');
+				return new WP_Error(
+					'method_not_available',
+					__('Search products method not available.', 'peaches'),
+					array('status' => 500)
+				);
+			}
+
+			// Get products from the specified category
+			$products = $this->ecwid_api->search_products('', $search_options);
+
+			$this->log_info('search_products returned', array(
+				'type' => gettype($products),
+				'count' => is_array($products) ? count($products) : 'N/A',
+				'is_empty' => empty($products),
+				'first_few_products' => is_array($products) ? array_slice($products, 0, 3) : 'Not array'
+			));
+
+			if (empty($products)) {
+				$category_name = $category_id === 0 ? 'Store Front Page (Featured Products)' : 'Category ' . $category_id;
+
+				$this->log_info('No products found in category', array('category_name' => $category_name));
+
+				return new WP_Error(
+					'no_products_found',
+					sprintf(__('No products found in %s.', 'peaches'), $category_name),
+					array('status' => 404)
+				);
+			}
+
+			// Prepare response data
+			$response_data = array(
+				'success'     => true,
+				'category_id' => (int) $category_id,
+				'count'       => count($products),
+				'limit'       => $limit,
+				'offset'      => $offset,
+				'sort_by'     => $sort_by,
+				'sort_order'  => $sort_order,
+			);
+
+			// Add category context
+			if ($category_id === 0) {
+				$response_data['category_type'] = 'featured';
+				$response_data['category_name'] = 'Store Front Page';
+				$response_data['description'] = 'Featured products displayed on the store\'s front page';
+			} else {
+				$response_data['category_type'] = 'standard';
+				$response_data['category_name'] = 'Category ' . $category_id;
+			}
+
+			// Return either product IDs or full product data
+			if ($return_ids_only) {
+				$product_ids = array();
+				foreach ($products as $product) {
+					if (isset($product['id'])) {
+						$product_ids[] = (int) $product['id'];
+					}
+				}
+				$response_data['product_ids'] = $product_ids;
+				$this->log_info('Returning product IDs only', array('ids' => $product_ids));
+			} else {
+				$response_data['products'] = $products;
+				$this->log_info('Returning full product data', array('count' => count($products)));
+			}
+
+			$this->log_info('Successful response prepared', array(
+				'category_id' => $response_data['category_id'],
+				'count' => $response_data['count'],
+				'category_type' => $response_data['category_type']
+			));
+
+			return new WP_REST_Response($response_data, 200);
+
+		} catch (Exception $e) {
+			$this->log_error('Exception in get_category_products', array(
+				'error' => $e->getMessage(),
+				'trace' => $e->getTraceAsString()
+			));
+			error_log('Peaches API: Error getting category products: ' . $e->getMessage());
+
+			return new WP_Error(
+				'server_error',
+				__('Internal server error.', 'peaches'),
+				array('status' => 500)
+			);
+		}
+	}
+
+	/**
 	 * Get product data for a specific product.
 	 *
 	 * @since 0.2.6
@@ -1847,5 +2102,40 @@ class Peaches_REST_API {
 		}
 
 		return true;
+	}
+
+	/**
+	 * Log informational messages.
+	 *
+	 * @since 0.3.4
+	 *
+	 * @param string $message Log message.
+	 * @param array  $context Additional context data.
+	 *
+	 * @return void
+	 */
+	private function log_info($message, $context = array()) {
+		if (class_exists('Peaches_Ecwid_Utilities') && Peaches_Ecwid_Utilities::is_debug_mode()) {
+			Peaches_Ecwid_Utilities::log_error('[INFO] [REST API] ' . $message, $context);
+		}
+	}
+
+	/**
+	 * Log error messages.
+	 *
+	 * @since 0.3.4
+	 *
+	 * @param string $message Error message.
+	 * @param array  $context Additional context data.
+	 *
+	 * @return void
+	 */
+	private function log_error($message, $context = array()) {
+		if (class_exists('Peaches_Ecwid_Utilities')) {
+			Peaches_Ecwid_Utilities::log_error('[REST API] ' . $message, $context);
+		} else {
+			// Fallback logging if utilities class is not available
+			error_log('[Peaches Ecwid] [REST API] ' . $message . (empty($context) ? '' : ' - Context: ' . wp_json_encode($context)));
+		}
 	}
 }

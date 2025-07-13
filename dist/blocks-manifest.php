@@ -67,6 +67,124 @@ return array(
 			)
 		)
 	),
+	'ecwid-category-products' => array(
+		'$schema' => 'https://schemas.wp.org/trunk/block.json',
+		'apiVersion' => 3,
+		'name' => 'peaches/ecwid-category-products',
+		'version' => '0.1.0',
+		'title' => 'Bootstrap ECWID Category Products',
+		'category' => 'peaches-bootstrap',
+		'description' => 'Display category products for ECWID products using existing product blocks.',
+		'keywords' => array(
+			'bootstrap',
+			'product',
+			'related',
+			'peaches',
+			'ecwid',
+			'template'
+		),
+		'textdomain' => 'peaches',
+		'supports' => array(
+			'html' => false,
+			'layout' => false,
+			'color' => array(
+				'overlay' => true
+			),
+			'interactivity' => true
+		),
+		'usesContext' => array(
+			'peaches/testProductData'
+		),
+		'attributes' => array(
+			'selectedCategoryId' => array(
+				'type' => 'number'
+			),
+			'translations' => array(
+				'type' => 'object',
+				'default' => array(
+					
+				)
+			),
+			'showTitle' => array(
+				'type' => 'boolean',
+				'default' => true
+			),
+			'customTitle' => array(
+				'type' => 'string',
+				'default' => ''
+			),
+			'maxProducts' => array(
+				'type' => 'number',
+				'default' => 4
+			),
+			'showAddToCart' => array(
+				'type' => 'boolean',
+				'default' => true
+			),
+			'buttonText' => array(
+				'type' => 'string',
+				'default' => 'Add to cart'
+			),
+			'showCardHoverShadow' => array(
+				'type' => 'boolean',
+				'default' => true
+			),
+			'showCardHoverJump' => array(
+				'type' => 'boolean',
+				'default' => true
+			),
+			'hoverMediaTag' => array(
+				'type' => 'string',
+				'default' => ''
+			),
+			'computedClassName' => array(
+				'type' => 'string',
+				'default' => ''
+			),
+			'isInCarousel' => array(
+				'type' => 'boolean',
+				'default' => false
+			),
+			'xs' => array(
+				'type' => 'object',
+				'default' => array(
+					
+				)
+			),
+			'sm' => array(
+				'type' => 'object',
+				'default' => array(
+					
+				)
+			),
+			'md' => array(
+				'type' => 'object',
+				'default' => array(
+					
+				)
+			),
+			'lg' => array(
+				'type' => 'object',
+				'default' => array(
+					
+				)
+			),
+			'xl' => array(
+				'type' => 'object',
+				'default' => array(
+					
+				)
+			),
+			'xxl' => array(
+				'type' => 'object',
+				'default' => array(
+					
+				)
+			)
+		),
+		'render' => 'file:./render.php',
+		'editorScript' => 'file:./index.js'
+	),
 	'ecwid-product' => array(
 		'$schema' => 'https://schemas.wp.org/trunk/block.json',
 		'apiVersion' => 3,

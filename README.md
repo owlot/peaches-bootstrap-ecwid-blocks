@@ -2,6 +2,21 @@
 
 Create beautiful, responsive Ecwid e-commerce pages with modern Bootstrap-styled Gutenberg blocks and advanced product management.
 
+## 🆕 What's New in 0.3.4
+
+### **Category Products Block**
+Our newest block brings powerful category-based product displays to your Gutenberg editor:
+
+- **🏷️ Universal Category Support**: Display products from any Ecwid category
+- **⭐ Featured Products**: Special support for Store Front Page featured products
+- **🎨 Full Customization**: Complete control over appearance and behavior
+- **📱 Responsive Design**: Bootstrap-powered responsive layouts
+- **🌍 Multilingual Ready**: Translation support for international stores
+- **🚀 High Performance**: Efficient API calls with intelligent caching
+- **🔄 Carousel Compatible**: Works seamlessly in carousel blocks
+
+Perfect for creating curated product showcases, category landing pages, and promotional displays!
+
 ## Description
 
 Peaches Bootstrap Ecwid Blocks transforms your Ecwid e-commerce store with modern, Bootstrap-styled Gutenberg blocks and comprehensive product management tools. Build custom product pages, manage ingredients libraries, organize product lines, and create stunning e-commerce experiences with the WordPress block editor.
@@ -12,6 +27,7 @@ Peaches Bootstrap Ecwid Blocks transforms your Ecwid e-commerce store with moder
 - **📋 Advanced Product Management**: Comprehensive product settings, ingredients library, and media management system
 - **🏷️ Product Lines Organization**: Group products by collections, fragrances, color schemes, or design series
 - **🖼️ Named Media System**: Organize product media with tags like hero images, size charts, and instruction manuals
+- **🏪 Category Products Block**: Display products from specific Ecwid categories with full customization control
 - **🌍 Multilingual Support**: Full compatibility with Polylang and WPML for international stores
 - **📄 Custom Product Detail Pages**: Create SEO-friendly product pages with custom URLs and metadata
 - **⚡ High Performance**: Redis caching support and optimized database queries for fast page loads
@@ -21,15 +37,14 @@ Peaches Bootstrap Ecwid Blocks transforms your Ecwid e-commerce store with moder
 - **🔗 Related Products**: Dynamic related product displays
 - **🛒 Enhanced Add to Cart**: Customizable add to cart functionality
 
-### What's New in Version 0.2.6
+### What's New in Version 0.3.5
 
-- **Product Descriptions System**: Create multiple product descriptions (usage, ingredients, care instructions, warranty, features, technical specifications)
-- **Related Products Block**: Display related products with customizable layouts and quantity limits
-- **Enhanced Media Management**: Improved media tags system with better organization and fallback handling
-- **Product Gallery Enhancements**: Better image gallery management with tags and categories
-- **REST API Endpoints**: Access product data programmatically via REST API
-- **Improved Admin Interface**: Better product settings management with enhanced validation
-- **Database Migrations**: Automatic database updates with version tracking
+- **Category Products Block**: Display products from any Ecwid category including Featured Products from Store Front Page
+- **Enhanced REST API**: New comprehensive `/category-products/{category_id}` endpoint with advanced filtering
+- **Category Selection**: Intuitive dropdown with automatic category name detection
+- **Smart Titles**: Automatic category name display with custom title override support
+- **Performance Optimizations**: Improved API calls with intelligent caching and loading states
+- **Bootstrap Integration**: Seamless responsive grid integration with Bootstrap column blocks
 
 ### Available Blocks
 
@@ -43,398 +58,274 @@ Peaches Bootstrap Ecwid Blocks transforms your Ecwid e-commerce store with moder
 - Add to cart button integration
 
 **📂 Bootstrap ECWID Category**
-- Display product categories in grid layouts
-- Configurable responsive columns (2-4 per row)
-- Automatic category thumbnails and navigation
-- Loading states and smooth interactions
+- Display product categories with thumbnails
+- Automatic category grid layouts
+- Custom category selection and filtering
+- Responsive Bootstrap grid system
+- SEO-friendly category URLs
+
+**📂 Category Products Block**
+- Display products from specific Ecwid categories
+- Featured Products support (Store Front Page)
+- Category selection dropdown with real-time preview
+- Configurable product limits and responsive layouts
+- Full product appearance customization
+- Automatic category name detection and display
+- Custom title support with smart fallbacks
+- Bootstrap grid integration with column blocks
+
+**🔗 Related Products Block**
+- Display related products with customizable layouts and quantity limits
+- Automatic related product detection from Ecwid data
+- Bootstrap grid system integration
+- Responsive design with hover effects
+- Product appearance customization
 
 #### Product Detail Blocks
 
-**📋 Bootstrap ECWID Product Detail Template**
-- Complete product page template with context sharing
-- Test product preview in editor
-- SEO-friendly product URLs
-- Bootstrap-styled layout containers
+**📄 Bootstrap ECWID Product Detail**
+- Comprehensive product information display
+- Image galleries with zoom functionality
+- Product descriptions and specifications
+- Integrated add to cart functionality
+- Responsive layout system
 
-**📝 Bootstrap ECWID Product Field**
-- Display specific product information (title, price, description, custom fields)
-- Configurable HTML tags for semantic markup
-- Dynamic content updates
-- Support for custom product attributes
+**🧪 Product Ingredients Block**
+- Display product ingredients with full details
+- Multilingual ingredient names and descriptions
+- Organized ingredient library system
+- Responsive grid layouts
+- Enhanced typography and styling
 
-**🖼️ Bootstrap ECWID Product Images**
-- Product image gallery with thumbnails
-- Multiple layout options (standard, thumbnails below/side)
-- Configurable image sizes and quantities
-- Responsive design with touch gestures
+**🖼️ Product Gallery Image Block**
+- Display specific product images using media tags
+- Fallback image support for missing media
+- Multiple media sources (WordPress, Ecwid, URLs)
+- Responsive image handling
+- Alternative text and accessibility support
 
-**🎨 Bootstrap ECWID Product Gallery Image**
-- Display specific media based on media tags
-- Support for images, videos, audio, and documents
-- Fallback options for missing media
-- Media type-specific controls (autoplay, loop, etc.)
+**📝 Product Field Block**
+- Display specific product data fields
+- Custom field formatting and styling
+- Responsive text handling
+- Integration with Ecwid product data
+- Multilingual field support
 
-**🛒 Bootstrap ECWID Product Add to Cart**
-- Customizable add to cart buttons
-- Quantity selectors with validation
-- Out of stock handling
-- Bootstrap button styling with theme colors
+**📋 Product Lines Block**
+- Display organized product line information
+- Product line taxonomy integration
+- Responsive grid layouts
+- Custom styling and formatting
+- Media integration for product lines
 
-**🧪 Bootstrap ECWID Product Ingredients**
-- Display product ingredients in Bootstrap accordion
-- Multilingual ingredient support
-- Rich text descriptions
-- Expandable/collapsible interface
+#### Layout and Design Blocks
 
-**📖 Bootstrap ECWID Product Description**
-- Display specific product descriptions by type
-- Rich text content support
-- Custom titles and formatting
-- Integration with product descriptions system
-
-**🔗 Bootstrap ECWID Product Related Products**
-- Show related products automatically
-- Customizable product count and layout
-- Carousel or grid display options
-- Integration with existing product blocks
-
-### Product Management System
-
-#### Product Configuration
-- Link WordPress posts to specific Ecwid products via ID or SKU
-- Organize products with tags and product lines
-- Manage product-specific media and ingredients
-- Custom product attributes and metadata
-- Multiple product descriptions with rich text editing
-
-#### Ingredients Library
-- Create reusable ingredient entries
-- Multilingual ingredient descriptions
-- Central library for consistent information
-- Easy assignment to multiple products
-- Enhanced admin interface for ingredient management
-
-#### Product Lines
-- Organize products into collections (fragrances, color schemes, etc.)
-- Line-specific media and descriptions
-- Hierarchical organization
-- Type classification system
-
-#### Media Tags System
-- Predefined media tags (hero_image, size_chart, product_video, etc.)
-- Support for multiple media types (image, video, audio, document)
-- Flexible media sources:
-  - WordPress media library uploads
-  - External URLs
-  - Direct Ecwid product images
-- Category-based organization (primary, secondary, reference, media)
-- Enhanced admin interface with drag-and-drop organization
-
-#### Product Descriptions
-- Multiple description types: usage, ingredients, care instructions, warranty, features, technical specifications, custom
-- Rich text editor with WordPress TinyMCE integration
-- Drag-and-drop reordering
-- Bootstrap accordion display on frontend
-- REST API access for programmatic use
-
-## Requirements
-
-- WordPress 6.7 or later
-- PHP 7.4 or later
-- [Ecwid Shopping Cart](https://wordpress.org/plugins/ecwid-ecommerce-shopping-cart/) plugin
-- Bootstrap 5 theme or framework (recommended)
-- Redis server (optional, for enhanced caching)
+**🎠 Bootstrap Carousel Integration**
+- Carousel-compatible versions of product blocks
+- Smooth transitions and responsive behavior
+- Touch/swipe support for mobile devices
+- Automatic slide management
+- Bootstrap carousel compatibility
 
 ## Installation
 
-1. Upload the `peaches-bootstrap-ecwid-blocks` folder to the `/wp-content/plugins/` directory
-2. Activate the plugin through the 'Plugins' menu in WordPress
-3. Install and activate the Ecwid Shopping Cart plugin
-4. Configure your Ecwid store ID and API credentials
-5. Visit **Peaches > Ecwid Products** to configure advanced settings
+### Prerequisites
 
-## Usage
+Before installing Peaches Bootstrap Ecwid Blocks, ensure you have:
 
-### Block Editor
+- **WordPress**: 6.7.0 or later
+- **PHP**: 7.4 or later (8.0+ recommended)
+- **Ecwid Shopping Cart Plugin**: Latest version
+- **Memory**: 256MB minimum (512MB recommended)
 
-#### Creating Product Displays
+### Installation Methods
 
-1. **Add Product Blocks**: Insert ECWID Product or Category blocks
-2. **Configure Layout**: Set responsive grid options (xs, sm, md, lg, xl, xxl)
-3. **Product Selection**: Choose specific products by ID or let blocks auto-populate
-4. **Styling**: Apply Bootstrap classes and custom styling
+#### Method 1: WordPress Admin Dashboard
 
-#### Building Product Detail Pages
+1. Download the plugin ZIP file
+2. Go to **Plugins > Add New > Upload Plugin**
+3. Choose the ZIP file and click **Install Now**
+4. Activate the plugin
+5. Configure Ecwid integration in **Peaches > Ecwid Blocks**
 
-1. **Create Product Template**: Add the Product Detail Template block
-2. **Add Components**: Insert Product Field, Images, Add to Cart, Ingredients, and Description blocks
-3. **Configure Fields**: Select which product information to display
-4. **Test Preview**: Use test product feature to preview layouts
-5. **Publish**: Pages automatically handle product URLs and SEO
+#### Method 2: Manual Installation
 
-#### Using Block Patterns
+1. Extract the plugin files to `/wp-content/plugins/peaches-bootstrap-ecwid-blocks/`
+2. Activate the plugin through the WordPress admin
+3. Configure settings in **Peaches > Ecwid Blocks**
 
-Quick-start with pre-built patterns:
-- **Categories Row**: 2-4 category display per row
-- **Products Carousel**: Responsive product slider
-- **Product Detail Page**: Complete product page layout
+### Initial Configuration
 
-### Product Management
+1. **Ecwid Setup**: Ensure Ecwid Shopping Cart plugin is active and configured
+2. **Store Configuration**: Verify your Ecwid store ID and settings
+3. **Cache Settings**: Configure caching preferences (Redis recommended for high-traffic sites)
+4. **Multilingual Setup**: Configure language settings if using Polylang or WPML
 
-#### Setting Up Product Configuration
+## Block Usage Examples
 
-1. Go to **Peaches > Ecwid Products**
-2. Click **Add New** to create a product settings post
-3. Enter Ecwid Product ID to link the configuration
-4. Configure ingredients, media, and descriptions
-5. Set product lines and tags for organization
+### **Category Products Block Usage**
 
-#### Managing Ingredients Library
-
-1. Navigate to **Peaches > Ecwid Products > Ingredients Library**
-2. Create ingredient entries with descriptions
-3. Add multilingual translations if needed
-4. Assign ingredients to product configurations
-
-#### Organizing Product Lines
-
-1. Access **Peaches > Ecwid Products > Product Lines**
-2. Create new product lines with types (fragrance, color_scheme, etc.)
-3. Add line-specific media and descriptions
-4. Assign products to appropriate lines
-
-#### Setting Up Media Tags
-
-1. Visit **Peaches > Ecwid Products > Media Tags**
-2. Create or edit media tags for consistent organization
-3. Define expected media types (image, video, audio, document)
-4. Organize tags by categories (primary, secondary, reference, media)
-
-#### Managing Product Descriptions
-
-1. Edit any product settings post
-2. Navigate to the **Product Descriptions** meta box
-3. Add multiple descriptions using different types:
-   - **Usage**: How to use the product
-   - **Ingredients**: Detailed ingredient information
-   - **Care**: Care and maintenance instructions
-   - **Warranty**: Warranty and guarantee information
-   - **Features**: Key product features
-   - **Technical**: Technical specifications
-   - **Custom**: Any other custom description
-4. Use the rich text editor for formatted content
-5. Drag and drop to reorder descriptions
-
-### Frontend Display
-
-#### Custom Product URLs
-
-The plugin creates SEO-friendly URLs for product pages:
-- Single language: `/shop/product-slug/`
-- Multilingual: `/en/shop/product-slug/`, `/fr/boutique/product-slug/`
-
-#### Automatic Product Data
-
-- Product information loads automatically from Ecwid
-- Real-time price and inventory updates
-- Multilingual content based on configured languages
-- Cached for optimal performance
-
-### Advanced Configuration
-
-#### Caching Settings
-
-Access **Peaches > Ecwid Blocks > General** to configure:
-- **Cache Duration**: Set API response cache time (1-1440 minutes)
-- **Redis Caching**: Enable Redis for improved performance
-- **Debug Mode**: Enable detailed logging for troubleshooting
-
-#### Template Settings
-
-Configure product page behavior:
-- **Product Template Page**: Choose custom template page
-- **Breadcrumbs**: Enable/disable navigation breadcrumbs
-- **URL Structure**: Customize product URL patterns
-
-## Developer Information
-
-### Adding Custom Blocks
-
-Extend the plugin with custom product blocks:
-
-```php
-// Register block with product context support
-register_block_type('your-namespace/product-block', array(
-    'usesContext' => array('peaches/testProductData'),
-    'render_callback' => 'your_block_render_callback'
-));
+**Basic Category Display:**
+```html
+<!-- wp:peaches/category-products {"selectedCategoryId":123,"maxProducts":6} -->
+<div class="wp-block-peaches-category-products">
+    <h3 class="category-products-title mb-4">Electronics</h3>
+    <div class="category-products-container row">
+        <!-- Product columns automatically generated -->
+    </div>
+</div>
+<!-- /wp:peaches/category-products -->
 ```
 
-### Template Functions
+**Featured Products Showcase:**
+```html
+<!-- wp:peaches/category-products {"selectedCategoryId":0,"customTitle":"Our Best Sellers","maxProducts":4,"showCardHoverShadow":true} -->
+<div class="wp-block-peaches-category-products">
+    <h3 class="category-products-title mb-4">Our Best Sellers</h3>
+    <div class="category-products-container row">
+        <!-- Featured product columns -->
+    </div>
+</div>
+<!-- /wp:peaches/category-products -->
+```
 
-Use template functions in your theme:
+**Carousel Integration:**
+```html
+<!-- wp:peaches/bs-carousel -->
+    <!-- wp:peaches/category-products {"selectedCategoryId":0,"maxProducts":8,"isInCarousel":true} /-->
+<!-- /wp:peaches/bs-carousel -->
+```
 
-```php
-<?php
-// Get product media by tag
-$hero_image = peaches_get_product_media_url($product_id, 'hero_image', 'large');
-if ($hero_image) {
-    echo '<img src="' . esc_url($hero_image) . '" alt="Product Hero Image">';
+### **Product Detail Block**
+
+```html
+<!-- wp:peaches/ecwid-product-detail {"selectedProductId":123456} -->
+<div class="wp-block-peaches-ecwid-product-detail">
+    <!-- Product detail content automatically generated -->
+</div>
+<!-- /wp:peaches/ecwid-product-detail -->
+```
+
+### **Product Ingredients Block**
+
+```html
+<!-- wp:peaches/product-ingredients {"selectedProductId":123456,"displayMode":"grid"} -->
+<div class="wp-block-peaches-product-ingredients">
+    <!-- Ingredients grid automatically generated -->
+</div>
+<!-- /wp:peaches/product-ingredients -->
+```
+
+### **Bootstrap Grid Integration**
+
+```html
+<!-- wp:peaches/bs-row {"rowCols":3,"gutter":"4"} -->
+<div class="row row-cols-1 row-cols-md-3 g-4">
+    <!-- wp:peaches/bs-col -->
+    <div class="col">
+        <!-- wp:peaches/ecwid-product {"id":123} /-->
+    </div>
+    <!-- /wp:peaches/bs-col -->
+</div>
+<!-- /wp:peaches/bs-row -->
+```
+
+### **Advanced Customization**
+
+```html
+<!-- wp:peaches/ecwid-product {
+    "id":123456,
+    "showAddToCart":true,
+    "buttonText":"Buy Now",
+    "showCardHoverShadow":true,
+    "showCardHoverJump":true,
+    "hoverMediaTag":"product_hover",
+    "className":"custom-product-card"
+} -->
+```
+
+### **Bootstrap Attribute Examples**
+
+```json
+// Row configuration
+{ 'rowCols': 4, 'gapX': '5' }
+
+// Column configuration
+{ 'colXs': 12, 'colMd': 6, 'colLg': 3 }
+
+// Spacing configuration
+{ 'paddingTop': '5', 'marginBottom': '4' }
+```
+
+## REST API Documentation
+
+### **Category Products Endpoint**
+
+```
+GET /wp-json/peaches/v1/category-products/{category_id}
+```
+
+**Parameters:**
+- `category_id` (required): Category ID (use 0 for Featured Products)
+- `limit`: Number of products to return (default: 20, max: 100)
+- `offset`: Pagination offset (default: 0)
+- `sort_by`: Sort field ('name', 'price', 'created', 'updated')
+- `sort_order`: Sort direction ('asc', 'desc')
+- `enabled`: Filter enabled products only (default: true)
+- `in_stock`: Filter in-stock products only
+- `return_ids_only`: Return product IDs only instead of full data (default: false)
+
+**Examples:**
+```bash
+# Get featured products (IDs only)
+curl "/wp-json/peaches/v1/category-products/0?return_ids_only=true&limit=6"
+
+# Get category products with full data
+curl "/wp-json/peaches/v1/category-products/123?limit=20&sort_by=price&sort_order=desc"
+
+# Get in-stock products from category
+curl "/wp-json/peaches/v1/category-products/456?in_stock=true&enabled=true"
+```
+
+**Response Format:**
+```json
+{
+  "success": true,
+  "category_id": 0,
+  "category_type": "featured",
+  "category_name": "Store Front Page",
+  "description": "Featured products displayed on the store's front page",
+  "count": 4,
+  "limit": 20,
+  "offset": 0,
+  "sort_by": "name",
+  "sort_order": "asc",
+  "product_ids": [123, 456, 789, 101112]
 }
-
-// Display product media with fallbacks
-peaches_the_product_media($product_id, 'size_chart', 'medium', array(
-    'class' => 'img-fluid',
-    'loading' => 'lazy'
-));
-
-// Get product descriptions
-$descriptions = peaches_get_product_descriptions($product_id);
-foreach ($descriptions as $description) {
-    echo '<h3>' . esc_html($description['title']) . '</h3>';
-    echo '<div>' . wp_kses_post($description['content']) . '</div>';
-}
-
-// Get all available media tags
-$media_tags = peaches_get_available_media_tags();
-?>
 ```
 
-### REST API Endpoints
+### **Product Ingredients Endpoint**
 
-Access product data via REST API:
-
-```javascript
-// Get product ingredients
-fetch('/wp-json/peaches/v1/product-ingredients/123')
-    .then(response => response.json())
-    .then(data => console.log(data.ingredients));
-
-// Get product descriptions
-fetch('/wp-json/peaches/v1/product-descriptions/123')
-    .then(response => response.json())
-    .then(data => console.log(data.descriptions));
-
-// Get product media by tag
-fetch('/wp-json/peaches/v1/product-media/123/tag/hero_image')
-    .then(response => response.json())
-    .then(data => console.log(data.data.url));
+```
+GET /wp-json/peaches/v1/product-ingredients/{product_id}
 ```
 
-### Hooks and Filters
+### **Related Products Endpoint**
 
-**Filters:**
-```php
-// Modify supported block list
-add_filter('peaches_ecwid_supported_blocks', function($blocks) {
-    $blocks[] = 'your-namespace/custom-block';
-    return $blocks;
-});
-
-// Customize product URL structure
-add_filter('peaches_ecwid_product_url', function($url, $product, $language) {
-    // Custom URL logic
-    return $url;
-}, 10, 3);
-
-// Modify media tag validation
-add_filter('peaches_media_tag_validation', function($is_valid, $tag_key, $media_url) {
-    // Custom validation logic
-    return $is_valid;
-}, 10, 3);
-
-// Customize product description types
-add_filter('peaches_product_description_types', function($types) {
-    $types['custom_type'] = __('Custom Type', 'textdomain');
-    return $types;
-});
+```
+GET /wp-json/peaches/v1/related-products/{product_id}
 ```
 
-**Actions:**
-```php
-// Hook into product save
-add_action('peaches_product_settings_saved', function($post_id, $product_data) {
-    // Custom logic after product settings save
-}, 10, 2);
+### **Product Data Endpoint**
 
-// Custom ingredient processing
-add_action('peaches_ingredient_updated', function($ingredient_id, $data) {
-    // Process ingredient updates
-}, 10, 2);
-
-// Hook into description save
-add_action('peaches_product_descriptions_saved', function($post_id, $descriptions) {
-    // Custom logic after descriptions save
-}, 10, 2);
+```
+GET /wp-json/peaches/v1/products/{product_id}
 ```
 
-### JavaScript Events
+### **Categories Endpoint**
 
-Listen for block interactions:
-
-```javascript
-// Product block loaded
-document.addEventListener('peaches:product:loaded', function(e) {
-    console.log('Product loaded:', e.detail.product);
-});
-
-// Media tag changed
-document.addEventListener('peaches:media:changed', function(e) {
-    console.log('Media changed:', e.detail.tag, e.detail.media);
-});
-
-// Description accordion toggled
-document.addEventListener('peaches:description:toggled', function(e) {
-    console.log('Description toggled:', e.detail.type, e.detail.expanded);
-});
 ```
-
-### Custom Block Development
-
-Example custom block with product context:
-
-```javascript
-import { registerBlockType } from '@wordpress/blocks';
-import { useContext } from '@wordpress/element';
-
-registerBlockType('your-namespace/custom-product-block', {
-    title: 'Custom Product Block',
-    category: 'peaches-bootstrap',
-    usesContext: ['peaches/testProductData'],
-
-    edit: ({ context }) => {
-        const productData = context['peaches/testProductData'];
-
-        return (
-            <div>
-                <h3>Custom Product Block</h3>
-                {productData && (
-                    <p>Product: {productData.name}</p>
-                )}
-            </div>
-        );
-    },
-
-    save: () => {
-        return (
-            <div data-wp-interactive="your-namespace">
-                <div data-wp-text="context.productName"></div>
-            </div>
-        );
-    }
-});
-```
-
-### Responsive Grid Configuration
-
-Configure Bootstrap responsive behavior:
-
-```javascript
-// Block attributes example
-'xs': { 'rowCols': 2, 'gapX': '3' },
-'sm': { 'rowCols': 3, 'gapX': '4' },
-'md': { 'rowCols': 4, 'gapX': '4' },
-'lg': { 'rowCols': 4, 'gapX': '5' }
+GET /wp-json/peaches/v1/categories
 ```
 
 ## Performance Optimization
@@ -536,6 +427,12 @@ $multilingual_settings = array(
 - Review cache settings and clear if needed
 - Enable debug mode for detailed error logs
 
+**Category products not displaying:**
+- Verify category ID exists in Ecwid store
+- Check if category has enabled products
+- Review REST API endpoint response for errors
+- Clear cache and retry
+
 **Media not displaying:**
 - Verify media tag configuration
 - Check file permissions and URLs
@@ -586,6 +483,88 @@ Before major updates:
 2. **Media Backup**: Product images and uploaded files
 3. **Configuration Export**: Plugin settings and configurations
 4. **Test Environment**: Verify updates in staging environment
+
+## Developer Documentation
+
+### **Category Products Block Development**
+
+**Block Registration:**
+- Block name: `peaches/category-products`
+- Supports: Custom CSS classes, spacing, color settings
+- Parent blocks: Any (carousel-aware rendering)
+- Inner blocks: `peaches/bs-col` with `peaches/ecwid-product`
+
+**Attributes:**
+```json
+{
+  "selectedCategoryId": 0,
+  "maxProducts": 4,
+  "showTitle": true,
+  "customTitle": "",
+  "showAddToCart": true,
+  "buttonText": "Add to cart",
+  "showCardHoverShadow": true,
+  "showCardHoverJump": true,
+  "hoverMediaTag": "",
+  "translations": {},
+  "isInCarousel": false
+}
+```
+
+**Hooks and Filters:**
+- `peaches_category_products_query_args`: Filter API query arguments
+- `peaches_category_products_title`: Filter category title display
+- `peaches_category_products_render`: Filter block output
+
+**Performance Considerations:**
+- API calls are cached using WordPress transients
+- Redis support for high-traffic sites
+- Efficient product ID fetching with return_ids_only parameter
+- Lazy loading compatible with proper markup structure
+
+### Custom Block Development
+
+```php
+// Register custom block variation
+function register_custom_product_block() {
+    register_block_type('my-theme/custom-product', array(
+        'render_callback' => 'render_custom_product_block',
+        'attributes' => array(
+            'productId' => array('type' => 'number'),
+            'customStyle' => array('type' => 'string')
+        )
+    ));
+}
+add_action('init', 'register_custom_product_block');
+```
+
+### Extending Product Data
+
+```php
+// Add custom product field
+function add_custom_product_field($product_data, $product_id) {
+    $product_data['custom_field'] = get_custom_product_data($product_id);
+    return $product_data;
+}
+add_filter('peaches_product_data', 'add_custom_product_field', 10, 2);
+```
+
+### Custom Media Tags
+
+```php
+// Register custom media tag
+function register_custom_media_tags($tags) {
+    $tags['custom_gallery'] = array(
+        'name' => 'Custom Gallery',
+        'description' => 'Custom product gallery images',
+        'category' => 'primary',
+        'expectedMediaType' => 'image',
+        'required' => false
+    );
+    return $tags;
+}
+add_filter('peaches_media_tags', 'register_custom_media_tags');
+```
 
 ## Support
 

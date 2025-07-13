@@ -33,6 +33,7 @@ class Peaches_Ecwid_Block_Registration implements Peaches_Ecwid_Block_Registrati
 	 */
 	private $block_types = array(
 		'ecwid-category',
+		'ecwid-category-products',
 		'ecwid-product',
 		'ecwid-product-add-to-cart',
 		'ecwid-product-description',

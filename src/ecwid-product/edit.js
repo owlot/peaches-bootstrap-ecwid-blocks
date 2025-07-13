@@ -79,12 +79,12 @@ function ProductEdit( props ) {
 	}, [] );
 
 	// Check if this block is a child of a related-products block
-	const isChildOfRelatedProducts = useSelect(
+	const isChildOf = useSelect(
 		( select ) => {
 			const { getBlockParents, getBlock } = select( 'core/block-editor' );
 
 			// Check if block has the metadata flag
-			if ( attributes._isChildOfRelatedProducts ) {
+			if ( attributes._isChildOf ) {
 				return true;
 			}
 
@@ -99,11 +99,14 @@ function ProductEdit( props ) {
 				) {
 					return true;
 				}
+				if ( parentBlock?.name === 'peaches/ecwid-category-products' ) {
+					return true;
+				}
 			}
 
 			return false;
 		},
-		[ clientId, attributes._isChildOfRelatedProducts ]
+		[ clientId, attributes._isChildOf ]
 	);
 
 	const computedClassName = useMemo(
@@ -527,7 +530,7 @@ function ProductEdit( props ) {
 
 	return (
 		<>
-			{ isChildOfRelatedProducts && (
+			{ isChildOf && (
 				<InspectorControls>
 					<Notice
 						status="info"
@@ -535,21 +538,18 @@ function ProductEdit( props ) {
 						className="m-3"
 					>
 						<strong>
-							{ __(
-								'Managed by Related Products Block',
-								'peaches'
-							) }
+							{ __( 'Managed by Parent Block', 'peaches' ) }
 						</strong>
 						<p>
 							{ __(
-								'This product block is managed by its parent Related Products block. To edit product settings, select the Related Products block instead.',
+								'This product block is managed by a parent block. To edit product settings, select the parent block instead.',
 								'peaches'
 							) }
 						</p>
 					</Notice>
 				</InspectorControls>
 			) }
-			{ ! isChildOfRelatedProducts && (
+			{ ! isChildOf && (
 				<InspectorControls>
 					<PanelBody
 						title={ __(
