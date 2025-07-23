@@ -1,6 +1,6 @@
 {
 	"name": "peaches-bootstrap-ecwid-blocks",
-	"version": "0.3.4",
+	"version": "0.4.0",
 	"description": "Gutenberg blocks created for Ecwid Bootstrap themed components.",
 	"author": "Peaches.io",
 	"license": "GPL-3.0-or-later",
@@ -20,7 +20,9 @@
 		"start": "wp-scripts start --experimental-modules",
 		"test:e2e": "wp-scripts test-e2e",
 		"test:unit": "wp-scripts test-unit-js",
-		"write-manifest": "wp-scripts build-blocks-manifest --input=src --output=dist/blocks-manifest.php"
+		"write-manifest": "wp-scripts build-blocks-manifest --input=src --output=dist/blocks-manifest.php",
+		"build:mollie": "wp-scripts build src/mollie-subscription/index.js --output-path=build/mollie-subscription",
+		"start:mollie": "wp-scripts start src/mollie-subscription/index.js --output-path=build/mollie-subscription"
 	},
 	"files": [
 		"build",
