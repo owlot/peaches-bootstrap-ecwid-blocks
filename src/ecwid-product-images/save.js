@@ -16,13 +16,12 @@ export default function save( { attributes } ) {
 	const blockProps = useBlockProps.save( {
 		className: computeClassName( attributes ),
 		'data-wp-interactive': 'peaches-ecwid-product-images',
-		'data-wp-bind--data-image-size': 'context.imageSize',
 		'data-wp-init': 'callbacks.initProductImages',
-		'data-image-size': imageSize,
-		'data-max-thumbnails': maxThumbnails,
 		'data-wp-context': JSON.stringify( {
 			selectedProductId: selectedProductId || null,
 			currentImageIndex: 0,
+			maxThumbnails,
+			imageSize,
 		} ),
 	} );
 

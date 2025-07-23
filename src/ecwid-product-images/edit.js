@@ -112,7 +112,7 @@ function ProductImagesEdit( props ) {
 			if ( showThumbnails && productData.media.images.length > 1 ) {
 				thumbnails = productData.media.images
 					.slice( 1, maxThumbnails + 1 ) // Skip first image, get up to maxThumbnails
-					.map( ( image ) => image.image160pxUrl );
+					.map( ( image ) => image.image400pxUrl );
 			}
 		}
 		// Fallback to legacy galleryImages + main image

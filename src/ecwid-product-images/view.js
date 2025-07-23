@@ -49,25 +49,17 @@ const { state } = store( 'peaches-ecwid-product-images', {
 				const element = document.querySelector(
 					'[data-wp-interactive="peaches-ecwid-product-images"]'
 				);
-				const imageSize =
-					element?.getAttribute( 'data-image-size' ) || 'medium';
-
-				// Get maxThumbnails setting from element attributes or fallback to 5
-				const maxThumbnails =
-					parseInt(
-						element?.getAttribute( 'data-max-thumbnails' )
-					) || 5;
 
 				// Size mapping to match the actual properties in the product media object
 				const sizeMapping = {
-					small: 'image160pxUrl',
-					medium: 'image400pxUrl',
-					large: 'image800pxUrl',
+					small: 'image400pxUrl',
+					medium: 'image800pxUrl',
+					large: 'image1500pxUrl',
 					original: 'imageOriginalUrl',
 				};
 
 				const imageSizeKey =
-					sizeMapping[ imageSize ] || 'image400pxUrl';
+					sizeMapping[ context.imageSize ] || 'image400pxUrl';
 
 				// Handle media.images first (newer API structure)
 				if (
@@ -82,9 +74,9 @@ const { state } = store( 'peaches-ecwid-product-images', {
 
 					// Set gallery images with the correct URL properties, respecting maxThumbnails
 					state.galleryImages = productData.media.images
-						.slice( 0, maxThumbnails + 1 )
+						.slice( 0, context.maxThumbnails + 1 )
 						.map( ( image ) => ( {
-							thumbnailUrl: image.image160pxUrl, // Use the smallest image for thumbnails
+							thumbnailUrl: image.image400pxUrl, // Use the smallest image for thumbnails
 							imageUrl:
 								image[ imageSizeKey ] || image.image400pxUrl,
 							isCurrent:
@@ -104,14 +96,14 @@ const { state } = store( 'peaches-ecwid-product-images', {
 
 					// Process legacy gallery images
 					const legacySizeMapping = {
-						small: 'smallThumbnailUrl',
-						medium: 'imageUrl',
-						large: 'hdThumbnailUrl',
+						small: 'thumbnailUrl',
+						medium: 'hdThumbnailUrl',
+						large: 'imageUrl',
 						original: 'originalImageUrl',
 					};
 
 					const legacyImageSizeKey =
-						legacySizeMapping[ imageSize ] || 'imageUrl';
+						legacySizeMapping[ context.imageSize ] || 'imageUrl';
 
 					// Add main image as first gallery item
 					const mainGalleryItem = {
@@ -126,7 +118,7 @@ const { state } = store( 'peaches-ecwid-product-images', {
 
 					// Add gallery images, respecting maxThumbnails (subtract 1 for main image)
 					const galleryItems = productData.galleryImages
-						.slice( 0, maxThumbnails - 1 )
+						.slice( 0, context.maxThumbnails - 1 )
 						.map( ( image ) => ( {
 							thumbnailUrl:
 								image.thumbnailUrl || image.smallThumbnailUrl,
@@ -165,7 +157,7 @@ const { state } = store( 'peaches-ecwid-product-images', {
 				);
 				console.log(
 					'Product Images - Gallery images (max:',
-					maxThumbnails,
+					context.maxThumbnails,
 					'):',
 					state.galleryImages
 				);
