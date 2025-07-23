@@ -337,6 +337,8 @@ class Peaches_Ecwid_Blocks {
 		if (class_exists('Peaches_Ecwid_Block_Registration')) {
 			$this->block_registration = new Peaches_Ecwid_Block_Registration();
 		}
+
+		$this->init_mollie_subscription();
 	}
 
 	/**
@@ -489,6 +491,31 @@ class Peaches_Ecwid_Blocks {
 	}
 
 	/**
+	 * Initialize Mollie subscription functionality
+	 *
+	 * @since 0.4.0
+	 */
+	private function init_mollie_subscription() {
+		// Check if any Mollie plugin is available
+		if ($this->is_mollie_available()) {
+			require_once PEACHES_ECWID_INCLUDES_DIR . 'class-mollie-subscription-block.php';
+
+			new Peaches_Mollie_Subscription_Block($this->ecwid_api, $this->cache);
+		}
+	}
+
+	/**
+	 * Check if Mollie integration is available
+	 *
+	 * @since 0.4.0
+	 *
+	 * @return bool True if Mollie plugin is available
+	 */
+	private function is_mollie_available() {
+			   class_exists('Mollie\\Api\\MollieApiClient');
+	}
+
+	/**
 	 * Plugin activation handler.
 	 *
 	 * @since 0.2.0
@@ -498,6 +525,8 @@ class Peaches_Ecwid_Blocks {
 		if ($this->rewrite_manager) {
 			flush_rewrite_rules();
 		}
+
+		$this->create_mollie_tables();
 	}
 
 	/**
@@ -576,5 +605,37 @@ class Peaches_Ecwid_Blocks {
 	 */
 	public function get_rest_api() {
 		return $this->rest_api;
+	}
+
+	/**
+	 * Create Mollie subscriptions table on activation
+	 *
+	 * @since 0.4.0
+	 */
+	private function create_mollie_tables() {
+		global $wpdb;
+
+		$table_name = $wpdb->prefix . 'peaches_mollie_subscriptions';
+		$charset_collate = $wpdb->get_charset_collate();
+
+		$sql = "CREATE TABLE IF NOT EXISTS $table_name (
+			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+			subscription_id varchar(255) NOT NULL,
+			product_id bigint(20) unsigned NOT NULL,
+			customer_email varchar(255) NOT NULL,
+			plan_data longtext NOT NULL,
+			customer_data longtext NOT NULL,
+			status varchar(50) NOT NULL DEFAULT 'pending',
+			created_at datetime NOT NULL,
+			updated_at datetime DEFAULT NULL,
+			PRIMARY KEY (id),
+			UNIQUE KEY subscription_id (subscription_id),
+			KEY product_id (product_id),
+			KEY customer_email (customer_email),
+			KEY status (status)
+		) $charset_collate;";
+
+		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+		dbDelta($sql);
 	}
 }

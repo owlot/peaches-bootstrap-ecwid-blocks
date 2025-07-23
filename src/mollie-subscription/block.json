@@ -1,0 +1,115 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "peaches/mollie-subscription",
+	"version": "0.4.0",
+	"title": "Bootstrap ECWID Mollie Subscription",
+	"category": "peaches-bootstrap",
+	"icon": "store",
+	"description": "Add Mollie subscription options to your Ecwid products with Bootstrap styling",
+	"keywords": [
+		"mollie",
+		"subscription",
+		"payment",
+		"recurring",
+		"ecwid",
+		"bootstrap",
+		"peaches"
+	],
+	"textdomain": "peaches",
+	"supports": {
+		"html": false,
+		"layout": false,
+		"interactivity": true,
+		"align": [ "wide", "full" ],
+		"spacing": {
+			"margin": true,
+			"padding": true
+		}
+	},
+	"usesContext": [ "peaches/testProductData" ],
+	"attributes": {
+		"selectedProductId": {
+			"type": "number",
+			"default": 0
+		},
+		"subscriptionPlans": {
+			"type": "array",
+			"default": [],
+			"items": {
+				"type": "object",
+				"properties": {
+					"name": {
+						"type": "string"
+					},
+					"amount": {
+						"type": "number"
+					},
+					"currency": {
+						"type": "string"
+					},
+					"interval": {
+						"type": "string"
+					},
+					"description": {
+						"type": "string"
+					}
+				}
+			}
+		},
+		"showPricing": {
+			"type": "boolean",
+			"default": true
+		},
+		"buttonText": {
+			"type": "string",
+			"default": "Subscribe Now"
+		},
+		"buttonStyle": {
+			"type": "string",
+			"default": "btn-primary"
+		},
+		"showDescription": {
+			"type": "boolean",
+			"default": true
+		},
+		"layoutStyle": {
+			"type": "string",
+			"default": "cards",
+			"enum": [ "cards", "list", "compact" ]
+		},
+		"customCSS": {
+			"type": "string",
+			"default": ""
+		}
+	},
+	"example": {
+		"attributes": {
+			"selectedProductId": 123456,
+			"subscriptionPlans": [
+				{
+					"name": "Monthly Plan",
+					"amount": 29.99,
+					"currency": "EUR",
+					"interval": "1 month",
+					"description": "Get this product every month"
+				},
+				{
+					"name": "Annual Plan",
+					"amount": 299.99,
+					"currency": "EUR",
+					"interval": "12 months",
+					"description": "Save 17% with annual billing"
+				}
+			],
+			"showPricing": true,
+			"buttonText": "Subscribe Now",
+			"buttonStyle": "btn-primary",
+			"showDescription": true,
+			"layoutStyle": "cards"
+		}
+	},
+	"viewScriptModule": "file:./view.js",
+	"editorScript": "file:./index.js",
+	"style": "file:./style-index.css"
+}

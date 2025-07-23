@@ -43,6 +43,7 @@ class Peaches_Ecwid_Block_Registration implements Peaches_Ecwid_Block_Registrati
 		'ecwid-product-images',
 		'ecwid-product-ingredients',
 		'ecwid-product-related-products',
+		'mollie-subscription'
 	);
 
 	/**

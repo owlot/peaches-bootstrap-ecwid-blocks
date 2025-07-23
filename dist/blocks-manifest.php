@@ -1118,5 +1118,131 @@ return array(
 		),
 		'render' => 'file:./render.php',
 		'editorScript' => 'file:./index.js'
+	),
+	'mollie-subscription' => array(
+		'$schema' => 'https://schemas.wp.org/trunk/block.json',
+		'apiVersion' => 3,
+		'name' => 'peaches/mollie-subscription',
+		'version' => '0.4.0',
+		'title' => 'Bootstrap ECWID Mollie Subscription',
+		'category' => 'peaches-bootstrap',
+		'icon' => 'store',
+		'description' => 'Add Mollie subscription options to your Ecwid products with Bootstrap styling',
+		'keywords' => array(
+			'mollie',
+			'subscription',
+			'payment',
+			'recurring',
+			'ecwid',
+			'bootstrap',
+			'peaches'
+		),
+		'textdomain' => 'peaches',
+		'supports' => array(
+			'html' => false,
+			'layout' => false,
+			'interactivity' => true,
+			'align' => array(
+				'wide',
+				'full'
+			),
+			'spacing' => array(
+				'margin' => true,
+				'padding' => true
+			)
+		),
+		'usesContext' => array(
+			'peaches/testProductData'
+		),
+		'attributes' => array(
+			'selectedProductId' => array(
+				'type' => 'number',
+				'default' => 0
+			),
+			'subscriptionPlans' => array(
+				'type' => 'array',
+				'default' => array(
+					
+				),
+				'items' => array(
+					'type' => 'object',
+					'properties' => array(
+						'name' => array(
+							'type' => 'string'
+						),
+						'amount' => array(
+							'type' => 'number'
+						),
+						'currency' => array(
+							'type' => 'string'
+						),
+						'interval' => array(
+							'type' => 'string'
+						),
+						'description' => array(
+							'type' => 'string'
+						)
+					)
+				)
+			),
+			'showPricing' => array(
+				'type' => 'boolean',
+				'default' => true
+			),
+			'buttonText' => array(
+				'type' => 'string',
+				'default' => 'Subscribe Now'
+			),
+			'buttonStyle' => array(
+				'type' => 'string',
+				'default' => 'btn-primary'
+			),
+			'showDescription' => array(
+				'type' => 'boolean',
+				'default' => true
+			),
+			'layoutStyle' => array(
+				'type' => 'string',
+				'default' => 'cards',
+				'enum' => array(
+					'cards',
+					'list',
+					'compact'
+				)
+			),
+			'customCSS' => array(
+				'type' => 'string',
+				'default' => ''
+			)
+		),
+		'example' => array(
+			'attributes' => array(
+				'selectedProductId' => 123456,
+				'subscriptionPlans' => array(
+					array(
+						'name' => 'Monthly Plan',
+						'amount' => 29.99,
+						'currency' => 'EUR',
+						'interval' => '1 month',
+						'description' => 'Get this product every month'
+					),
+					array(
+						'name' => 'Annual Plan',
+						'amount' => 299.99,
+						'currency' => 'EUR',
+						'interval' => '12 months',
+						'description' => 'Save 17% with annual billing'
+					)
+				),
+				'showPricing' => true,
+				'buttonText' => 'Subscribe Now',
+				'buttonStyle' => 'btn-primary',
+				'showDescription' => true,
+				'layoutStyle' => 'cards'
+			)
+		),
+		'viewScriptModule' => 'file:./view.js',
+		'editorScript' => 'file:./index.js',
+		'style' => 'file:./style-index.css'
 	)
 );
