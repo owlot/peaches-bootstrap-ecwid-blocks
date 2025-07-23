@@ -151,6 +151,8 @@ $wrapper_attributes = get_block_wrapper_attributes(array(
 		<img class="card-img-top product-image-main"
 			 src="<?php echo esc_url($product->thumbnailUrl ?? ''); ?>"
 			 alt="<?php echo esc_attr($product->name); ?>"
+			 role="button"
+			 data-wp-on--click="actions.navigateToProduct"
 			 data-wp-class--visible="!context.isHovering">
 
 		<?php if (!empty($hover_image_url)): ?>
