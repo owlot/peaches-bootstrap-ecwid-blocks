@@ -9,18 +9,46 @@ import { useBlockProps } from '@wordpress/block-editor';
  */
 import { computeClassName } from '../../../peaches-bootstrap-blocks/src/utils/bootstrap_settings';
 
+/**
+ * Prepare translation data for frontend
+ *
+ * Passes all translation data to the frontend so view.js can handle
+ * language switching dynamically, ensuring cache compatibility.
+ *
+ * @param {Object} attributes - Block attributes
+ *
+ * @return {Object} - Translation data for context
+ */
+function prepareTranslationData( attributes ) {
+	const {
+		buttonText = __( 'Add to Cart', 'peaches' ),
+		outOfStockText = __( 'Out of Stock', 'peaches' ),
+		translations = {},
+	} = attributes;
+
+	return {
+		// Default texts (fallbacks)
+		defaultButtonText: buttonText,
+		defaultOutOfStockText: outOfStockText,
+		// All available translations
+		buttonTextTranslations: translations.buttonText || {},
+		outOfStockTextTranslations: translations.outOfStockText || {},
+	};
+}
+
 export default function save( { attributes } ) {
 	const {
 		selectedProductId,
 		buttonThemeColor = 'primary',
 		buttonSize = 'md',
-		buttonText = 'Add to Cart',
-		outOfStockText = 'Out of Stock',
 		allowOutOfStockPurchase = false,
 		showQuantitySelector = true,
 		buttonBootstrapSettings = {},
 		inputBootstrapSettings = {},
 	} = attributes;
+
+	// Get translation data for frontend
+	const translationData = prepareTranslationData( attributes );
 
 	// Compute border classes
 	const borderClasses = computeClassName( { border: attributes.border } );
@@ -69,6 +97,7 @@ export default function save( { attributes } ) {
 			selectedProductId: selectedProductId || null,
 			quantity: 1,
 			allowOutOfStockPurchase,
+			...translationData,
 		} ),
 	} );
 
@@ -77,7 +106,9 @@ export default function save( { attributes } ) {
 			{ showQuantitySelector && (
 				<div className={ `${ borderClasses } input-group` }>
 					<button
-						className={ `btn-${ inputBootstrapSettings.colors.background } btn quantity-decrease border-0 rounded-0` }
+						className={ `btn-${
+							inputBootstrapSettings.colors?.background || 'light'
+						} btn quantity-decrease border-0 rounded-0` }
 						type="button"
 						data-wp-on--click="actions.decreaseQuantity"
 						data-wp-bind--disabled="state.shouldDisableControls"
@@ -95,7 +126,9 @@ export default function save( { attributes } ) {
 						data-wp-bind--disabled="state.shouldDisableControls"
 					/>
 					<button
-						className={ `btn-${ inputBootstrapSettings.colors.background } btn quantity-increase border-0 rounded-0` }
+						className={ `btn-${
+							inputBootstrapSettings.colors?.background || 'light'
+						} btn quantity-increase border-0 rounded-0` }
 						type="button"
 						data-wp-on--click="actions.increaseQuantity"
 						data-wp-bind--disabled="state.shouldDisableControls"

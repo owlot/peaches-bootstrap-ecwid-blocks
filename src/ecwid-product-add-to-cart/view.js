@@ -1,4 +1,6 @@
 /**
+ * Ecwid Product Add to Cart interactivity store
+ *//**
  * WordPress dependencies
  */
 import { store, getContext, getElement } from '@wordpress/interactivity';
@@ -9,7 +11,7 @@ import { store, getContext, getElement } from '@wordpress/interactivity';
 import {
 	getProductIdWithFallback,
 	getProductDataWithFallbackGenerator,
-	__,
+	getCurrentLanguageForAPI,
 } from '../utils/ecwid-view-utils';
 
 /**
@@ -18,18 +20,56 @@ import {
 const { state } = store( 'peaches-ecwid-add-to-cart', {
 	state: {
 		/**
-		 * Computed state: Button text based on out of stock
+		 * Computed state: Button text based on out of stock status and current language
 		 *
-		 * @return {text} - Text to show for the 'add to cart' button
+		 * Uses the same translation pattern as other ecwid blocks for consistency.
+		 *
+		 * @return {string} - Text to show for the 'add to cart' button
 		 */
 		get buttonText() {
 			const context = getContext();
-			if ( context.isOutOfStock ) {
-				return __( 'Out of Stock' );
+
+			// Get current language (dynamic, supports language switching)
+			const currentLang = getCurrentLanguageForAPI();
+
+			// Get multilingual data if available
+			const multilingualData = window.peachesLanguageData;
+			const defaultLanguage = multilingualData?.defaultLanguage;
+
+			// Determine which text to use based on stock status
+			const useOutOfStock = context.isOutOfStock;
+			const defaultText = useOutOfStock
+				? context.defaultOutOfStockText
+				: context.defaultButtonText;
+			const translations = useOutOfStock
+				? context.outOfStockTextTranslations
+				: context.buttonTextTranslations;
+
+			// If no language info or on default language, use default text
+			if ( ! currentLang || currentLang === defaultLanguage ) {
+				return (
+					defaultText ||
+					( useOutOfStock ? 'Out of Stock' : 'Add to Cart' )
+				);
 			}
-			return __( 'Add to Cart' );
+
+			// Try to get translation for current language
+			if ( translations && translations[ currentLang ] ) {
+				return translations[ currentLang ];
+			}
+
+			// Fallback to default text
+			return (
+				defaultText ||
+				( useOutOfStock ? 'Out of Stock' : 'Add to Cart' )
+			);
 		},
 
+		/**
+		 * Computed state: Should disable controls based on stock status
+		 *
+		 * @return {boolean} - Whether to disable quantity and cart controls
+		 */
 		get shouldDisableControls() {
 			const context = getContext();
 
@@ -41,6 +81,11 @@ const { state } = store( 'peaches-ecwid-add-to-cart', {
 	},
 
 	actions: {
+		/**
+		 * Increase quantity by 1
+		 *
+		 * @param {Event} e - Click event
+		 */
 		increaseQuantity( e ) {
 			const context = getContext();
 			// Only allow increase if controls are not disabled
@@ -48,6 +93,12 @@ const { state } = store( 'peaches-ecwid-add-to-cart', {
 				context.quantity = parseInt( context.quantity ) + 1;
 			}
 		},
+
+		/**
+		 * Decrease quantity by 1 (minimum 1)
+		 *
+		 * @param {Event} e - Click event
+		 */
 		decreaseQuantity( e ) {
 			const context = getContext();
 			// Only allow decrease if controls are not disabled and amount > 1
@@ -55,6 +106,12 @@ const { state } = store( 'peaches-ecwid-add-to-cart', {
 				context.quantity = parseInt( context.quantity ) - 1;
 			}
 		},
+
+		/**
+		 * Set quantity from input field
+		 *
+		 * @param {Event} e - Input event
+		 */
 		setQuantity( e ) {
 			const context = getContext();
 			// Only allow amount changes if controls are not disabled
@@ -108,22 +165,41 @@ const { state } = store( 'peaches-ecwid-add-to-cart', {
 		/**
 		 * Initialize add to cart component
 		 *
-		 * Gets product data and sets up initial state.
+		 * Gets product data and sets up initial state including stock status.
 		 */
-		*initAddToCart() {
+		initAddToCart: () => {
 			const context = getContext();
-			context.isLoading = true;
+			const { selectedProductId } = context;
 
-			// Use consolidated utility to get product data
-			const productData = yield* getProductDataWithFallbackGenerator(
-				context.selectedProductId
-			);
+			// Use consolidated utility to get product ID
+			const productId = getProductIdWithFallback( selectedProductId );
 
-			if ( productData ) {
-				context.isOutOfStock = ! productData.inStock;
+			if ( ! productId ) {
+				console.error( 'No product ID available for initialization' );
+				return;
 			}
 
-			context.isLoading = false;
+			// Get product data and check stock status
+			const getProductData = getProductDataWithFallbackGenerator();
+			getProductData( productId )
+				.then( ( productData ) => {
+					if ( productData ) {
+						// Update context with stock information
+						context.isOutOfStock = ! productData.inStock;
+						context.productData = productData;
+					} else {
+						console.warn(
+							`No product data found for ID: ${ productId }`
+						);
+						// Assume in stock if we can't get data
+						context.isOutOfStock = false;
+					}
+				} )
+				.catch( ( error ) => {
+					console.error( 'Error fetching product data:', error );
+					// Assume in stock if there's an error
+					context.isOutOfStock = false;
+				} );
 		},
 	},
 } );
