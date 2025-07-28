@@ -63,7 +63,7 @@ $ecwid_api = $ecwid_blocks->get_ecwid_api();
 
 // Get product ID from the parent product detail store or attributes
 $product_detail_state = wp_interactivity_state('peaches-ecwid-product-detail');
-$product_id = $attributes['selectedProductId'];
+$product_id = isset($attributes['selectedProductId']) ? $attributes['selectedProductId'] : null;
 
 // Use state product id if available
 if($product_detail_state) {
