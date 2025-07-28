@@ -124,7 +124,7 @@ if (isset($product->price)) {
 
 // Prepare block wrapper attributes with computed Bootstrap classes
 $wrapper_attributes = get_block_wrapper_attributes(array(
-	'class' => trim('card h-100 border-0 ' . $computed_class_name),
+	'class' => $computed_class_name,
 	'data-wp-interactive' => 'peaches-ecwid-product',
 	'data-wp-context' => json_encode(array(
 		'productId' => $product_id,
@@ -152,21 +152,25 @@ $wrapper_attributes = get_block_wrapper_attributes(array(
 			 src="<?php echo esc_url($product->thumbnailUrl ?? ''); ?>"
 			 alt="<?php echo esc_attr($product->name); ?>"
 			 role="button"
-			 data-wp-on--click="actions.navigateToProduct"
 			 data-wp-class--visible="!context.isHovering">
 
 		<?php if (!empty($hover_image_url)): ?>
 			<img class="card-img-top product-image-hover"
 				 src="<?php echo esc_url($hover_image_url); ?>"
 				 alt="<?php echo esc_attr($product->name . ' - hover image'); ?>"
+				 role="button"
+				 data-wp-on--click="actions.navigateToProduct"
 				 data-wp-class--visible="context.isHovering">
 		<?php endif; ?>
 	</div>
 
-	<div class="card-body p-2 p-md-3 d-flex row-cols-1 flex-wrap align-content-between">
+	<div
+		class="card-body p-2 p-md-3 d-flex row-cols-1 flex-wrap align-content-between"
+		role="button"
+		 data-wp-on--click="actions.navigateToProduct"
+	>
 		<h5 role="button"
-			class="card-title"
-			data-wp-on--click="actions.navigateToProduct">
+			class="card-title">
 			<?php echo esc_html($product->name); ?>
 		</h5>
 		<?php if (!empty($product_subtitle)): ?>
