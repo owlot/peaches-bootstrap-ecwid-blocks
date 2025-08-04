@@ -242,6 +242,7 @@ const { state, actions } = store( 'peaches-ecwid-product-gallery-image', {
 					// Apply video-specific settings from context
 					if ( context.videoAutoplay ) {
 						mediaElement.autoplay = true;
+						mediaElement.muted = true;
 					}
 					if ( context.videoMuted ) {
 						mediaElement.muted = true;
@@ -252,6 +253,9 @@ const { state, actions } = store( 'peaches-ecwid-product-gallery-image', {
 					if ( context.videoControls ) {
 						mediaElement.controls = true;
 					}
+
+					// Always add playsinline for iOS compatibility
+					mediaElement.setAttribute( 'playsinline', true );
 
 					// Add preload for better UX
 					mediaElement.preload = 'metadata';
