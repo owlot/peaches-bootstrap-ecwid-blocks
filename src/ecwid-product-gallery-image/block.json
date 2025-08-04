@@ -80,6 +80,15 @@
 			"type": "boolean",
 			"default": true
 		},
+		"enableLightbox": {
+			"type": "boolean",
+			"default": true
+		},
+		"lightboxZoomLevel": {
+			"type": "string",
+			"default": "fit",
+			"enum": [ "fit", "fill", "original" ]
+		},
 		"border": {
 			"type": "object",
 			"default": {
@@ -95,6 +104,7 @@
 			"default": {}
 		}
 	},
+	"style": "file:./style-index.css",
 	"viewScriptModule": "file:./view.js",
 	"editorScript": "file:./index.js"
 }

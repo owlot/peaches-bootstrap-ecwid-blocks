@@ -888,6 +888,19 @@ return array(
 				'type' => 'boolean',
 				'default' => true
 			),
+			'enableLightbox' => array(
+				'type' => 'boolean',
+				'default' => true
+			),
+			'lightboxZoomLevel' => array(
+				'type' => 'string',
+				'default' => 'fit',
+				'enum' => array(
+					'fit',
+					'fill',
+					'original'
+				)
+			),
 			'border' => array(
 				'type' => 'object',
 				'default' => array(
@@ -909,6 +922,7 @@ return array(
 				)
 			)
 		),
+		'style' => 'file:./style-index.css',
 		'viewScriptModule' => 'file:./view.js',
 		'editorScript' => 'file:./index.js'
 	),

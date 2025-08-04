@@ -1,4 +1,9 @@
-import { store, getContext, getElement } from '@wordpress/interactivity';
+import {
+	store,
+	getContext,
+	getElement,
+	withScope,
+} from '@wordpress/interactivity';
 
 /**
  * Internal dependencies
@@ -241,24 +246,24 @@ const { state, actions } = store( 'peaches-ecwid-product-gallery-image', {
 
 					// Apply video-specific settings from context
 					if ( context.videoAutoplay ) {
-						mediaElement.autoplay = true;
-						mediaElement.muted = true;
+						mediaElement.setAttribute( 'autoplay', 'autoplay' );
+						mediaElement.setAttribute( 'muted', 'muted' );
 					}
 					if ( context.videoMuted ) {
-						mediaElement.muted = true;
+						mediaElement.setAttribute( 'muted', 'muted' );
 					}
 					if ( context.videoLoop ) {
-						mediaElement.loop = true;
+						mediaElement.setAttribute( 'loop', 'loop' );
 					}
 					if ( context.videoControls ) {
 						mediaElement.controls = true;
 					}
 
 					// Always add playsinline for iOS compatibility
-					mediaElement.setAttribute( 'playsinline', true );
+					mediaElement.setAttribute( 'playsinline', 'playsinline' );
 
 					// Add preload for better UX
-					mediaElement.preload = 'metadata';
+					mediaElement.setAttribute( 'preload', 'metadata' );
 
 					// Add fallback content
 					mediaElement.innerHTML =
@@ -369,6 +374,37 @@ const { state, actions } = store( 'peaches-ecwid-product-gallery-image', {
 					} );
 
 					break;
+			}
+
+			// Add lightbox click handler to all media elements
+			if ( context.enableLightbox && mediaElement ) {
+				mediaElement.style.cursor = 'pointer';
+				mediaElement.addEventListener( 'click', ( e ) => {
+					// Don't interfere with video/audio controls
+					if (
+						e.target.tagName === 'VIDEO' ||
+						e.target.tagName === 'AUDIO'
+					) {
+						if ( e.offsetX < e.target.offsetWidth - 50 ) {
+							// Don't trigger on controls area
+							e.preventDefault();
+							actions.openLightbox( context );
+						}
+					} else {
+						e.preventDefault();
+						actions.openLightbox( context );
+					}
+				} );
+
+				// Add hover effect
+				mediaElement.addEventListener( 'mouseenter', () => {
+					mediaElement.style.transform = 'scale(1.02)';
+					mediaElement.style.transition = 'transform 0.2s ease';
+				} );
+
+				mediaElement.addEventListener( 'mouseleave', () => {
+					mediaElement.style.transform = 'scale(1)';
+				} );
 			}
 
 			return mediaElement;
@@ -544,6 +580,324 @@ const { state, actions } = store( 'peaches-ecwid-product-gallery-image', {
 			} catch ( error ) {
 				return null;
 			}
+		},
+
+		/**
+		 * Open lightbox with media
+		 * @param context
+		 */
+		openLightbox: ( context ) => {
+			const mediaDetails = actions.getMediaDetails( context );
+
+			if ( ! context.enableLightbox || ! mediaDetails.url ) {
+				return;
+			}
+
+			context.lightboxOpen = true;
+			context.lightboxMediaType = mediaDetails.type;
+
+			// Create lightbox modal
+			actions.createLightboxModal( mediaDetails, context );
+
+			// Prevent body scroll
+			document.body.style.overflow = 'hidden';
+		},
+
+		/**
+		 * Close lightbox
+		 * @param context
+		 */
+		closeLightbox: ( context ) => {
+			context.lightboxOpen = false;
+
+			// Remove lightbox from DOM
+			const existingLightbox = document.getElementById(
+				'peaches-media-lightbox'
+			);
+			if ( existingLightbox ) {
+				existingLightbox.remove();
+			}
+
+			// Restore body scroll
+			document.body.style.overflow = '';
+		},
+
+		/**
+		 * Create lightbox modal
+		 * @param mediaDetails
+		 * @param context
+		 */
+		createLightboxModal: ( mediaDetails, context ) => {
+			// Remove existing lightbox
+			const existingLightbox = document.getElementById(
+				'peaches-media-lightbox'
+			);
+			if ( existingLightbox ) {
+				existingLightbox.remove();
+			}
+
+			// Create lightbox container
+			const lightbox = document.createElement( 'div' );
+			lightbox.id = 'peaches-media-lightbox';
+			lightbox.className = 'peaches-lightbox-overlay';
+			lightbox.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100vw;
+                height: 100vh;
+                background-color: rgba(0, 0, 0, 0.9);
+                z-index: 9999;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 20px;
+                box-sizing: border-box;
+                backdrop-filter: blur(5px);
+                animation: fadeIn 0.3s ease;
+            `;
+
+			// Create close button
+			const closeButton = document.createElement( 'button' );
+			closeButton.innerHTML = '×';
+			closeButton.className = 'peaches-lightbox-close';
+			closeButton.style.cssText = `
+                position: absolute;
+                top: 20px;
+                right: 30px;
+                background: rgba(255, 255, 255, 0.9);
+                border: none;
+                border-radius: 50%;
+                width: 40px;
+                height: 40px;
+                font-size: 24px;
+                cursor: pointer;
+                z-index: 10000;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition: all 0.2s ease;
+            `;
+
+			// Create media container
+			const mediaContainer = document.createElement( 'div' );
+			mediaContainer.className = 'peaches-lightbox-content';
+
+			// Set container styles based on zoom level
+			let containerStyle = 'max-width: 90vw; max-height: 90vh;';
+			switch ( context.lightboxZoomLevel ) {
+				case 'fill':
+					containerStyle = 'width: 90vw; height: 90vh;';
+					break;
+				case 'original':
+					containerStyle = 'max-width: none; max-height: 90vh;';
+					break;
+				default: // 'fit'
+					containerStyle = 'max-width: 90vw; max-height: 90vh;';
+			}
+
+			mediaContainer.style.cssText = `
+                ${ containerStyle }
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                position: relative;
+            `;
+
+			// Create media element for lightbox
+			const lightboxMedia = actions.createLightboxMediaElement(
+				mediaDetails.url,
+				mediaDetails.alt,
+				mediaDetails.type,
+				context
+			);
+
+			if ( lightboxMedia ) {
+				mediaContainer.appendChild( lightboxMedia );
+			}
+
+			// Assemble lightbox
+			lightbox.appendChild( closeButton );
+			lightbox.appendChild( mediaContainer );
+
+			// Add event listeners
+			closeButton.addEventListener( 'click', ( e ) => {
+				actions.closeLightbox( context );
+			} );
+			lightbox.addEventListener( 'click', ( e ) => {
+				if ( e.target === lightbox ) {
+					actions.closeLightbox( context );
+				}
+			} );
+
+			// Handle ESC key
+			const handleEscape = ( e ) => {
+				if ( e.key === 'Escape' ) {
+					actions.closeLightbox( context );
+					document.removeEventListener( 'keydown', handleEscape );
+				}
+			};
+			document.addEventListener( 'keydown', handleEscape );
+
+			// Add to DOM
+			document.body.appendChild( lightbox );
+		},
+
+		/**
+		 * Create media element specifically for lightbox
+		 * @param mediaUrl
+		 * @param mediaAlt
+		 * @param mediaType
+		 * @param context
+		 */
+		createLightboxMediaElement: (
+			mediaUrl,
+			mediaAlt,
+			mediaType,
+			context
+		) => {
+			let mediaElement;
+
+			switch ( mediaType ) {
+				case 'video':
+					mediaElement = document.createElement( 'video' );
+					mediaElement.style.cssText = `
+                        max-width: 100%;
+                        max-height: 100%;
+                        width: auto;
+                        height: auto;
+                    `;
+					mediaElement.src = mediaUrl;
+
+					// Apply video-specific settings from context
+					if ( context.videoAutoplay ) {
+						mediaElement.setAttribute( 'autoplay', 'autoplay' );
+						mediaElement.setAttribute( 'muted', 'muted' );
+					}
+					if ( context.videoMuted ) {
+						mediaElement.setAttribute( 'muted', 'muted' );
+					}
+					if ( context.videoLoop ) {
+						mediaElement.setAttribute( 'loop', 'loop' );
+					}
+					if ( context.videoControls ) {
+						mediaElement.controls = true;
+					}
+
+					// Always add playsinline for iOS compatibility
+					mediaElement.setAttribute( 'playsinline', 'playsinline' );
+
+					// Add preload for better UX
+					mediaElement.setAttribute( 'preload', 'metadata' );
+
+					break;
+
+				case 'audio':
+					mediaElement = document.createElement( 'div' );
+					mediaElement.style.cssText = `
+                        background: rgba(255, 255, 255, 0.95);
+                        padding: 40px;
+                        border-radius: 10px;
+                        text-align: center;
+                        min-width: 400px;
+                    `;
+
+					const audioEl = document.createElement( 'audio' );
+					audioEl.src = mediaUrl;
+					audioEl.controls = true;
+					audioEl.style.width = '100%';
+
+					const title = document.createElement( 'h3' );
+					title.textContent = mediaAlt || 'Audio File';
+					title.style.marginBottom = '20px';
+
+					mediaElement.appendChild( title );
+					mediaElement.appendChild( audioEl );
+					break;
+
+				case 'document':
+					if ( mediaUrl.toLowerCase().includes( '.pdf' ) ) {
+						mediaElement = document.createElement( 'iframe' );
+						mediaElement.src = mediaUrl;
+						mediaElement.style.cssText = `
+                            width: 90vw;
+                            height: 90vh;
+                            border: none;
+                            border-radius: 5px;
+                        `;
+					} else {
+						// Show download link for other documents
+						mediaElement = document.createElement( 'div' );
+						mediaElement.style.cssText = `
+                            background: rgba(255, 255, 255, 0.95);
+                            padding: 40px;
+                            border-radius: 10px;
+                            text-align: center;
+                            min-width: 300px;
+                        `;
+
+						const icon = document.createElement( 'div' );
+						icon.innerHTML = '📄';
+						icon.style.fontSize = '48px';
+						icon.style.marginBottom = '20px';
+
+						const title = document.createElement( 'h3' );
+						title.textContent = mediaAlt || 'Document';
+						title.style.marginBottom = '20px';
+
+						const downloadLink = document.createElement( 'a' );
+						downloadLink.href = mediaUrl;
+						downloadLink.download = '';
+						downloadLink.textContent = 'Download Document';
+						downloadLink.style.cssText = `
+                            display: inline-block;
+                            padding: 10px 20px;
+                            background: #007cba;
+                            color: white;
+                            text-decoration: none;
+                            border-radius: 5px;
+                        `;
+
+						mediaElement.appendChild( icon );
+						mediaElement.appendChild( title );
+						mediaElement.appendChild( downloadLink );
+					}
+					break;
+
+				default: // image
+					mediaElement = document.createElement( 'img' );
+					mediaElement.src = mediaUrl;
+					mediaElement.alt = mediaAlt || '';
+
+					// Style based on zoom level
+					switch ( context.lightboxZoomLevel ) {
+						case 'fill':
+							mediaElement.style.cssText = `
+                                width: 100%;
+                                height: 100%;
+                                object-fit: cover;
+                            `;
+							break;
+						case 'original':
+							mediaElement.style.cssText = `
+                                max-height: 90vh;
+                                width: auto;
+                                height: auto;
+                            `;
+							break;
+						default: // 'fit'
+							mediaElement.style.cssText = `
+                                max-width: 100%;
+                                max-height: 100%;
+                                width: auto;
+                                height: auto;
+                                object-fit: contain;
+                            `;
+					}
+					break;
+			}
+
+			return mediaElement;
 		},
 	},
 

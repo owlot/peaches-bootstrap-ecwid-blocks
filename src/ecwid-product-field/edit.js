@@ -592,6 +592,7 @@ function ProductFieldEdit( props ) {
 			setLinesError( null );
 		}
 	}, [ productData?.id, productLoading, isLineField, lineType, fieldType ] );
+
 	/**
 	 * Get preview text for non-line field types
 	 *
