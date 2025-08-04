@@ -31,6 +31,11 @@ import {
 	ProductSelectionPanel,
 } from '../utils/ecwid-product-utils';
 
+/**
+ * Styles
+ */
+import './style.scss';
+
 // Content block settings
 const SUPPORTED_SETTINGS = {
 	responsive: {
@@ -348,20 +353,41 @@ function createMediaElement( mediaUrl, mediaAlt, mediaType, attributes ) {
 		audioAutoplay = false,
 		audioLoop = false,
 		audioControls = true,
+		enableLightbox = true,
 	} = attributes;
+
+	const lightboxStyle = enableLightbox
+		? {
+				cursor: 'pointer',
+				transition: 'transform 0.2s ease, opacity 0.2s ease',
+		  }
+		: {};
+	const lightboxHoverClass = enableLightbox ? 'lightbox-trigger' : '';
 
 	switch ( mediaType ) {
 		case 'video':
 			return (
 				<video
-					className="media-element w-100 h-100"
-					style={ { objectFit: 'cover' } }
+					className={ `media-element w-100 h-100 ${ lightboxHoverClass }` }
+					style={ { objectFit: 'cover', ...lightboxStyle } }
 					src={ mediaUrl }
 					autoPlay={ videoAutoplay }
 					muted={ videoMuted }
 					loop={ videoLoop }
 					controls={ videoControls }
 					preload="metadata"
+					playsInline={ true }
+					onClick={
+						enableLightbox
+							? ( e ) => {
+									e.preventDefault();
+									// Preview mode - just show that lightbox would work
+									alert(
+										'Lightbox would open here in frontend view'
+									);
+							  }
+							: undefined
+					}
 				>
 					<p>Your browser does not support the video element.</p>
 				</video>
@@ -369,26 +395,54 @@ function createMediaElement( mediaUrl, mediaAlt, mediaType, attributes ) {
 
 		case 'audio':
 			return (
-				<audio
-					className="media-element w-100"
-					src={ mediaUrl }
-					autoPlay={ audioAutoplay }
-					loop={ audioLoop }
-					controls={ audioControls }
-					preload="metadata"
+				<div
+					className={ `media-element w-100 d-flex align-items-center justify-content-center ${ lightboxHoverClass }` }
+					style={ {
+						minHeight: '200px',
+						backgroundColor: '#f8f9fa',
+						...lightboxStyle,
+					} }
+					onClick={
+						enableLightbox
+							? ( e ) => {
+									e.preventDefault();
+									alert(
+										'Audio lightbox would open here in frontend view'
+									);
+							  }
+							: undefined
+					}
 				>
-					<p>Your browser does not support the audio element.</p>
-				</audio>
+					<audio
+						className="w-100"
+						src={ mediaUrl }
+						autoPlay={ audioAutoplay }
+						loop={ audioLoop }
+						controls={ audioControls }
+						preload="metadata"
+					>
+						<p>Your browser does not support the audio element.</p>
+					</audio>
+				</div>
 			);
 
 		case 'document':
 			if ( mediaUrl.toLowerCase().includes( '.pdf' ) ) {
 				return (
 					<iframe
-						className="media-element w-100 h-100"
+						className={ `media-element w-100 h-100 ${ lightboxHoverClass }` }
 						src={ mediaUrl }
-						style={ { minHeight: '400px' } }
+						style={ { minHeight: '400px', ...lightboxStyle } }
 						title={ mediaAlt || 'PDF Document' }
+						onClick={
+							enableLightbox
+								? ( e ) => {
+										alert(
+											'Document lightbox would open here in frontend view'
+										);
+								  }
+								: undefined
+						}
 					/>
 				);
 			}
@@ -433,10 +487,20 @@ function createMediaElement( mediaUrl, mediaAlt, mediaType, attributes ) {
 		default: // image
 			return (
 				<img
-					className="media-element img-fluid w-100 h-100"
-					style={ { objectFit: 'cover' } }
+					className={ `media-element img-fluid w-100 h-100 ${ lightboxHoverClass }` }
+					style={ { objectFit: 'cover', ...lightboxStyle } }
 					src={ mediaUrl }
 					alt={ mediaAlt || '' }
+					onClick={
+						enableLightbox
+							? ( e ) => {
+									e.preventDefault();
+									alert(
+										'Image lightbox would open here in frontend view'
+									);
+							  }
+							: undefined
+					}
 				/>
 			);
 	}
@@ -461,6 +525,8 @@ function ProductGalleryImageEdit( props ) {
 		audioAutoplay = false,
 		audioLoop = false,
 		audioControls = true,
+		enableLightbox = true,
+		lightboxZoomLevel,
 	} = attributes;
 
 	// Use unified product data hook
@@ -1515,6 +1581,62 @@ function ProductGalleryImageEdit( props ) {
 
 							{ renderFallbackControls() }
 						</>
+					) }
+				</PanelBody>
+				<PanelBody
+					title={ __( 'Display Options', 'ecwid-shopping-cart' ) }
+					initialOpen={ false }
+				>
+					<ToggleControl
+						label={ __( 'Enable Lightbox', 'ecwid-shopping-cart' ) }
+						checked={ enableLightbox }
+						onChange={ ( value ) =>
+							setAttributes( { enableLightbox: value } )
+						}
+						help={ __(
+							'Open media in lightbox when clicked',
+							'ecwid-shopping-cart'
+						) }
+					/>
+
+					{ enableLightbox && (
+						<SelectControl
+							label={ __(
+								'Lightbox Size',
+								'ecwid-shopping-cart'
+							) }
+							value={ lightboxZoomLevel }
+							options={ [
+								{
+									label: __(
+										'Fit to Screen',
+										'ecwid-shopping-cart'
+									),
+									value: 'fit',
+								},
+								{
+									label: __(
+										'Fill Screen',
+										'ecwid-shopping-cart'
+									),
+									value: 'fill',
+								},
+								{
+									label: __(
+										'Original Size',
+										'ecwid-shopping-cart'
+									),
+									value: 'original',
+								},
+							] }
+							onChange={ ( value ) =>
+								setAttributes( { lightboxZoomLevel: value } )
+							}
+							help={ __(
+								'How media should be sized in the lightbox',
+								'ecwid-shopping-cart'
+							) }
+						/>
 					) }
 				</PanelBody>
 

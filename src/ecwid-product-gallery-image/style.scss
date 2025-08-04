@@ -1,0 +1,49 @@
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* Hover effect for lightbox triggers */
+.lightbox-hover {
+    transform: scale(1.02);
+    transition: transform 0.2s ease;
+}
+
+.peaches-lightbox-close:hover {
+    background: white !important;
+    transform: scale(1.1);
+}
+
+.peaches-lightbox-content img,
+.peaches-lightbox-content video {
+    border-radius: 5px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+/* Media elements that can be clicked for lightbox */
+[data-wp-on--click*="handleMediaClick"] {
+    transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+[data-wp-on--click*="handleMediaClick"]:hover {
+    opacity: 0.9;
+}
+
+@media (max-width: 768px) {
+    .peaches-lightbox-overlay {
+        padding: 10px !important;
+    }
+
+    .peaches-lightbox-close {
+        top: 10px !important;
+        right: 15px !important;
+        width: 35px !important;
+        height: 35px !important;
+        font-size: 20px !important;
+    }
+
+    /* Disable hover effects on mobile */
+    .lightbox-hover {
+        transform: none;
+    }
+}
