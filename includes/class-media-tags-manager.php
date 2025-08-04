@@ -828,7 +828,7 @@ class Peaches_Media_Tags_Manager implements Peaches_Media_Tags_Manager_Interface
 							data-tag-label="<?php echo esc_attr($tag_data['label']); ?>"
 							data-tag-description="<?php echo esc_attr($tag_data['description']); ?>"
 							data-tag-category="<?php echo esc_attr($tag_data['category']); ?>"
-							data-tag-expected-media-type="<?php echo esc_attr($tag_data['expected_media_type']); ?>"
+							data-tag-expected-media-type="<?php echo esc_attr($tag_data['expectedMediaType']); ?>"
 							data-bs-toggle="tooltip"
 							title="<?php esc_attr_e('Edit tag', 'peaches'); ?>">
 						<i class="dashicons dashicons-edit"></i>
