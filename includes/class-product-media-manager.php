@@ -153,6 +153,7 @@ class Peaches_Product_Media_Manager implements Peaches_Product_Media_Manager_Int
 				}
 			}
 
+			$this->log_info('Callimg update post meta _product_media', $product_media);
 			// Save the processed media data
 			$result = update_post_meta($post_id, '_product_media', $product_media);
 
@@ -429,6 +430,8 @@ class Peaches_Product_Media_Manager implements Peaches_Product_Media_Manager_Int
 	 * @throws Exception If processing fails.
 	 */
 	private function process_media_item($tag_key, $media_item, $post_id) {
+		$this->log_info('Process media item', $media_item);
+
 		if (empty($media_item['tag_name']) || empty($media_item['media_type'])) {
 			return null;
 		}
@@ -546,6 +549,12 @@ class Peaches_Product_Media_Manager implements Peaches_Product_Media_Manager_Int
 
 		$ecwid_position = absint($media_item['ecwid_position']);
 
+		// DEBUG: Log the position being processed
+		$this->log_info('Processing Ecwid media for position: ' . $ecwid_position, array(
+			'post_id' => $post_id,
+			'original_position' => $media_item['ecwid_position']
+		));
+
 		// Validate that we can access the Ecwid product
 		$ecwid_product_id = get_post_meta($post_id, '_ecwid_product_id', true);
 		if (!$ecwid_product_id) {
@@ -565,15 +574,31 @@ class Peaches_Product_Media_Manager implements Peaches_Product_Media_Manager_Int
 				return null;
 			}
 
+			// DEBUG: Log product image data
+			$this->log_info('Ecwid product image data', array(
+				'ecwid_product_id' => $ecwid_product_id,
+				'thumbnailUrl' => isset($product->thumbnailUrl) ? $product->thumbnailUrl : 'NOT SET',
+				'galleryImages_count' => isset($product->galleryImages) ? count($product->galleryImages) : 0,
+				'position_requested' => $ecwid_position
+			));
+
 			// Validate that the position exists
 			$image_url = $this->get_ecwid_image_by_position($product, $ecwid_position);
 			if (!$image_url) {
 				$this->log_error('Ecwid image position not found', array(
 					'ecwid_product_id' => $ecwid_product_id,
 					'position'         => $ecwid_position,
+					'product_thumbnail' => isset($product->thumbnailUrl) ? 'EXISTS' : 'MISSING',
+					'gallery_count'     => isset($product->galleryImages) ? count($product->galleryImages) : 0,
 				));
 				return null;
 			}
+
+			// DEBUG: Log successful validation
+			$this->log_info('Ecwid media validation successful', array(
+				'position' => $ecwid_position,
+				'image_url' => $image_url
+			));
 
 		} catch (Exception $e) {
 			$this->log_error('Error validating Ecwid media', array(
@@ -584,7 +609,7 @@ class Peaches_Product_Media_Manager implements Peaches_Product_Media_Manager_Int
 			return null;
 		}
 
-		return array('ecwid_position' => $ecwid_position);
+		return array('ecwid_position' => (string) $ecwid_position);
 	}
 
 	/**
@@ -609,6 +634,8 @@ class Peaches_Product_Media_Manager implements Peaches_Product_Media_Manager_Int
 			'fallback_url'    => '',
 		);
 
+		$this->log_info('Parse current media', $current_media);
+
 		try {
 			if (is_array($current_media)) {
 				if (!empty($current_media['attachment_id'])) {
@@ -619,9 +646,9 @@ class Peaches_Product_Media_Manager implements Peaches_Product_Media_Manager_Int
 					$state['media_type'] = 'url';
 					$state['media_url'] = $current_media['media_url'];
 					$state['has_media'] = true;
-				} elseif (!empty($current_media['ecwid_position'])) {
+				} elseif (isset($current_media['ecwid_position']) && $current_media['ecwid_position'] !== '') {
 					$state['media_type'] = 'ecwid';
-					$state['ecwid_position'] = $current_media['ecwid_position'];
+					$state['ecwid_position'] = $current_media['ecwid_position']; // Keep as string
 					$state['has_media'] = true;
 				}
 			} elseif (!empty($current_media)) {
