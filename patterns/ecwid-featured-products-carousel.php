@@ -17,7 +17,7 @@ defined('ABSPATH') || exit;
 		<div class="peaches-carousel-track row row-cols-2 row-cols-sm-3 row-cols-lg-4 gx-null mt-0 mx-lg-0 mt-lg-0 mb-lg-0 py-lg-5" data-wp-style--transform="state.transform" data-wp-style--transition="state.transition" data-wp-class--grabbing="state.isDragging" data-wp-on--mousedown="actions.dragStart" data-wp-on--touchstart="actions.dragStart" data-wp-on--mousemove="actions.dragMove" data-wp-on--touchmove="actions.dragMove" data-wp-on--mouseup="actions.dragEnd" data-wp-on--touchend="actions.dragEnd" data-wp-on--mouseleave="actions.dragEnd">
 			<!-- wp:peaches/ecwid-category-products {"selectedCategoryId":0,"translations":{"buttonText":{"en":"Add to cart"}},"maxProducts":12,"buttonText":"Plaats in shopper","hoverMediaTag":"secondary_1","isInCarousel":true} /-->
 		</div>
-		<div class="peaches-carousel-dots gap-3 pt-5" data-wp-class--d-none="!state.isCarouselActive">
+		<div class="peaches-carousel-dots gap-3" data-wp-class--d-none="!state.isCarouselActive">
 			<template data-wp-each--dot="state.dots">
 				<button class="btn" data-wp-class--active="state.isActive" data-wp-on--click="actions.selectSlide" data-wp-bind--data-slide-index="context.dot" data-wp-bind--aria-label="state.getLabel">
 				</button>
