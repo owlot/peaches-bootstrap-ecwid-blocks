@@ -165,20 +165,19 @@ $wrapper_attributes = get_block_wrapper_attributes(array(
 	</div>
 
 	<div
-		class="card-body p-2 p-md-3 d-flex row-cols-1 flex-wrap align-content-between"
+		class="card-body p-2 p-md-3 d-flex flex-wrap align-content-between"
 		role="button"
 		 data-wp-on--click="actions.navigateToProduct"
 	>
-		<h5 role="button"
-			class="card-title">
+		<h5 role="button" class="card-title">
 			<?php echo esc_html($product->name); ?>
 		</h5>
 		<?php if (!empty($product_subtitle)): ?>
-			<p class="card-text text-muted"><?php echo esc_html($product_subtitle); ?></p>
+			<p class="card-subtitle mb-2 text-muted"><?php echo esc_html($product_subtitle); ?></p>
 		<?php endif; ?>
 	</div>
 
-	<div class="card-footer border-0 hstack justify-content-between">
+	<div class="card-footer p-2 p-md-3 border-0 hstack justify-content-between">
 		<div class="card-text fw-bold lead">
 			<?php echo esc_html($formatted_price); ?>
 		</div>

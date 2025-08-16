@@ -258,7 +258,481 @@ class Peaches_Product_Media_Manager implements Peaches_Product_Media_Manager_Int
 	}
 
 	/**
-	 * Get product media URL by tag.
+	 * Get complete product media data by tag.
+	 *
+	 * Returns full media information including URLs, metadata, and fallbacks.
+	 * This method unifies the logic used by both REST API and template functions.
+	 *
+	 * @since 0.4.3
+	 *
+	 * @param int    $product_id  Ecwid product ID.
+	 * @param string $tag_key     Media tag key.
+	 * @param string $size        Image size (thumbnail, medium, large, full).
+	 * @param bool   $fallback    Whether to use fallback images.
+	 *
+	 * @return array|null Complete media data or null if not found.
+	 */
+	public function get_product_media_data($product_id, $tag_key, $size = 'large', $fallback = true) {
+		if (empty($product_id) || empty($tag_key)) {
+			return null;
+		}
+
+		try {
+			// Get product object first (same as REST API approach)
+			$product = $this->ecwid_api->get_product_by_id($product_id);
+			if (!$product) {
+				$this->log_error('Product not found in Ecwid', array(
+					'product_id' => $product_id,
+				));
+				return null;
+			}
+
+			// Get product post ID
+			$post_id = $this->ecwid_api->get_product_post_id($product_id);
+			$raw_media_data = null;
+			$is_fallback = false;
+
+			if ($post_id) {
+				// Try to get raw media data by tag
+				$raw_media_data = $this->get_product_media_by_tag($post_id, $tag_key);
+			}
+
+			if (!$raw_media_data) {
+				$this->log_info('No custom media found, checking fallback', array(
+					'product_id' => $product_id,
+					'tag_key' => $tag_key,
+					'fallback_enabled' => $fallback
+				));
+
+				// No custom media found, try fallback to Ecwid images if enabled
+				if ($fallback) {
+					$fallback_url = $this->get_ecwid_image_by_position($product, 0);
+					if ($fallback_url) {
+						return $this->create_fallback_media_data($product, $fallback_url, $tag_key);
+					}
+				}
+				return null;
+			}
+
+			// Process the raw media data
+			$processed_data = $this->process_media_data_complete($raw_media_data, $product, $size);
+
+			if ($processed_data) {
+				return $processed_data;
+			}
+
+			// If processing failed, try fallback
+			if ($fallback) {
+				$fallback_url = $this->get_ecwid_image_by_position($product, 0);
+				if ($fallback_url) {
+					return $this->create_fallback_media_data($product, $fallback_url, $tag_key);
+				}
+			}
+
+			return null;
+
+		} catch (Exception $e) {
+			$this->log_error('Error getting product media data', array(
+				'product_id' => $product_id,
+				'tag_key' => $tag_key,
+				'size' => $size,
+				'error' => $e->getMessage()
+			));
+
+			// Try fallback on error
+			if ($fallback && isset($product)) {
+				$fallback_url = $this->get_ecwid_image_by_position($product, 0);
+				if ($fallback_url) {
+					return $this->create_fallback_media_data($product, $fallback_url, $tag_key);
+				}
+			}
+
+			return null;
+		}
+	}
+
+	/**
+	 * Process media data to get complete information.
+	 *
+	 * @since 0.4.3
+	 *
+	 * @param array  $media_data Raw media data from get_product_media_by_tag.
+	 * @param object $product    Ecwid product object.
+	 * @param string $size       Image size for WordPress attachments.
+	 *
+	 * @return array|null Complete media data or null if processing failed.
+	 */
+	private function process_media_data_complete($media_data, $product, $size = 'large') {
+		if (!is_array($media_data) || !isset($media_data['media_type'])) {
+			return null;
+		}
+
+		$media_type = $media_data['media_type'];
+
+		switch ($media_type) {
+			case 'upload':
+				if (!empty($media_data['attachment_id'])) {
+					return $this->format_wordpress_media_data($media_data['attachment_id'], $size);
+				}
+				break;
+
+			case 'url':
+				if (!empty($media_data['media_url'])) {
+					return $this->format_url_media_data($media_data['media_url']);
+				}
+				break;
+
+			case 'ecwid':
+				if (isset($media_data['ecwid_position'])) {
+					return $this->format_ecwid_media_data($media_data['ecwid_position'], $product, $size);
+				}
+				break;
+		}
+
+		return null;
+	}
+
+	/**
+	 * Format Ecwid media data with size selection support.
+	 *
+	 * @since 0.4.3
+	 *
+	 * @param int    $ecwid_position Ecwid image position.
+	 * @param object $product        Ecwid product object.
+	 * @param string $size           Preferred size (thumbnail, medium, large, full).
+	 *
+	 * @return array|null Formatted data or null if invalid.
+	 */
+	private function format_ecwid_media_data($ecwid_position, $product, $size = 'large') {
+		// Use the improved utility method to get complete image data
+		$image_data = Peaches_Ecwid_Image_Utilities::generate_ecwid_image_data(
+			$product,
+			$ecwid_position,
+			'gallery'
+		);
+
+		if (!$image_data) {
+			return null;
+		}
+
+		// Safely extract product name as string
+		$product_name = isset($product->name) && is_scalar($product->name) ? (string)$product->name : 'Product';
+
+		$media_type = $this->determine_media_type_from_url($image_data['url']);
+
+		// Build the sizes array using actual Ecwid image sizes
+		$sizes = array();
+		if (!empty($image_data['available_sizes'])) {
+			foreach ($image_data['available_sizes'] as $width => $url) {
+				// Map width to approximate size names
+				$size_name = $this->get_size_name_from_width($width);
+				$sizes[$size_name] = array(
+					'url'    => $url,
+					'width'  => $width,
+					'height' => 0, // Ecwid doesn't always provide height
+					'type'   => $media_type
+				);
+			}
+		}
+
+		// Add full size as the largest available
+		if (!empty($image_data['available_sizes'])) {
+			$max_width = max(array_keys($image_data['available_sizes']));
+			$sizes['full'] = array(
+				'url'    => $image_data['available_sizes'][$max_width],
+				'width'  => $max_width,
+				'height' => isset($image_data['height']) && is_numeric($image_data['height']) ? (int)$image_data['height'] : 0,
+				'type'   => $media_type
+			);
+		}
+
+		// Safely extract alt text
+		$alt_text = '';
+		if (isset($image_data['alt']) && is_scalar($image_data['alt'])) {
+			$alt_text = (string)$image_data['alt'];
+		} else {
+			$alt_text = $product_name;
+		}
+
+		// Select the appropriate URL based on requested size
+		$selected_url = $this->get_ecwid_url_for_size($image_data, $sizes, $size);
+
+		return array(
+			'url'            => $selected_url, // Use size-specific URL
+			'title'          => $product_name . ' - Image ' . ($ecwid_position + 1),
+			'alt'            => $alt_text,
+			'caption'        => '',
+			'description'    => '',
+			'mime_type'      => $this->guess_mime_type_from_url($selected_url),
+			'type'           => $media_type,
+			'source'         => 'ecwid',
+			'ecwid_position' => $ecwid_position,
+			'sizes'          => $sizes,
+			'srcset'         => isset($image_data['srcset']) && is_scalar($image_data['srcset']) ? (string)$image_data['srcset'] : '',
+			'responsive'     => true,
+		);
+	}
+
+	/**
+	 * Get Ecwid URL for specific size.
+	 *
+	 * @since 0.4.3
+	 *
+	 * @param array  $image_data Ecwid image data.
+	 * @param array  $sizes      Available sizes array.
+	 * @param string $size       Requested size.
+	 *
+	 * @return string Selected URL.
+	 */
+	private function get_ecwid_url_for_size($image_data, $sizes, $size) {
+		// Direct size mapping
+		if (isset($sizes[$size]['url'])) {
+			return $sizes[$size]['url'];
+		}
+
+		// Size fallback logic
+		switch ($size) {
+			case 'full':
+			case 'original':
+				// Get the largest available image
+				if (!empty($image_data['available_sizes'])) {
+					$max_width = max(array_keys($image_data['available_sizes']));
+					return $image_data['available_sizes'][$max_width];
+				}
+				break;
+
+			case 'large':
+				// Prefer 800px or largest available
+				if (isset($sizes['large']['url'])) {
+					return $sizes['large']['url'];
+				}
+				if (!empty($image_data['available_sizes'])) {
+					$max_width = max(array_keys($image_data['available_sizes']));
+					return $image_data['available_sizes'][$max_width];
+				}
+				break;
+
+			case 'medium':
+				// Prefer 400px or fallback
+				if (isset($sizes['medium']['url'])) {
+					return $sizes['medium']['url'];
+				}
+				if (isset($sizes['large']['url'])) {
+					return $sizes['large']['url'];
+				}
+				break;
+
+			case 'thumbnail':
+				// Prefer 160px or smallest available
+				if (isset($sizes['thumbnail']['url'])) {
+					return $sizes['thumbnail']['url'];
+				}
+				if (!empty($image_data['available_sizes'])) {
+					$min_width = min(array_keys($image_data['available_sizes']));
+					return $image_data['available_sizes'][$min_width];
+				}
+				break;
+		}
+
+		// Final fallback to src from image_data
+		return $image_data['src'];
+	}
+
+	/**
+	 * Format WordPress media attachment data.
+	 *
+	 * @since 0.4.3
+	 *
+	 * @param int    $attachment_id WordPress attachment ID.
+	 * @param string $size          Image size.
+	 *
+	 * @return array|null Formatted data or null if invalid.
+	 */
+	private function format_wordpress_media_data($attachment_id, $size = 'large') {
+		$attachment = get_post($attachment_id);
+		if (!$attachment) {
+			return null;
+		}
+
+		$mime_type = get_post_mime_type($attachment_id);
+		$media_type = $this->determine_media_type_from_mime($mime_type);
+
+		// FIXED: Use appropriate URL function based on media type
+		if ($media_type === 'image') {
+			// For images, use wp_get_attachment_image_url() which supports size parameters
+			$url = wp_get_attachment_image_url($attachment_id, $size);
+		} else {
+			// For videos, audio, and documents, use wp_get_attachment_url() which always works
+			$url = wp_get_attachment_url($attachment_id);
+		}
+
+		if (!$url) {
+			return null;
+		}
+
+		return array(
+			'url'           => $url,
+			'title'         => $attachment->post_title,
+			'alt'           => get_post_meta($attachment_id, '_wp_attachment_image_alt', true),
+			'caption'       => $attachment->post_excerpt,
+			'description'   => $attachment->post_content,
+			'mime_type'     => $mime_type,
+			'type'          => $media_type,
+			'source'        => 'wordpress',
+			'attachment_id' => $attachment_id,
+			'sizes'         => $this->get_attachment_sizes($attachment_id),
+		);
+	}
+
+	/**
+	 * Format external URL media data.
+	 *
+	 * @since 0.4.3
+	 *
+	 * @param string $media_url External media URL.
+	 *
+	 * @return array Formatted data.
+	 */
+	private function format_url_media_data($media_url) {
+		$media_type = $this->determine_media_type_from_url($media_url);
+
+		return array(
+			'url'         => $media_url,
+			'title'       => basename(parse_url($media_url, PHP_URL_PATH)),
+			'alt'         => '',
+			'caption'     => '',
+			'description' => '',
+			'mime_type'   => $this->guess_mime_type_from_url($media_url),
+			'type'        => $media_type,
+			'source'      => 'external',
+			'sizes'       => array(
+				'full' => array(
+					'url'    => $media_url,
+					'width'  => 0,
+					'height' => 0,
+					'type'   => $media_type
+				)
+			),
+		);
+	}
+
+	/**
+	 * Map image width to WordPress size name
+	 *
+	 * @since 0.4.3
+	 *
+	 * @param int $width Image width in pixels.
+	 *
+	 * @return string Size name.
+	 */
+	private function get_size_name_from_width($width) {
+		if ($width <= 160) {
+			return 'thumbnail';
+		} elseif ($width <= 400) {
+			return 'medium';
+		} elseif ($width <= 800) {
+			return 'large';
+		} elseif ($width <= 1500) {
+			return 'extra-large';
+		} else {
+			return 'original';
+		}
+	}
+
+	/**
+	 * Create fallback media data for Ecwid images.
+	 *
+	 * @since 0.4.3
+	 *
+	 * @param object $product     Ecwid product object.
+	 * @param string $fallback_url Fallback image URL.
+	 * @param string $tag_key     Original tag key requested.
+	 *
+	 * @return array Fallback media data.
+	 */
+	private function create_fallback_media_data($product, $fallback_url = null, $tag_key = '') {
+		// Safely extract product name as string
+		$product_name = isset($product->name) && is_scalar($product->name) ? (string)$product->name : 'Product';
+
+		// If no specific URL provided, get the best available image (position 0)
+		if (!$fallback_url) {
+			$image_data = Peaches_Ecwid_Image_Utilities::generate_ecwid_image_data(
+				$product,
+				0, // Main image
+				'gallery'
+			);
+
+			if ($image_data) {
+				$fallback_url = $image_data['src'];
+
+				// Return enhanced fallback with responsive data
+				$media_type = $this->determine_media_type_from_url($fallback_url);
+
+				$sizes = array();
+				if (!empty($image_data['available_sizes'])) {
+					foreach ($image_data['available_sizes'] as $width => $url) {
+						$size_name = $this->get_size_name_from_width($width);
+						$sizes[$size_name] = array(
+							'url'    => $url,
+							'width'  => $width,
+							'height' => 0,
+							'type'   => $media_type
+						);
+					}
+				}
+
+				// Safely extract alt text
+				$alt_text = '';
+				if (isset($image_data['alt']) && is_scalar($image_data['alt'])) {
+					$alt_text = (string)$image_data['alt'];
+				} else {
+					$alt_text = $product_name;
+				}
+
+				return array(
+					'url'         => $fallback_url,
+					'title'       => $product_name . (!empty($tag_key) ? ' - ' . $tag_key : '') . ' (fallback)',
+					'alt'         => $alt_text,
+					'caption'     => '',
+					'description' => '',
+					'mime_type'   => $this->guess_mime_type_from_url($fallback_url),
+					'type'        => $media_type,
+					'source'      => 'ecwid_fallback',
+					'is_fallback' => true,
+					'sizes'       => $sizes,
+					'srcset'      => isset($image_data['srcset']) && is_scalar($image_data['srcset']) ? (string)$image_data['srcset'] : '',
+					'responsive'  => true,
+				);
+			}
+		}
+
+		// Basic fallback if no enhanced data available
+		$media_type = $this->determine_media_type_from_url($fallback_url);
+
+		return array(
+			'url'         => $fallback_url,
+			'title'       => $product_name . (!empty($tag_key) ? ' - ' . $tag_key : '') . ' (fallback)',
+			'alt'         => $product_name,
+			'caption'     => '',
+			'description' => '',
+			'mime_type'   => $this->guess_mime_type_from_url($fallback_url),
+			'type'        => $media_type,
+			'source'      => 'ecwid_fallback',
+			'is_fallback' => true,
+			'sizes'       => array(
+				'full' => array(
+					'url'    => $fallback_url,
+					'width'  => 0,
+					'height' => 0,
+					'type'   => $media_type
+				)
+			),
+			'responsive'  => false,
+		);
+	}
+
+	/**
+	 * Updated get_product_media_url method - now uses the complete method.
 	 *
 	 * @since 0.2.7
 	 *
@@ -270,109 +744,203 @@ class Peaches_Product_Media_Manager implements Peaches_Product_Media_Manager_Int
 	 * @return string|null Media URL or null if not found.
 	 */
 	public function get_product_media_url($product_id, $tag_key, $size = 'large', $fallback = true) {
-		if (empty($product_id) || empty($tag_key)) {
-			return null;
+		$media_data = $this->get_product_media_data($product_id, $tag_key, $size, $fallback);
+
+		return $media_data ? $media_data['url'] : null;
+	}
+
+	/**
+	 * Determine media type from URL and optional mime type.
+	 *
+	 * @since 0.4.3
+	 *
+	 * @param string $url      Media URL.
+	 * @param string $mimeType Optional mime type.
+	 *
+	 * @return string Media type.
+	 */
+	private function determine_media_type_from_url($url, $mimeType = '') {
+		// Check mime type first if provided
+		if ($mimeType) {
+			if (strpos($mimeType, 'video/') === 0) {
+				return 'video';
+			}
+			if (strpos($mimeType, 'image/') === 0) {
+				return 'image';
+			}
+			if (strpos($mimeType, 'audio/') === 0) {
+				return 'audio';
+			}
+			if (strpos($mimeType, 'application/pdf') === 0 || strpos($mimeType, 'text/') === 0) {
+				return 'document';
+			}
 		}
 
-		try {
-			// Find product settings post for this Ecwid product ID
-			$product_settings_posts = get_posts(array(
-				'post_type' => 'product_settings',
-				'meta_query' => array(
-					array(
-						'key' => '_ecwid_product_id',
-						'value' => $product_id,
-						'compare' => '='
-					)
-				),
-				'posts_per_page' => 1,
-				'post_status' => 'any'
-			));
-
-			if (empty($product_settings_posts)) {
-				$this->log_error('No post found for given product ID', array(
-					'product_id' => $product_id,
-				));
-
-				// No product settings found, try fallback to Ecwid images if enabled
-				if ($fallback) {
-					return $this->get_ecwid_image_by_position($post_id, 1);
-				}
-				return null;
-			}
-
-			$product_settings_post = $product_settings_posts[0];
-			$post_id = $product_settings_post->ID;
-			$this->log_info('Successfully found product settings post', array(
-				'product_id' => $product_id,
-				'post_id'    => $post_id
-			));
-
-			// Get raw media data by tag
-			$media_data = $this->get_product_media_by_tag($post_id, $tag_key);
-
-			if (!$media_data) {
-				$this->log_error('No media found for given product and tag', array(
-					'post_id' => $post_id,
-					'tag_key' => $tag_key
-				));
-
-				// No product settings found, try fallback to Ecwid images if enabled
-				if ($fallback) {
-					return $this->get_ecwid_image_by_position($post_id, 1);
-				}
-				return null;
-			}
-
-			// Process different media types
-			switch ($media_data['media_type']) {
-				case 'upload':
-					if (!empty($media_data['attachment_id'])) {
-						$image_url = wp_get_attachment_image_url($media_data['attachment_id'], $size);
-						if ($image_url) {
-							return $image_url;
-						}
-					}
-					break;
-
-				case 'url':
-					if (!empty($media_data['media_url'])) {
-						return $media_data['media_url'];
-					}
-					break;
-
-				case 'ecwid':
-					if (!empty($media_data['ecwid_position'])) {
-						$product = $this->ecwid_api->get_product_by_id($product_id);
-						if ($product) {
-							return $this->get_ecwid_image_by_position($product, $media_data['ecwid_position']);
-						}
-					}
-					break;
-			}
-
-			// If we get here, the specified media couldn't be loaded, try fallback
-			if ($fallback && $post_id) {
-				return $this->get_ecwid_image_by_position($post_id, 1);
-			}
-
-			return null;
-
-		} catch (Exception $e) {
-			$this->log_error('Error getting product media URL', array(
-				'product_id' => $product_id,
-				'tag_key' => $tag_key,
-				'size' => $size,
-				'error' => $e->getMessage()
-			));
-
-			// Try fallback on error
-			if ($fallback && isset($post_id)) {
-				return $this->get_ecwid_image_by_position($post_id, 1);
-			}
-
-			return null;
+		if (!$url) {
+			return 'image';
 		}
+
+		// Parse URL to get pathname without query parameters
+		$parsed_url = parse_url($url);
+		$pathname = isset($parsed_url['path']) ? $parsed_url['path'] : $url;
+
+		// Extract file extension from pathname
+		$extension = strtolower(pathinfo($pathname, PATHINFO_EXTENSION));
+
+		// Video extensions
+		$video_extensions = array('mp4', 'webm', 'ogg', 'avi', 'mov', 'wmv', 'flv', 'm4v', '3gp', 'mkv');
+		if (in_array($extension, $video_extensions)) {
+			return 'video';
+		}
+
+		// Audio extensions
+		$audio_extensions = array('mp3', 'wav', 'ogg', 'aac', 'flac', 'm4a', 'wma');
+		if (in_array($extension, $audio_extensions)) {
+			return 'audio';
+		}
+
+		// Document extensions
+		$document_extensions = array('pdf', 'doc', 'docx', 'txt', 'rtf', 'xls', 'xlsx', 'ppt', 'pptx');
+		if (in_array($extension, $document_extensions)) {
+			return 'document';
+		}
+
+		// Check for common video hosting patterns
+		if (strpos($url, 'youtube.com') !== false || strpos($url, 'youtu.be') !== false ||
+			strpos($url, 'vimeo.com') !== false || strpos($url, 'wistia.com') !== false ||
+			strpos($url, '/videos/') !== false || strpos($url, '/video/') !== false) {
+			return 'video';
+		}
+
+		// Default to image
+		return 'image';
+	}
+
+	/**
+	 * Determine media type from mime type only.
+	 *
+	 * @since 0.4.3
+	 *
+	 * @param string $mime_type MIME type.
+	 *
+	 * @return string Media type.
+	 */
+	private function determine_media_type_from_mime($mime_type) {
+		if (empty($mime_type)) {
+			return 'image';
+		}
+
+		if (strpos($mime_type, 'video/') === 0) {
+			return 'video';
+		}
+		if (strpos($mime_type, 'image/') === 0) {
+			return 'image';
+		}
+		if (strpos($mime_type, 'audio/') === 0) {
+			return 'audio';
+		}
+		if (strpos($mime_type, 'application/pdf') === 0 || strpos($mime_type, 'text/') === 0) {
+			return 'document';
+		}
+
+		return 'image';
+	}
+
+	/**
+	 * Guess mime type from URL.
+	 *
+	 * @since 0.4.3
+	 *
+	 * @param string $url Media URL.
+	 *
+	 * @return string Guessed mime type.
+	 */
+	private function guess_mime_type_from_url($url) {
+		$extension = strtolower(pathinfo(parse_url($url, PHP_URL_PATH), PATHINFO_EXTENSION));
+
+		$mime_types = array(
+			'jpg'  => 'image/jpeg',
+			'jpeg' => 'image/jpeg',
+			'png'  => 'image/png',
+			'gif'  => 'image/gif',
+			'webp' => 'image/webp',
+			'svg'  => 'image/svg+xml',
+			'bmp'  => 'image/bmp',
+			'mp4'  => 'video/mp4',
+			'webm' => 'video/webm',
+			'ogg'  => 'video/ogg',
+			'avi'  => 'video/x-msvideo',
+			'mov'  => 'video/quicktime',
+			'mp3'  => 'audio/mpeg',
+			'wav'  => 'audio/wav',
+			'aac'  => 'audio/aac',
+			'flac' => 'audio/flac',
+			'pdf'  => 'application/pdf',
+			'doc'  => 'application/msword',
+			'docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+		);
+
+		return isset($mime_types[$extension]) ? $mime_types[$extension] : 'image/jpeg';
+	}
+
+	/**
+	 * Get attachment sizes for WordPress media.
+	 *
+	 * @since 0.4.3
+	 *
+	 * @param int $attachment_id WordPress attachment ID.
+	 *
+	 * @return array Array of available sizes.
+	 */
+	private function get_attachment_sizes($attachment_id) {
+		$sizes = array();
+		$metadata = wp_get_attachment_metadata($attachment_id);
+
+		if (!$metadata) {
+			return $sizes;
+		}
+
+		// For videos, we might not have traditional image sizes
+		$mime_type = get_post_mime_type($attachment_id);
+		if (strpos($mime_type, 'video/') === 0) {
+			// For videos, return basic info
+			$sizes['full'] = array(
+				'url'    => wp_get_attachment_url($attachment_id),
+				'width'  => isset($metadata['width']) ? $metadata['width'] : 0,
+				'height' => isset($metadata['height']) ? $metadata['height'] : 0,
+				'type'   => 'video'
+			);
+
+			return $sizes;
+		}
+
+		// For images, process normal image sizes
+		if (!isset($metadata['sizes'])) {
+			return $sizes;
+		}
+
+		$upload_dir = wp_upload_dir();
+		$base_url = $upload_dir['baseurl'];
+		$base_path = dirname($metadata['file']);
+
+		foreach ($metadata['sizes'] as $size_name => $size_data) {
+			$sizes[$size_name] = array(
+				'url'    => $base_url . '/' . $base_path . '/' . $size_data['file'],
+				'width'  => $size_data['width'],
+				'height' => $size_data['height'],
+				'type'   => 'image'
+			);
+		}
+
+		// Add full size
+		$sizes['full'] = array(
+			'url'    => wp_get_attachment_url($attachment_id),
+			'width'  => isset($metadata['width']) ? $metadata['width'] : 0,
+			'height' => isset($metadata['height']) ? $metadata['height'] : 0,
+			'type'   => 'image'
+		);
+
+		return $sizes;
 	}
 
 	/**
@@ -658,15 +1226,17 @@ class Peaches_Product_Media_Manager implements Peaches_Product_Media_Manager_Int
 				$state['has_media'] = true;
 			}
 
-			// Check for hero image fallback from Ecwid
 			if (!$state['has_media'] && $tag_key === 'hero_image' && $post_id) {
-				$fallback_url = $this->get_ecwid_fallback_image($post_id);
-				if ($fallback_url) {
-					$state['fallback_used'] = true;
-					$state['fallback_url'] = $fallback_url;
+				// Get the Ecwid product ID from the post meta
+				$ecwid_product_id = get_post_meta($post_id, '_ecwid_product_id', true);
+				if ($ecwid_product_id) {
+					$fallback_url = $this->get_ecwid_fallback_image($ecwid_product_id);
+					if ($fallback_url) {
+						$state['fallback_used'] = true;
+						$state['fallback_url'] = $fallback_url;
+					}
 				}
 			}
-
 		} catch (Exception $e) {
 			$this->log_error('Error parsing current media', array(
 				'tag_key'       => $tag_key,
@@ -1120,12 +1690,23 @@ class Peaches_Product_Media_Manager implements Peaches_Product_Media_Manager_Int
 	 *
 	 * @since 0.2.1
 	 *
-	 * @param object $product  Ecwid product object.
-	 * @param string $position Image position.
+	 * @param object $product    Ecwid product object.
+	 * @param int    $position   Image position.
+	 * @param bool   $full_data  Whether to return full responsive data.
 	 *
-	 * @return string|null Image URL or null.
+	 * @return string|array|null Image URL, full data array, or null.
 	 */
-	private function get_ecwid_image_by_position($product, $position) {
+	private function get_ecwid_image_by_position($product, $position, $full_data = false) {
+		if ($full_data) {
+			// Return complete responsive image data
+			return Peaches_Ecwid_Image_Utilities::generate_ecwid_image_data(
+				$product,
+				$position,
+				'gallery'
+			);
+		}
+
+		// Original behavior - just return URL
 		$position = intval($position);
 
 		if ($position === 0 && !empty($product->thumbnailUrl)) {
@@ -1133,7 +1714,6 @@ class Peaches_Product_Media_Manager implements Peaches_Product_Media_Manager_Int
 		}
 
 		if (!empty($product->galleryImages) && is_array($product->galleryImages)) {
-			// Position 1+ refers to gallery images (0-indexed)
 			$gallery_index = $position - 1;
 			if (isset($product->galleryImages[$gallery_index])) {
 				return $product->galleryImages[$gallery_index]->url;

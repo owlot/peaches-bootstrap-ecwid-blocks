@@ -551,14 +551,12 @@ function ProductGalleryImageEdit( props ) {
 	const [ previewMedia, setPreviewMedia ] = useState( null );
 	const [ isLoadingPreview, setIsLoadingPreview ] = useState( false );
 
-	const className = useMemo(
-		() => computeClassName( attributes ),
-		[ attributes ]
-	);
+	const computedClassName = useMemo( () => {
+		return computeClassName( attributes );
+	}, [ attributes ] );
 
 	const blockProps = useBlockProps( {
-		className,
-		'data-wp-interactive': 'peaches-ecwid-product-gallery-image',
+		className: computedClassName,
 	} );
 
 	/**
@@ -572,6 +570,11 @@ function ProductGalleryImageEdit( props ) {
 			mediaTags.find( ( tag ) => tag.key === selectedMediaTag ) || null
 		);
 	}, [ selectedMediaTag, mediaTags ] );
+
+	// Update the computedClassName attribute when it changes
+	useEffect( () => {
+		setAttributes( { computedClassName } );
+	}, [ computedClassName, setAttributes ] );
 
 	/**
 	 * Fetch media tags from API

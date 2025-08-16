@@ -27,6 +27,10 @@
 		},
 		"interactivity": true
 	},
+	"style": "file:./style-index.css",
+	"viewScriptModule": "file:./view.js",
+	"render": "file:./render.php",
+	"editorScript": "file:./index.js",
 	"usesContext": [ "peaches/testProductData" ],
 	"attributes": {
 		"selectedProductId": {
@@ -102,9 +106,34 @@
 		"sizes": {
 			"type": "object",
 			"default": {}
+		},
+		"computedClassName": {
+			"type": "string",
+			"default": ""
+		},
+		"xs": {
+			"type": "object",
+			"default": {}
+		},
+		"sm": {
+			"type": "object",
+			"default": {}
+		},
+		"md": {
+			"type": "object",
+			"default": {}
+		},
+		"lg": {
+			"type": "object",
+			"default": {}
+		},
+		"xl": {
+			"type": "object",
+			"default": {}
+		},
+		"xxl": {
+			"type": "object",
+			"default": {}
 		}
-	},
-	"style": "file:./style-index.css",
-	"viewScriptModule": "file:./view.js",
-	"editorScript": "file:./index.js"
+	}
 }

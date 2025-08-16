@@ -117,7 +117,7 @@ function ProductEdit( props ) {
 					'hover-jump': attributes.showCardHoverJump,
 					'hover-shadow': attributes.showCardHoverShadow,
 				},
-				computeClassName( attributes, SUPPORTED_SETTINGS )
+				computeClassName( attributes )
 			),
 		[ attributes ]
 	);
@@ -854,23 +854,19 @@ function ProductEdit( props ) {
 								) }
 							</div>
 						) }
-						<div className="card-body p-2 p-md-3 d-flex flex-wrap align-content-between">
-							<h5
-								role="button"
-								className="card-title"
-								data-wp-text="state.productName"
-								data-wp-on--click="actions.navigateToProduct"
-							>
+						<div
+							className="card-body p-2 p-md-3 d-flex flex-wrap align-content-between"
+							role="button"
+							data-wp-on--click="actions.navigateToProduct"
+						>
+							<h5 role="button" className="card-title">
 								{ productData.name }
 							</h5>
-							<p
-								className="card-subtitle mb-2 text-muted"
-								data-wp-text="state.productSubtitle"
-							>
+							<p className="card-subtitle mb-2 text-muted">
 								{ getProductSubtitle() }
 							</p>
 						</div>
-						<div className="card-footer border-0 hstack justify-content-between">
+						<div className="card-footer p-2 p-md-3 border-0 hstack justify-content-between">
 							<div
 								className="card-text fw-bold lead"
 								data-wp-text="state.productPrice"

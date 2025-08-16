@@ -82,20 +82,27 @@ class Peaches_REST_API {
 	 *
 	 * @since 0.2.6
 	 *
-	 * @param Peaches_Product_Settings_Manager $product_settings_manager Product Settings Manager instance.
-	 * @param Peaches_Media_Tags_Manager       $media_tags_manager       Media Tags Manager instance.
-	 * @param Peaches_Product_Media_Manager    $product_media_manager    Product Media Manager instance.
-	 * @param Peaches_Ecwid_API                $ecwid_api                Ecwid API instance.
-	 * @param Peaches_Product_Manager          $product_manager          Product manager instance.
-	 * @param Peaches_Product_Lines_Manager    $product_lines_manager    Product lines manager instance.
+	 * @param Peaches_Product_Settings_Manager  $product_settings_manager  Product settings manager
+	 * @param Peaches_Media_Tags_Manager        $media_tags_manager        Media tags manager
+	 * @param Peaches_Product_Media_Manager     $product_media_manager     Product media manager
+	 * @param Peaches_Ecwid_API                 $ecwid_api                 Ecwid API
+	 * @param Peaches_Product_Manager           $product_manager           Product manager
+	 * @param Peaches_Product_Lines_Manager     $product_lines_manager     Product lines manager
 	 */
-	public function __construct($product_settings_manager, $media_tags_manager, $product_media_manager, $ecwid_api, $product_manager, $product_lines_manager) {
+	public function __construct(
+		$product_settings_manager,
+		$media_tags_manager,
+		$product_media_manager,
+		$ecwid_api,
+		$product_manager,
+		$product_lines_manager
+	) {
 		$this->product_settings_manager = $product_settings_manager;
-		$this->media_tags_manager       = $media_tags_manager;
-		$this->product_media_manager    = $product_media_manager;
-		$this->ecwid_api                = $ecwid_api;
-		$this->product_manager          = $product_manager;
-		$this->product_lines_manager    = $product_lines_manager;
+		$this->media_tags_manager = $media_tags_manager;
+		$this->product_media_manager = $product_media_manager;
+		$this->ecwid_api = $ecwid_api;
+		$this->product_manager = $product_manager;
+		$this->product_lines_manager = $product_lines_manager;
 
 		$this->init_hooks();
 	}
@@ -437,8 +444,6 @@ class Peaches_REST_API {
 			)
 		);
 
-		$this->log_info('About to register category-products endpoint');
-
 		// Category products endpoint (generic - includes featured products when category_id = 0)
 		register_rest_route(
 			self::NAMESPACE,
@@ -504,7 +509,6 @@ class Peaches_REST_API {
 			)
 		);
 
-		$this->log_info('Finished registering category-products endpoint');
 		$this->log_info('Completed registering all REST API routes');
 	}
 
@@ -1171,45 +1175,14 @@ class Peaches_REST_API {
 				);
 			}
 
-			// Verify product exists in Ecwid
-			$product = $this->ecwid_api->get_product_by_id($product_id);
-			if (!$product) {
-				return new WP_Error(
-					'product_not_found',
-					__('Product not found.', 'peaches'),
-					array('status' => 404)
-				);
-			}
+			// Use the unified method from product media manager
+			$media_data = $this->product_media_manager->get_product_media_data($product_id, $tag_key, 'large', false);
 
-			// Get product post ID
-			$post_id = $this->ecwid_api->get_product_post_id($product_id);
-			if (!$post_id) {
-				return new WP_Error(
-					'no_product_settings',
-					__('No product settings found for this product.', 'peaches'),
-					array('status' => 404)
-				);
-			}
-
-			// Get raw media data by tag
-			$raw_media_data = $this->product_media_manager->get_product_media_by_tag($post_id, $tag_key);
-
-			if (!$raw_media_data) {
+			if (!$media_data) {
 				return new WP_Error(
 					'media_not_found',
 					sprintf(__('No media found for tag "%s" on this product.', 'peaches'), $tag_key),
 					array('status' => 404)
-				);
-			}
-
-			// Process the raw media data into full response format
-			$processed_media = $this->process_media_data($raw_media_data, $post_id, $product);
-
-			if (!$processed_media) {
-				return new WP_Error(
-					'media_processing_failed',
-					__('Failed to process media data.', 'peaches'),
-					array('status' => 500)
 				);
 			}
 
@@ -1218,8 +1191,8 @@ class Peaches_REST_API {
 					'success'    => true,
 					'product_id' => (int) $product_id,
 					'tag_key'    => $tag_key,
-					'data'       => $processed_media,
-					'fallback'   => false,
+					'data'       => $media_data,
+					'fallback'   => isset($media_data['is_fallback']) ? $media_data['is_fallback'] : false,
 				),
 				200
 			);
@@ -1232,344 +1205,6 @@ class Peaches_REST_API {
 				array('status' => 500)
 			);
 		}
-	}
-
-	/**
-	 * Process raw media data into API response format.
-	 *
-	 * @since 0.2.5
-	 *
-	 * @param array  $media_data Raw media data from product media manager.
-	 * @param int    $post_id    Product settings post ID.
-	 * @param object $product    Ecwid product object.
-	 *
-	 * @return array|null Processed media data or null if processing failed.
-	 */
-	private function process_media_data($media_data, $post_id, $product) {
-		if (!is_array($media_data) || !isset($media_data['media_type'])) {
-			return null;
-		}
-
-		$media_type = $media_data['media_type'];
-
-		switch ($media_type) {
-			case 'upload':
-				if (!empty($media_data['attachment_id'])) {
-					return $this->format_wordpress_media_response($media_data['attachment_id']);
-				}
-				break;
-
-			case 'url':
-				if (!empty($media_data['media_url'])) {
-					return $this->format_url_media_response($media_data['media_url']);
-				}
-				break;
-
-			case 'ecwid':
-				if (isset($media_data['ecwid_position'])) {
-					return $this->format_ecwid_media_response($media_data['ecwid_position'], $product);
-				}
-				break;
-		}
-
-		return null;
-	}
-
-	/**
-	 * Format WordPress media attachment response.
-	 *
-	 * @since 0.2.5
-	 *
-	 * @param int $attachment_id WordPress attachment ID.
-	 *
-	 * @return array|null Formatted response or null if invalid.
-	 */
-	private function format_wordpress_media_response($attachment_id) {
-		$attachment = get_post($attachment_id);
-
-		if (!$attachment) {
-			return null;
-		}
-
-		$mime_type = get_post_mime_type($attachment_id);
-		$media_type = $this->determine_media_type_from_url(wp_get_attachment_url($attachment_id), $mime_type);
-
-		return array(
-			'attachment_id' => $attachment_id,
-			'url'           => wp_get_attachment_url($attachment_id),
-			'title'         => $attachment->post_title,
-			'alt'           => get_post_meta($attachment_id, '_wp_attachment_image_alt', true),
-			'caption'       => $attachment->post_excerpt,
-			'description'   => $attachment->post_content,
-			'mime_type'     => $mime_type,
-			'type'          => $media_type,
-			'sizes'         => $this->get_attachment_sizes($attachment_id),
-			'source'        => 'wordpress'
-		);
-	}
-
-	/**
-	 * Format external URL media response.
-	 *
-	 * @since 0.2.5
-	 *
-	 * @param string $media_url External media URL.
-	 *
-	 * @return array Formatted response.
-	 */
-	private function format_url_media_response($media_url) {
-		$media_type = $this->determine_media_type_from_url($media_url);
-
-		return array(
-			'url'         => $media_url,
-			'title'       => basename(parse_url($media_url, PHP_URL_PATH)),
-			'alt'         => '',
-			'caption'     => '',
-			'description' => '',
-			'mime_type'   => $this->guess_mime_type_from_url($media_url),
-			'type'        => $media_type,
-			'sizes'       => array(
-				'full' => array(
-					'url'    => $media_url,
-					'width'  => 0,
-					'height' => 0,
-					'type'   => $media_type
-				)
-			),
-			'source'      => 'external'
-		);
-	}
-
-	/**
-	 * Format Ecwid media response.
-	 *
-	 * @since 0.2.5
-	 *
-	 * @param int    $ecwid_position Ecwid image position.
-	 * @param object $product        Ecwid product object.
-	 *
-	 * @return array|null Formatted response or null if invalid.
-	 */
-	private function format_ecwid_media_response($ecwid_position, $product) {
-		// Get image URL by position
-		$image_url = $this->get_ecwid_image_by_position($product, $ecwid_position);
-
-		if (!$image_url) {
-			return null;
-		}
-
-		$media_type = $this->determine_media_type_from_url($image_url);
-
-		return array(
-			'url'            => $image_url,
-			'title'          => $product->name . ' - Image ' . ($ecwid_position + 1),
-			'alt'            => $product->name,
-			'caption'        => '',
-			'description'    => '',
-			'mime_type'      => $this->guess_mime_type_from_url($image_url),
-			'type'           => $media_type,
-			'sizes'          => array(
-				'full' => array(
-					'url'    => $image_url,
-					'width'  => 0,
-					'height' => 0,
-					'type'   => $media_type
-				)
-			),
-			'source'         => 'ecwid',
-			'ecwid_position' => $ecwid_position
-		);
-	}
-
-	/**
-	 * Get Ecwid image URL by position.
-	 *
-	 * @since 0.2.5
-	 *
-	 * @param object $product  Ecwid product object.
-	 * @param int    $position Image position.
-	 *
-	 * @return string|null Image URL or null.
-	 */
-	private function get_ecwid_image_by_position($product, $position) {
-		$position = intval($position);
-
-		if ($position === 0 && !empty($product->thumbnailUrl)) {
-			return $product->thumbnailUrl;
-		}
-
-		if (!empty($product->galleryImages) && is_array($product->galleryImages)) {
-			// Position 1+ refers to gallery images (0-indexed)
-			$gallery_index = $position - 1;
-			if (isset($product->galleryImages[$gallery_index])) {
-				return $product->galleryImages[$gallery_index]->url;
-			}
-		}
-
-		return null;
-	}
-
-	/**
-	 * Determine media type from URL and optional mime type.
-	 *
-	 * @since 0.2.5
-	 *
-	 * @param string $url      Media URL.
-	 * @param string $mimeType Optional mime type.
-	 *
-	 * @return string Media type.
-	 */
-	private function determine_media_type_from_url($url, $mimeType = '') {
-		// Check mime type first if provided
-		if ($mimeType) {
-			if (strpos($mimeType, 'video/') === 0) {
-				return 'video';
-			}
-			if (strpos($mimeType, 'image/') === 0) {
-				return 'image';
-			}
-			if (strpos($mimeType, 'audio/') === 0) {
-				return 'audio';
-			}
-			if (strpos($mimeType, 'application/pdf') === 0 || strpos($mimeType, 'text/') === 0) {
-				return 'document';
-			}
-		}
-
-		if (!$url) {
-			return 'image';
-		}
-
-		// Parse URL to get pathname without query parameters
-		$parsed_url = parse_url($url);
-		$pathname = isset($parsed_url['path']) ? $parsed_url['path'] : $url;
-
-		// Extract file extension from pathname
-		$extension = strtolower(pathinfo($pathname, PATHINFO_EXTENSION));
-
-		// Video extensions
-		$video_extensions = array('mp4', 'webm', 'ogg', 'avi', 'mov', 'wmv', 'flv', 'm4v', '3gp', 'mkv');
-		if (in_array($extension, $video_extensions)) {
-			return 'video';
-		}
-
-		// Audio extensions
-		$audio_extensions = array('mp3', 'wav', 'ogg', 'aac', 'flac', 'm4a', 'wma');
-		if (in_array($extension, $audio_extensions)) {
-			return 'audio';
-		}
-
-		// Document extensions
-		$document_extensions = array('pdf', 'doc', 'docx', 'txt', 'rtf', 'xls', 'xlsx', 'ppt', 'pptx');
-		if (in_array($extension, $document_extensions)) {
-			return 'document';
-		}
-
-		// Check for common video hosting patterns
-		if (strpos($url, 'youtube.com') !== false || strpos($url, 'youtu.be') !== false ||
-			strpos($url, 'vimeo.com') !== false || strpos($url, 'wistia.com') !== false ||
-			strpos($url, '/videos/') !== false || strpos($url, '/video/') !== false) {
-			return 'video';
-		}
-
-		// Default to image
-		return 'image';
-	}
-
-	/**
-	 * Guess mime type from URL.
-	 *
-	 * @since 0.2.5
-	 *
-	 * @param string $url Media URL.
-	 *
-	 * @return string Guessed mime type.
-	 */
-	private function guess_mime_type_from_url($url) {
-		$extension = strtolower(pathinfo(parse_url($url, PHP_URL_PATH), PATHINFO_EXTENSION));
-
-		$mime_types = array(
-			'jpg'  => 'image/jpeg',
-			'jpeg' => 'image/jpeg',
-			'png'  => 'image/png',
-			'gif'  => 'image/gif',
-			'webp' => 'image/webp',
-			'svg'  => 'image/svg+xml',
-			'mp4'  => 'video/mp4',
-			'webm' => 'video/webm',
-			'ogg'  => 'video/ogg',
-			'avi'  => 'video/x-msvideo',
-			'mov'  => 'video/quicktime',
-			'mp3'  => 'audio/mpeg',
-			'wav'  => 'audio/wav',
-			'aac'  => 'audio/aac',
-			'flac' => 'audio/flac',
-			'pdf'  => 'application/pdf',
-			'doc'  => 'application/msword',
-			'docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-		);
-
-		return isset($mime_types[$extension]) ? $mime_types[$extension] : 'image/jpeg';
-	}
-
-	/**
-	 * Get attachment sizes for WordPress media.
-	 *
-	 * @since 0.2.5
-	 *
-	 * @param int $attachment_id WordPress attachment ID.
-	 *
-	 * @return array Array of available sizes.
-	 */
-	private function get_attachment_sizes($attachment_id) {
-		$sizes = array();
-		$metadata = wp_get_attachment_metadata($attachment_id);
-
-		if (!$metadata) {
-			return $sizes;
-		}
-
-		// For videos, we might not have traditional image sizes
-		$mime_type = get_post_mime_type($attachment_id);
-		if (strpos($mime_type, 'video/') === 0) {
-			// For videos, return basic info
-			$sizes['full'] = array(
-				'url'    => wp_get_attachment_url($attachment_id),
-				'width'  => isset($metadata['width']) ? $metadata['width'] : 0,
-				'height' => isset($metadata['height']) ? $metadata['height'] : 0,
-				'type'   => 'video'
-			);
-
-			return $sizes;
-		}
-
-		// For images, process normal image sizes
-		if (!isset($metadata['sizes'])) {
-			return $sizes;
-		}
-
-		$upload_dir = wp_upload_dir();
-		$base_url = $upload_dir['baseurl'];
-		$base_path = dirname($metadata['file']);
-
-		foreach ($metadata['sizes'] as $size_name => $size_data) {
-			$sizes[$size_name] = array(
-				'url'    => $base_url . '/' . $base_path . '/' . $size_data['file'],
-				'width'  => $size_data['width'],
-				'height' => $size_data['height'],
-				'type'   => 'image'
-			);
-		}
-
-		// Add full size
-		$sizes['full'] = array(
-			'url'    => wp_get_attachment_url($attachment_id),
-			'width'  => isset($metadata['width']) ? $metadata['width'] : 0,
-			'height' => isset($metadata['height']) ? $metadata['height'] : 0,
-			'type'   => 'image'
-		);
-
-		return $sizes;
 	}
 
 	/**

@@ -5,6 +5,99 @@ import { store, getContext } from '@wordpress/interactivity';
  */
 import { getProductDataWithFallbackGenerator } from '../utils/ecwid-view-utils';
 
+/**
+ * Helper function to create responsive image with enhanced data
+ * @param imageData
+ * @param productId
+ * @param position
+ * @param context
+ */
+function createResponsiveImage(
+	imageData,
+	productId,
+	position,
+	context = 'gallery'
+) {
+	const img = document.createElement( 'img' );
+
+	// Basic attributes
+	img.src = imageData.src || imageData.url || imageData.image400pxUrl;
+	img.alt =
+		imageData.alt || productId
+			? `Product ${ productId } Image`
+			: 'Product Image';
+	img.className = 'img-fluid peaches-responsive-img peaches-ecwid-img';
+	img.loading = 'lazy';
+	img.decoding = 'async';
+
+	// Add responsive attributes if available
+	if ( imageData.srcset ) {
+		img.srcset = imageData.srcset;
+	}
+	if ( imageData.sizes ) {
+		img.sizes = imageData.sizes;
+	}
+
+	// Add dimensions if available
+	if ( imageData.width ) {
+		img.width = imageData.width;
+	}
+	if ( imageData.height ) {
+		img.height = imageData.height;
+	}
+
+	// Add data attributes
+	img.setAttribute( 'data-responsive-type', 'ecwid' );
+	img.setAttribute( 'data-image-position', position );
+	img.setAttribute( 'data-product-id', productId );
+
+	return img;
+}
+
+/**
+ * Fetch enhanced responsive image data from REST API
+ * @param productId
+ * @param position
+ * @param context
+ */
+async function fetchEnhancedImageData(
+	productId,
+	position,
+	context = 'gallery'
+) {
+	try {
+		const response = await fetch(
+			'/wp-json/peaches/v1/responsive-image-data',
+			{
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+					Accept: 'application/json',
+				},
+				credentials: 'same-origin',
+				body: JSON.stringify( {
+					product_id: productId,
+					position,
+					context,
+				} ),
+			}
+		);
+
+		if ( response.ok ) {
+			const result = await response.json();
+			if ( result.success && result.data ) {
+				return result.data;
+			}
+		}
+
+		console.warn( 'Enhanced image data not available, using fallback' );
+		return null;
+	} catch ( error ) {
+		console.warn( 'Error fetching enhanced image data:', error );
+		return null;
+	}
+}
+
 // Store definition with proper lifecycle methods
 const { state } = store( 'peaches-ecwid-product-images', {
 	state: {

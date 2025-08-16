@@ -242,13 +242,14 @@ class Peaches_Ecwid_Blocks {
 			'class-product-media-manager.php',
 			'class-ingredients-manager.php',
 			'class-media-tags-manager.php',
-			'class-rest-api.php', // Consolidated REST API endpoints
+			'class-ecwid-image-utilities.php',
+			'class-rest-api.php',
 		);
 
 		foreach ($classes as $class_file) {
 			$file_path = PEACHES_ECWID_INCLUDES_DIR . $class_file;
 			if (file_exists($file_path)) {
-				require_once $class_file;
+				require_once $file_path;
 			}
 		}
 
@@ -295,7 +296,7 @@ class Peaches_Ecwid_Blocks {
 			$this->product_media_manager = new Peaches_Product_Media_Manager($this->ecwid_api, $this->media_tags_manager);
 		}
 
-		// Initialize product lines manager (replaces groups)
+		// Initialize product lines manager
 		if (class_exists('Peaches_Product_Lines_Manager')) {
 			$this->product_lines_manager = new Peaches_Product_Lines_Manager();
 		}
@@ -328,9 +329,22 @@ class Peaches_Ecwid_Blocks {
 			$this->block_patterns = new Peaches_Ecwid_Block_Patterns();
 		}
 
-		// Initialize REST API (consolidates all REST endpoints)
-		if (class_exists('Peaches_REST_API') && $this->product_settings_manager && $this->media_tags_manager && $this->product_media_manager && $this->ecwid_api && $this->product_manager && $this->product_lines_manager) {
-			$this->rest_api = new Peaches_REST_API($this->product_settings_manager, $this->media_tags_manager, $this->product_media_manager, $this->ecwid_api, $this->product_manager, $this->product_lines_manager);
+		// Initialize REST API
+		if (class_exists('Peaches_REST_API') &&
+		    $this->product_settings_manager &&
+		    $this->media_tags_manager &&
+		    $this->product_media_manager &&
+		    $this->ecwid_api &&
+		    $this->product_manager &&
+		    $this->product_lines_manager) {
+			$this->rest_api = new Peaches_REST_API(
+				$this->product_settings_manager,
+				$this->media_tags_manager,
+				$this->product_media_manager,
+				$this->ecwid_api,
+				$this->product_manager,
+				$this->product_lines_manager
+			);
 		}
 
 		// Initialize block registration
