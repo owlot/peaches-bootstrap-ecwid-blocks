@@ -1,0 +1,24 @@
+/**
+ * Ecwid Responsive Images CSS
+ *
+ * Additional styles for Ecwid images that complement the parent plugin's
+ * responsive backgrounds CSS.
+ *
+ * @package PeachesBootstrapEcwidBlocks
+ * @since   0.4.3
+ */
+
+/* ========================================================================
+   ECWID SPECIFIC RESPONSIVE IMAGE STYLES
+   ======================================================================== */
+
+/* Ecwid responsive images */
+.peaches-ecwid-img {
+	/* Ensure consistent behavior with WordPress images */
+	max-width: 100%;
+	height: auto;
+
+	/* Ecwid-specific optimizations */
+	image-rendering: -webkit-optimize-contrast;
+	image-rendering: crisp-edges;
+}

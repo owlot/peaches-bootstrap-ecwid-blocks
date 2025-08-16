@@ -148,6 +148,15 @@ class Peaches_Ecwid_Blocks {
 	private $rest_api;
 
 	/**
+	 * Responsive Images Manager instance.
+	 *
+	 * @since  0.4.3
+	 * @access private
+	 * @var    Peaches_Ecwid_Responsive_Images
+	 */
+	private $responsive_images;
+
+	/**
 	 * Get singleton instance of the class.
 	 *
 	 * @since 0.2.0
@@ -242,13 +251,15 @@ class Peaches_Ecwid_Blocks {
 			'class-product-media-manager.php',
 			'class-ingredients-manager.php',
 			'class-media-tags-manager.php',
-			'class-rest-api.php', // Consolidated REST API endpoints
+			'class-ecwid-image-utilities.php',
+			'class-ecwid-responsive-images.php',
+			'class-rest-api.php',
 		);
 
 		foreach ($classes as $class_file) {
 			$file_path = PEACHES_ECWID_INCLUDES_DIR . $class_file;
 			if (file_exists($file_path)) {
-				require_once $class_file;
+				require_once $file_path;
 			}
 		}
 
@@ -295,7 +306,7 @@ class Peaches_Ecwid_Blocks {
 			$this->product_media_manager = new Peaches_Product_Media_Manager($this->ecwid_api, $this->media_tags_manager);
 		}
 
-		// Initialize product lines manager (replaces groups)
+		// Initialize product lines manager
 		if (class_exists('Peaches_Product_Lines_Manager')) {
 			$this->product_lines_manager = new Peaches_Product_Lines_Manager();
 		}
@@ -328,9 +339,28 @@ class Peaches_Ecwid_Blocks {
 			$this->block_patterns = new Peaches_Ecwid_Block_Patterns();
 		}
 
-		// Initialize REST API (consolidates all REST endpoints)
-		if (class_exists('Peaches_REST_API') && $this->product_settings_manager && $this->media_tags_manager && $this->product_media_manager && $this->ecwid_api && $this->product_manager && $this->product_lines_manager) {
-			$this->rest_api = new Peaches_REST_API($this->product_settings_manager, $this->media_tags_manager, $this->product_media_manager, $this->ecwid_api, $this->product_manager, $this->product_lines_manager);
+		// Initialize responsive images (simplified version)
+		if (class_exists('Peaches_Ecwid_Responsive_Images')) {
+			$this->responsive_images = Peaches_Ecwid_Responsive_Images::get_instance();
+		}
+
+		// Initialize REST API with responsive images dependency
+		if (class_exists('Peaches_REST_API') &&
+		    $this->product_settings_manager &&
+		    $this->media_tags_manager &&
+		    $this->product_media_manager &&
+		    $this->ecwid_api &&
+		    $this->product_manager &&
+		    $this->product_lines_manager) {
+			$this->rest_api = new Peaches_REST_API(
+				$this->product_settings_manager,
+				$this->media_tags_manager,
+				$this->product_media_manager,
+				$this->ecwid_api,
+				$this->product_manager,
+				$this->product_lines_manager,
+				$this->responsive_images  // Pass responsive images instance
+			);
 		}
 
 		// Initialize block registration
@@ -637,5 +667,31 @@ class Peaches_Ecwid_Blocks {
 
 		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 		dbDelta($sql);
+	}
+
+	/**
+	 * Get responsive images instance
+	 *
+	 * Public method to access the responsive images functionality.
+	 *
+	 * @since 0.4.3
+	 *
+	 * @return Peaches_Ecwid_Responsive_Images|null
+	 */
+	public function get_responsive_images() {
+		return $this->responsive_images;
+	}
+
+	/**
+	 * Check if responsive images are available
+	 *
+	 * Utility method to check if responsive images functionality is available.
+	 *
+	 * @since 0.4.3
+	 *
+	 * @return bool True if responsive images are available
+	 */
+	public function has_responsive_images() {
+		return $this->responsive_images instanceof Peaches_Ecwid_Responsive_Images;
 	}
 }
