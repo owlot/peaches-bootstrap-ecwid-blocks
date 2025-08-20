@@ -27,7 +27,6 @@ const { state } = store( 'peaches-ecwid-product-ingredients', {
 			try {
 				const apiUrl = buildApiUrl( 'product-ingredients', productId );
 
-				console.log( `Calling API with language: ${ apiUrl }` );
 				// Fetch ingredients from WordPress API with language support
 				const response = yield fetch( apiUrl, {
 					headers: {
@@ -60,13 +59,6 @@ const { state } = store( 'peaches-ecwid-product-ingredients', {
 							isCollapsed: true, // Start collapsed by default
 						} )
 					);
-
-					// Log language info for debugging
-					if ( data.language && data.language !== 'en' ) {
-						console.log(
-							`Loaded ingredients in language: ${ data.language }`
-						);
-					}
 				} else {
 					context.ingredients = [];
 				}

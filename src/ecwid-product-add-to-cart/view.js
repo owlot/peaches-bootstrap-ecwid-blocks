@@ -147,11 +147,6 @@ const { state } = store( 'peaches-ecwid-add-to-cart', {
 						id: productId,
 						quantity: parseInt( quantity ) || 1,
 					} );
-
-					// Optional: Show success message or feedback
-					console.log(
-						`Added product ${ productId } to cart with quantity ${ quantity }`
-					);
 				} catch ( error ) {
 					console.error( 'Error adding product to cart:', error );
 				}

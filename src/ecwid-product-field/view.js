@@ -405,7 +405,6 @@ store( 'peaches-ecwid-product-lines', {
 			try {
 				const apiUrl = buildApiUrl( 'product-lines', productId );
 
-				console.log( `Calling API with language: ${ apiUrl }` );
 				// Fetch ingredients from WordPress API with language support
 				const response = yield fetch( apiUrl, {
 					headers: {

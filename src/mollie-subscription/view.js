@@ -657,8 +657,6 @@ const { state, actions } = store( 'peaches/mollie-subscription', {
 				// Handle return from Mollie checkout
 				actions.handleCheckoutReturn( subscriptionResult );
 			}
-
-			console.log( 'Mollie subscription block initialized:', context );
 		},
 	},
 } );

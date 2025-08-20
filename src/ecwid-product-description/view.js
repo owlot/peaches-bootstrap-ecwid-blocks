@@ -35,10 +35,6 @@ const { state } = store( 'peaches-ecwid-product-description', {
 			}
 
 			try {
-				console.log(
-					`Fetching description for product ${ productData?.id }, type: ${ descriptionType }`
-				);
-
 				// Fetch specific description type from unified API
 				const response = yield window.fetch(
 					`/wp-json/peaches/v1/product-descriptions/${ productData?.id }/type/${ descriptionType }`,
@@ -51,11 +47,6 @@ const { state } = store( 'peaches-ecwid-product-description', {
 				);
 
 				if ( response.status === 404 ) {
-					// Description not found for this type - hide the entire block
-					console.log(
-						`No description found for type: ${ descriptionType }`
-					);
-
 					// Get the element and hide it
 					try {
 						const element = getElement();
@@ -64,7 +55,7 @@ const { state } = store( 'peaches-ecwid-product-description', {
 						}
 					} catch ( e ) {
 						// Fallback if element access fails
-						console.log(
+						console.error(
 							'Could not hide element, description not found'
 						);
 					}
@@ -80,11 +71,6 @@ const { state } = store( 'peaches-ecwid-product-description', {
 				const data = yield response.json();
 
 				if ( data && data.success && data.description ) {
-					console.log(
-						`Description loaded for type: ${ descriptionType }`,
-						data.description
-					);
-
 					// Get the element reference like product-field does
 					const element = getElement();
 					if ( element && element.ref ) {
@@ -123,18 +109,13 @@ const { state } = store( 'peaches-ecwid-product-description', {
 					context.descriptionContent = data.description.content || '';
 					context.descriptionTitle = data.description.title || '';
 				} else {
-					// No description data - hide the block
-					console.log(
-						`No description data for type: ${ descriptionType }`
-					);
-
 					try {
 						const element = getElement();
 						if ( element && element.ref ) {
 							element.ref.style.display = 'none';
 						}
 					} catch ( e ) {
-						console.log(
+						console.error(
 							'Could not hide element, no description data'
 						);
 					}
@@ -149,7 +130,7 @@ const { state } = store( 'peaches-ecwid-product-description', {
 						element.ref.style.display = 'none';
 					}
 				} catch ( e ) {
-					console.log( 'Could not hide element on error' );
+					console.error( 'Could not hide element on error' );
 				}
 			}
 		},
