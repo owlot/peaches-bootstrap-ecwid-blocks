@@ -47,6 +47,15 @@ class Peaches_Ecwid_Block_Registration implements Peaches_Ecwid_Block_Registrati
 	);
 
 	/**
+	 * Cache for registered block types to avoid duplicate registrations
+	 *
+	 * @since  0.4.5
+	 * @access private
+	 * @var    array
+	 */
+	private $registered_blocks = array();
+
+	/**
 	 * Multilingual configuration for blocks that support translations.
 	 *
 	 * @since  0.3.3
@@ -96,54 +105,138 @@ class Peaches_Ecwid_Block_Registration implements Peaches_Ecwid_Block_Registrati
 	 * for optimal performance and automatic asset handling.
 	 *
 	 * @since 0.3.3
+	 *
+	 * @return void
 	 */
 	public function register_blocks() {
-		// Register block metadata collection for better performance
-		if (function_exists('wp_register_block_metadata_collection')) {
-			wp_register_block_metadata_collection(
-				PEACHES_ECWID_PLUGIN_DIR . 'dist',
-				PEACHES_ECWID_PLUGIN_DIR . 'dist/blocks-manifest.php'
-			);
-		}
+		// Performance monitoring start
+		$start_time = microtime( true );
 
-		// Register each block type from metadata.
-		foreach ($this->block_types as $block_type) {
-			$this->register_single_block($block_type);
+		try {
+			// Register block metadata collection for better performance
+			$this->register_block_metadata_collection();
+
+			// Register individual block types
+			$this->register_individual_blocks();
+
+			// Log performance if debugging is enabled
+			$execution_time = ( microtime( true ) - $start_time ) * 1000; // Convert to milliseconds
+			$this::log_info( sprintf(
+				'Registered %d blocks in %.2fms',
+				count( $this->block_types ),
+				$execution_time
+			) );
+
+		} catch ( Exception $e ) {
+			// Log error but don't break the site
+			$this::log_error( 'Error registering blocks - ' . $e->getMessage() );
 		}
 	}
 
 	/**
-	 * Register a single block using metadata.
+	 * Register block metadata collection for improved performance
 	 *
-	 * @since 0.3.3
+	 * @since 0.4.5
 	 *
-	 * @param string $block_type The block type name.
+	 * @return void
+	 * @throws Exception If metadata collection registration fails
+	 */
+	private function register_block_metadata_collection() {
+		$manifest_path = PEACHES_ECWID_PLUGIN_DIR . 'dist/blocks-manifest.php';
+		$dist_path     = PEACHES_ECWID_PLUGIN_DIR . 'dist';
+
+		// Verify paths exist before attempting registration
+		if ( ! file_exists( $dist_path ) ) {
+			throw new Exception( "Distribution directory not found: {$dist_path}" );
+		}
+
+		if ( ! file_exists( $manifest_path ) ) {
+			throw new Exception( "Manifest file not found: {$manifest_path}" );
+		}
+
+		// Register the metadata collection
+		if ( function_exists( 'wp_register_block_metadata_collection' ) ) {
+			wp_register_block_metadata_collection( $dist_path, $manifest_path );
+		}
+	}
+
+	/**
+	 * Register individual block types with validation
+	 *
+	 * @since 0.4.5
 	 *
 	 * @return void
 	 */
-	private function register_single_block($block_type) {
-		// Try build directory first
-		$build_path = PEACHES_ECWID_PLUGIN_DIR . 'build/' . $block_type;
-		$src_path = PEACHES_ECWID_PLUGIN_DIR . 'src/' . $block_type;
-
-		// Use the path that exists
-		$block_path = file_exists($build_path . '/block.json') ? $build_path : $src_path;
-
-		if (file_exists($block_path . '/block.json')) {
-			if (function_exists('register_block_type_from_metadata')) {
-				register_block_type_from_metadata($block_path);
-			} else {
-				// Fallback for older WordPress versions
-				register_block_type($block_path);
-			}
-
-			$this->log_info("Registered block peaches-ecwid/{$block_type}.");
-		} else {
-			$this->log_error("Block definition not found for {$block_type}", array(
-				'build_path' => $build_path,
-				'src_path' => $src_path,
-			));
+	private function register_individual_blocks() {
+		foreach ( $this->block_types as $block_type ) {
+			$this->register_single_block( $block_type );
 		}
+	}
+
+	/**
+	 * Register a single block type with validation and error handling
+	 *
+	 * @since 0.4.5
+	 *
+	 * @param string $block_type - The block type identifier
+	 *
+	 * @return void
+	 */
+	private function register_single_block( $block_type ) {
+		// Skip if already registered
+		if ( isset( $this->registered_blocks[ $block_type ] ) ) {
+			return;
+		}
+
+		$block_path = PEACHES_ECWID_PLUGIN_DIR . 'build/' . $block_type;
+
+		// Validate block path exists
+		if ( ! is_dir( $block_path ) ) {
+			$this::log_info( "Block directory not found: {$block_path}" );
+			return;
+		}
+
+		// Validate block.json exists
+		$block_json_path = $block_path . '/block.json';
+		if ( ! file_exists( $block_json_path ) ) {
+			$this::log_info( "block.json not found: {$block_json_path}" );
+			return;
+		}
+
+		// Register the block
+		try {
+			$result = register_block_type_from_metadata( $block_path );
+
+			if ( $result instanceof WP_Block_Type ) {
+				$this->registered_blocks[ $block_type ] = true;
+			}
+		} catch ( Exception $e ) {
+			$this::error_log( "Failed to register {$block_type} - " . $e->getMessage() );
+		}
+	}
+
+	/**
+	 * Get list of successfully registered blocks
+	 *
+	 * @since 0.3.3
+	 *
+	 * @return array - Array of registered block type names
+	 */
+	public function get_registered_blocks() {
+		return array_keys( $this->registered_blocks );
+	}
+
+	/**
+	 * Check if a specific block type is registered
+	 *
+	 * @since 0.4.5
+	 *
+	 * @param string $block_type - Block type to check
+	 *
+	 * @return bool - True if registered, false otherwise
+	 */
+	public function is_block_registered( $block_type ) {
+		return isset( $this->registered_blocks[ $block_type ] );
 	}
 
 	/**
@@ -258,17 +351,6 @@ class Peaches_Ecwid_Block_Registration implements Peaches_Ecwid_Block_Registrati
 		$result = $registry->apply_translations((string)$block_content, $block['attrs'] ?? array(), $block['blockName']);
 
 		return (string)$result;
-	}
-
-	/**
-	 * Get list of registered block names.
-	 *
-	 * @since 0.3.3
-	 *
-	 * @return array Array of block names.
-	 */
-	public function get_registered_blocks() {
-		return $this->block_types;
 	}
 
 	/**

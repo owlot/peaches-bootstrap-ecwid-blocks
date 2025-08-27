@@ -847,7 +847,7 @@ class Peaches_Ecwid_Utilities {
 			$message = 'Non-string error message provided';
 		}
 
-		$log_message = '[Peaches Ecwid Utilities] ' . $message;
+		$log_message = '[Peaches Ecwid Blocks] ' . $message;
 
 		if (!empty($context) && is_array($context)) {
 			$log_message .= ' - Context: ' . wp_json_encode($context);
