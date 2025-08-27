@@ -647,6 +647,8 @@ class Peaches_Ecwid_API implements Peaches_Ecwid_API_Interface {
 
 				if (isset($options['offset'])) {
 					$api_params['offset'] = max(0, intval($options['offset']));
+				} else {
+					$api_params['offset'] = 0;
 				}
 
 				if (isset($options['enabled'])) {

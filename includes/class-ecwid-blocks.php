@@ -207,7 +207,6 @@ class Peaches_Ecwid_Blocks {
 			'interfaces/interface-ecwid-api.php',
 			'interfaces/interface-rewrite-manager.php',
 			'interfaces/interface-product-manager.php',
-			'interfaces/interface-ingredients-manager.php',
 			'interfaces/interface-block-patterns.php',
 			'interfaces/interface-media-tags-manager.php',
 			'interfaces/interface-product-media-manager.php',
@@ -226,9 +225,10 @@ class Peaches_Ecwid_Blocks {
 
 		// Load classes
 		$classes = array(
-			'class-block-registration.php',
 			'class-utilities.php',
+			'class-block-registration.php',
 			'class-ecwid-api.php',
+			'class-ecwid-sitemap-manager.php',
 			'class-rewrite-manager.php',
 			'class-enhanced-navigation.php',
 			'class-product-manager.php',
@@ -240,7 +240,6 @@ class Peaches_Ecwid_Blocks {
 			'class-product-lines-manager.php',
 			'class-product-settings-manager.php',
 			'class-product-media-manager.php',
-			'class-ingredients-manager.php',
 			'class-media-tags-manager.php',
 			'class-ecwid-image-utilities.php',
 			'class-rest-api.php',
@@ -250,6 +249,8 @@ class Peaches_Ecwid_Blocks {
 			$file_path = PEACHES_ECWID_INCLUDES_DIR . $class_file;
 			if (file_exists($file_path)) {
 				require_once $file_path;
+			} else {
+				error_log('Missing class file: ' . $file_path);
 			}
 		}
 

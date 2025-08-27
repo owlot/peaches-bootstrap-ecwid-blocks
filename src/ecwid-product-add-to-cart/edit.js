@@ -18,7 +18,6 @@ import {
 import {
 	BootstrapSettingsPanels,
 	computeClassName,
-	initializeBootstrapAttributes,
 } from '../../../peaches-bootstrap-blocks/src/utils/bootstrap_settings';
 import {
 	useEcwidProductData,
@@ -169,21 +168,13 @@ function AddToCartEdit( props ) {
 
 	// Initialize Bootstrap attributes with defaults
 	useEffect( () => {
-		const initializedAttributes =
-			initializeBootstrapAttributes( attributes );
-
-		// Check if we need to set the default display value
-		if ( ! initializedAttributes.xs.display ) {
-			initializedAttributes.xs.display = 'inline-flex';
-		}
-
-		// Only update if there are actual changes
-		if (
-			JSON.stringify( initializedAttributes ) !==
-			JSON.stringify( attributes )
-		) {
-			setAttributes( initializedAttributes );
-		}
+		const currentPrefixedValue = attributes.xs || {};
+		setAttributes( {
+			xs: {
+				...currentPrefixedValue,
+				display: 'inline-flex',
+			},
+		} );
 	}, [] );
 
 	/**
