@@ -607,6 +607,82 @@ class Peaches_Ecwid_API implements Peaches_Ecwid_API_Interface {
 		return $info;
 	}
 
+	/**
+	 * Get product description by type with caching support
+	 *
+	 * @since 0.4.7
+	 *
+	 * @param int    $product_id       Product ID
+	 * @param string $description_type Description type (usage, care, etc.)
+	 * @param string $language         Optional language code
+	 *
+	 * @return array|null Description data with title and content, or null if not found
+	 */
+	public function get_product_description_by_type($product_id, $description_type, $language = 'en') {
+		if (empty($product_id) || empty($description_type)) {
+			return null;
+		}
+
+		// Create cache key
+		$cache_key = sprintf(
+			'product_description_%d_%s_%s',
+			$product_id,
+			$description_type,
+			$language
+		);
+
+		// Try to get from cache first
+		$cached_data = $this->get_cached_data($cache_key);
+		if ($cached_data !== false) {
+			return $cached_data;
+		}
+
+		try {
+			// Get product settings manager
+			$settings_manager = Peaches_Ecwid_Blocks::get_instance()->get_product_settings_manager();
+			if (!$settings_manager) {
+				$this->log_error('Product settings manager not available');
+				return null;
+			}
+
+			// Get description from product settings
+			$description_data = $settings_manager->get_product_description_by_type(
+				$product_id,
+				$description_type,
+				$language
+			);
+
+			if (!$description_data) {
+				// Cache negative result for shorter time (use transients directly for short cache)
+				set_transient($cache_key . '_null', null, 5 * MINUTE_IN_SECONDS);
+				return null;
+			}
+
+			// Ensure we have the expected structure
+			$formatted_data = [
+				'title' => isset($description_data['title']) ? $description_data['title'] : '',
+				'content' => isset($description_data['content']) ? $description_data['content'] : '',
+				'type' => $description_type,
+			];
+
+			// Cache the result
+			$this->set_cached_data($cache_key, $formatted_data);
+
+			return $formatted_data;
+
+		} catch (Exception $e) {
+			$this->log_error('Error fetching product description', [
+				'product_id' => $product_id,
+				'description_type' => $description_type,
+				'language' => $language,
+				'error' => $e->getMessage(),
+			]);
+
+			// Cache error result for short time (use transients directly for short cache)
+			set_transient($cache_key . '_error', null, 2 * MINUTE_IN_SECONDS);
+			return null;
+		}
+	}
 
 	/**
 	 * Get all products from Ecwid store with pagination, search, and sorting.

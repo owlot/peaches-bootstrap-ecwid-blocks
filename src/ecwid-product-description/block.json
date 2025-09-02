@@ -5,7 +5,7 @@
 	"version": "0.1.0",
 	"title": "Bootstrap ECWID Product Description",
 	"category": "peaches-bootstrap",
-	"description": "Display product descriptions with Bootstrap styling.",
+	"description": "Display product descriptions with Bootstrap styling using hybrid server-client rendering.",
 	"keywords": [
 		"bootstrap",
 		"product",
@@ -65,6 +65,7 @@
 			"default": {}
 		}
 	},
+	"render": "file:./render.php",
 	"viewScriptModule": "file:./view.js",
 	"editorScript": "file:./index.js"
 }

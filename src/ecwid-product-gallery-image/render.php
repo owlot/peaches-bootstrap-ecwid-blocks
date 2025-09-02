@@ -318,24 +318,6 @@ $media_alt = esc_attr($media_data['alt']);
 $media_type = $media_data['type'];
 $attachment_id = $media_data['attachment_id'] ?? null;
 
-// Debug: Add some debug info as HTML comments
-echo '<!-- Debug: Media URL: ' . $media_url . ' -->';
-echo '<!-- Debug: Lightbox URL: ' . $lightbox_media_url . ' -->';
-echo '<!-- Debug: Media Type: ' . $media_type . ' (from tag config) -->';
-echo '<!-- Debug: Expected Type: ' . $expected_media_type . ' -->';
-echo '<!-- Debug: Enable Lightbox: ' . ($enable_lightbox ? 'true' : 'false') . ' -->';
-echo '<!-- Debug: Has Enhanced Data: ' . (function_exists('peaches_get_product_media_data') ? 'true' : 'false') . ' -->';
-echo '<!-- Debug: Has Responsive Data: ' . (!empty($media_data['srcset']) ? 'true' : 'false') . ' -->';
-echo '<!-- Debug: Media Source: ' . ($media_data['source'] ?? 'unknown') . ' -->';
-echo '<!-- Debug: Attachment ID: ' . ($media_data['attachment_id'] ?? 'none') . ' -->';
-echo '<!-- Debug: Media Data Keys: ' . implode(', ', array_keys($media_data)) . ' -->';
-if (isset($media_data['mime_type'])) {
-    echo '<!-- Debug: MIME Type: ' . $media_data['mime_type'] . ' -->';
-}
-if (isset($media_data['ecwid_position'])) {
-    echo '<!-- Debug: Ecwid Position: ' . $media_data['ecwid_position'] . ' -->';
-}
-
 ?>
 <div <?php echo $wrapper_attributes; ?>>
 	<?php if ($media_type === 'image'): ?>
