@@ -104,7 +104,7 @@ export default function save( { attributes } ) {
 	return (
 		<div { ...blockProps }>
 			{ showQuantitySelector && (
-				<div className={ `${ borderClasses } input-group` }>
+				<div className={ `${ borderClasses } w-auto input-group` }>
 					<button
 						className={ `btn-${
 							inputBootstrapSettings.colors?.background || 'light'
