@@ -1578,7 +1578,7 @@ class Peaches_Product_Settings_Manager {
 	 */
 	private function log_info($message, $context = array()) {
 		if (defined('WP_DEBUG') && WP_DEBUG) {
-			error_log('Peaches Product Settings Manager: ' . $message . ' ' . wp_json_encode($context));
+			error_log('Product Settings Manager: ' . $message . ' ' . wp_json_encode($context));
 		}
 	}
 
@@ -1593,7 +1593,9 @@ class Peaches_Product_Settings_Manager {
 	 * @return void
 	 */
 	private function log_error($message, $context = array()) {
-		error_log('Peaches Product Settings Manager ERROR: ' . $message . ' ' . wp_json_encode($context));
+		if (class_exists('Peaches_Utilities')) {
+			Peaches_Utilities::log_error('[Block Registration] ' . $message, $context);
+		}
 	}
 }
 
