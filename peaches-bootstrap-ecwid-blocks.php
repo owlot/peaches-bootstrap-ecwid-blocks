@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       Peaches Boostrap Ecwid Blocks
  * Description:       Gutenberg blocks created for Ecwid Bootstrap themed components
- * Version:           0.4.7
+ * Version:           0.5.0
  * Requires at least: 6.7
  * Requires PHP:      7.4
  * Author:            Peaches.io
@@ -18,7 +18,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // Define plugin constants
-define('PEACHES_ECWID_VERSION', '0.4.7');
+define('PEACHES_ECWID_VERSION', '0.5.0');
 define('PEACHES_ECWID_PLUGIN_FILE', __FILE__);
 define('PEACHES_ECWID_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('PEACHES_ECWID_PLUGIN_URL', plugin_dir_url(__FILE__));
@@ -26,6 +26,9 @@ define('PEACHES_ECWID_INCLUDES_DIR', PEACHES_ECWID_PLUGIN_DIR . 'includes/');
 define('PEACHES_ECWID_ASSETS_URL', PEACHES_ECWID_PLUGIN_URL . 'assets/');
 // Require the main plugin class
 require_once PEACHES_ECWID_INCLUDES_DIR . 'class-ecwid-blocks.php';
+
+// Require block caching helper functions
+require_once PEACHES_ECWID_INCLUDES_DIR . 'block-cache-helper.php';
 
 // Initialize the plugin
 Peaches_Ecwid_Blocks::get_instance();

@@ -501,7 +501,9 @@ function AddToCartEdit( props ) {
 			{ ! isLoading && (
 				<div { ...blockProps }>
 					{ showQuantitySelector && (
-						<div className={ `${ borderClasses } w-auto input-group` }>
+						<div
+							className={ `${ borderClasses } w-auto input-group` }
+						>
 							<button
 								className={ `btn-${ inputBootstrapSettings.colors.background } btn quantity-decrease border-0 rounded-0` }
 								type="button"

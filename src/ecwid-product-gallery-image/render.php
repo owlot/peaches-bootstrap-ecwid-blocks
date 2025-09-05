@@ -10,6 +10,14 @@
  *     $block (WP_Block): The block instance.
  */
 
+// Check for cached block HTML first using product-aware caching
+$cache_result = peaches_ecwid_start_product_block_cache('ecwid-product-gallery-image', $attributes, $content);
+if ($cache_result === false) {
+    return; // Cached content was served
+}
+$cache_manager = $cache_result['cache_manager'] ?? null;
+$cache_factors = $cache_result['cache_factors'] ?? null;
+
 // Get attributes with defaults
 $selected_product_id = isset($attributes['selectedProductId']) ? absint($attributes['selectedProductId']) : 0;
 $selected_media_tag = isset($attributes['selectedMediaTag']) ? sanitize_text_field($attributes['selectedMediaTag']) : '';
@@ -261,13 +269,8 @@ if (!$media_data && $hide_if_missing) {
 	return;
 }
 
-// Get block wrapper attributes using computeClassName if available
-$computed_class_name = '';
-if (function_exists('computeClassName')) {
-	$computed_class_name = computeClassName($attributes);
-} elseif (function_exists('peaches_get_safe_string_attribute')) {
-	$computed_class_name = peaches_get_safe_string_attribute($attributes, 'className', '');
-}
+// Get computed className from attributes
+$computed_class_name = peaches_get_safe_string_attribute($attributes, 'computedClassName');
 
 $wrapper_attributes = get_block_wrapper_attributes(array(
 	'class' => $computed_class_name,
@@ -433,7 +436,7 @@ $attachment_id = $media_data['attachment_id'] ?? null;
 							'style' => 'max-width: 100%; max-height: 100%; object-fit: contain;',
 							'loading' => 'lazy'
 						);
-						echo peaches_generate_responsive_image_html($lightbox_data, $lightbox_attrs);
+						echo peaches_generate_responsive_image_html($lightbox_data, $lightbox_attrs, true);
 					} else {
 						// Fallback to simple image for lightbox
 						?>
@@ -460,3 +463,8 @@ $attachment_id = $media_data['attachment_id'] ?? null;
 		</div>
 	<?php endif; ?>
 </div>
+
+<?php
+// Cache the rendered HTML
+peaches_ecwid_end_block_cache('ecwid-product-gallery-image', $cache_manager, $cache_factors, 300);
+?>

@@ -16,6 +16,15 @@ if (empty($product_id)) {
 	return;
 }
 
+// Check for cached block HTML first using cache helper
+// Note: ecwid-product uses 'id' attribute instead of 'selectedProductId'
+$cache_result = peaches_ecwid_start_product_block_cache('ecwid-product', $attributes, $content);
+if ($cache_result === false) {
+    return; // Cached content was served
+}
+$cache_manager = $cache_result['cache_manager'] ?? null;
+$cache_factors = $cache_result['cache_factors'] ?? null;
+
 // Get show add to cart setting
 $show_add_to_cart = isset($attributes['showAddToCart']) ? $attributes['showAddToCart'] : true;
 
@@ -189,3 +198,8 @@ $wrapper_attributes = get_block_wrapper_attributes(array(
 		<?php endif; ?>
 	</div>
 </div>
+
+<?php
+// Cache the rendered HTML using cache helper
+peaches_ecwid_end_block_cache('ecwid-product', $cache_manager, $cache_factors, 300);
+?>

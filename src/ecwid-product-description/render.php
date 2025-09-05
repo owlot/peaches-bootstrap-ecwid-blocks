@@ -11,6 +11,14 @@
  *     $block (WP_Block): The block instance.
  */
 
+// Check for cached block HTML first using product-aware caching
+$cache_result = peaches_ecwid_start_product_block_cache('ecwid-product-description', $attributes, $content);
+if ($cache_result === false) {
+    return; // Cached content was served
+}
+$cache_manager = $cache_result['cache_manager'] ?? null;
+$cache_factors = $cache_result['cache_factors'] ?? null;
+
 // Get attributes with defaults
 $selected_product_id = isset($attributes['selectedProductId']) ? absint($attributes['selectedProductId']) : 0;
 $description_type = isset($attributes['descriptionType']) ? sanitize_text_field($attributes['descriptionType']) : 'usage';
@@ -127,3 +135,8 @@ $wrapper_attributes = get_block_wrapper_attributes([
 		?>
 	</div>
 </div>
+
+<?php
+// Cache the rendered HTML
+peaches_ecwid_end_block_cache('ecwid-product-description', $cache_manager, $cache_factors, 300);
+?>

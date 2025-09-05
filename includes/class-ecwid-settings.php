@@ -213,6 +213,7 @@ class Peaches_Ecwid_Settings {
 			'general_settings'
 		);
 
+
 		add_settings_field(
 			'cache_management',
 			__( 'Cache Management', 'peaches' ),
@@ -435,8 +436,10 @@ class Peaches_Ecwid_Settings {
 	public function render_redis_field() {
 		$settings = $this->get_settings();
 		$value = isset( $settings['enable_redis'] ) ? $settings['enable_redis'] : false;
-		$redis_available = extension_loaded( 'redis' );
-		$cache_info = $this->get_cache_info();
+		
+		// Check if the parent Peaches Bootstrap Blocks plugin is active
+		$redis_service = $this->get_shared_cache_service();
+		$redis_configured = $redis_service && $redis_service->is_redis_available();
 		?>
 		<div class="redis-settings">
 			<label>
@@ -444,55 +447,39 @@ class Peaches_Ecwid_Settings {
 					   name="<?php echo esc_attr( self::OPTION_NAME ); ?>[enable_redis]"
 					   value="1"
 					   <?php checked( $value ); ?>
-					   <?php disabled( ! $redis_available ); ?> />
-				<?php esc_html_e( 'Use Redis for caching (faster performance)', 'peaches' ); ?>
+					   <?php disabled( ! $redis_service ); ?> />
+				<?php esc_html_e( 'Use Redis for Ecwid caching', 'peaches' ); ?>
 			</label>
 
-			<?php if ( ! $redis_available ) : ?>
+			<?php if ( ! $redis_service ) : ?>
 				<p class="description" style="color: #d63638;">
-					<strong><?php esc_html_e( 'Redis extension not available.', 'peaches' ); ?></strong>
-					<?php esc_html_e( 'Install the Redis PHP extension to enable Redis caching.', 'peaches' ); ?>
+					<strong><?php esc_html_e( 'Peaches Bootstrap Blocks plugin required.', 'peaches' ); ?></strong>
+					<?php esc_html_e( 'Install and activate Peaches Bootstrap Blocks to enable Redis caching.', 'peaches' ); ?>
 				</p>
 			<?php else : ?>
 				<p class="description">
-					<?php esc_html_e( 'Redis extension is available. Configure connection using wp-config.php constants.', 'peaches' ); ?>
+					<?php esc_html_e( 'Redis configuration is managed by Peaches Bootstrap Blocks plugin.', 'peaches' ); ?>
+					<a href="<?php echo esc_url( admin_url( 'admin.php?page=peaches-redis-settings' ) ); ?>">
+						<?php esc_html_e( 'Configure Redis settings', 'peaches' ); ?>
+					</a>
 				</p>
 
-				<?php if ( $cache_info['redis_available'] ) : ?>
+				<?php if ( $redis_configured ) : ?>
 					<div class="redis-status" style="margin-top: 10px; padding: 10px; background: #d1edff; border-left: 4px solid #0073aa;">
 						<strong><?php esc_html_e( 'Redis Connected', 'peaches' ); ?></strong><br>
-						<?php if ( isset( $cache_info['redis_info'] ) ) : ?>
-							<?php esc_html_e( 'Version:', 'peaches' ); ?> <?php echo esc_html( $cache_info['redis_info']['version'] ); ?><br>
-							<?php esc_html_e( 'Memory Usage:', 'peaches' ); ?> <?php echo esc_html( $cache_info['redis_info']['used_memory_human'] ); ?><br>
-							<?php esc_html_e( 'Connected Clients:', 'peaches' ); ?> <?php echo esc_html( $cache_info['redis_info']['connected_clients'] ); ?>
-						<?php endif; ?>
+						<?php esc_html_e( 'Ecwid data will be cached using Redis for improved performance.', 'peaches' ); ?>
 					</div>
 				<?php elseif ( $value ) : ?>
 					<div class="redis-status" style="margin-top: 10px; padding: 10px; background: #fff2cc; border-left: 4px solid #dba617;">
-						<strong><?php esc_html_e( 'Redis Connection Failed', 'peaches' ); ?></strong><br>
-						<?php esc_html_e( 'Check your Redis server and wp-config.php constants.', 'peaches' ); ?>
+						<strong><?php esc_html_e( 'Redis Not Connected', 'peaches' ); ?></strong><br>
+						<?php esc_html_e( 'Using WordPress transients as fallback. Configure Redis in main settings for better performance.', 'peaches' ); ?>
 					</div>
 				<?php endif; ?>
-
-				<details style="margin-top: 10px;">
-					<summary style="cursor: pointer; color: #0073aa;">
-						<?php esc_html_e( 'Redis Configuration Constants', 'peaches' ); ?>
-					</summary>
-					<div style="margin-top: 10px; font-family: monospace; background: #f1f1f1; padding: 10px; border-radius: 3px;">
-						<code>
-							define('WP_REDIS_HOST', '127.0.0.1');<br>
-							define('WP_REDIS_PORT', 6379);<br>
-							define('WP_REDIS_TIMEOUT', 1);<br>
-							define('WP_REDIS_PASSWORD', 'your-password'); // Optional<br>
-							define('WP_REDIS_DATABASE', 0); // Optional<br>
-							define('WP_REDIS_PREFIX', 'site1'); // Optional, for multisite
-						</code>
-					</div>
-				</details>
 			<?php endif; ?>
 		</div>
 		<?php
 	}
+
 
 	/**
 	 * Render cache management field
@@ -503,11 +490,30 @@ class Peaches_Ecwid_Settings {
 	 */
 	public function render_cache_management_field() {
 		$cache_info = $this->get_cache_info();
+		
+		// Get detailed cache statistics
+		$ecwid_blocks = Peaches_Ecwid_Blocks::get_instance();
+		$ecwid_api = $ecwid_blocks ? $ecwid_blocks->get_ecwid_api() : null;
+		$detailed_stats = $ecwid_api ? $ecwid_api->get_cache_stats() : null;
 		?>
 		<div class="cache-management">
 			<div class="cache-stats" style="margin-bottom: 15px;">
 				<strong><?php esc_html_e( 'Cache Status:', 'peaches' ); ?></strong> <?php echo esc_html( $cache_info['type'] ); ?><br>
-				<strong><?php esc_html_e( 'Cached Items:', 'peaches' ); ?></strong> <?php echo esc_html( number_format( $cache_info['count'] ) ); ?>
+				
+				<?php if ( $detailed_stats ) : ?>
+					<strong><?php esc_html_e( 'API Cache Details:', 'peaches' ); ?></strong><br>
+					<div style="margin-left: 15px; font-size: 13px;">
+						<?php esc_html_e( 'Products:', 'peaches' ); ?> <?php echo esc_html( number_format( $detailed_stats['products'] ) ); ?> |
+						<?php esc_html_e( 'Categories:', 'peaches' ); ?> <?php echo esc_html( number_format( $detailed_stats['categories'] ) ); ?> |
+						<?php esc_html_e( 'Searches:', 'peaches' ); ?> <?php echo esc_html( number_format( $detailed_stats['searches'] ) ); ?><br>
+						<?php esc_html_e( 'Descriptions:', 'peaches' ); ?> <?php echo esc_html( number_format( $detailed_stats['descriptions'] ) ); ?> |
+						<?php esc_html_e( 'Slugs:', 'peaches' ); ?> <?php echo esc_html( number_format( $detailed_stats['slugs'] ) ); ?> |
+						<?php esc_html_e( 'Other:', 'peaches' ); ?> <?php echo esc_html( number_format( $detailed_stats['other'] ) ); ?><br>
+						<strong><?php esc_html_e( 'Total:', 'peaches' ); ?> <?php echo esc_html( number_format( $detailed_stats['total'] ) ); ?></strong>
+					</div>
+				<?php else : ?>
+					<strong><?php esc_html_e( 'Cached Items:', 'peaches' ); ?></strong> <?php echo esc_html( number_format( $cache_info['count'] ) ); ?>
+				<?php endif; ?>
 
 				<?php if ( $cache_info['redis_available'] && $cache_info['memory_usage'] > 0 ) : ?>
 					<br><strong><?php esc_html_e( 'Memory Usage:', 'peaches' ); ?></strong> <?php echo esc_html( $this->format_bytes( $cache_info['memory_usage'] ) ); ?>
@@ -518,8 +524,12 @@ class Peaches_Ecwid_Settings {
 				<a href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin.php?page=' . self::PAGE_SLUG . '&action=clear_cache&tab=general' ), 'clear_ecwid_cache' ) ); ?>"
 				   class="button button-secondary"
 				   onclick="return confirm('<?php esc_attr_e( 'Are you sure you want to clear all cached data? This will temporarily slow down your site until the cache is rebuilt.', 'peaches' ); ?>')">
-					<?php esc_html_e( 'Clear Cache', 'peaches' ); ?>
+					<?php esc_html_e( 'Clear API Cache', 'peaches' ); ?>
 				</a>
+			</p>
+			<p class="description">
+				<strong><?php esc_html_e( 'Note:', 'peaches' ); ?></strong> <?php esc_html_e( 'This clears only API result cache. To clear block HTML cache, visit', 'peaches' ); ?>
+				<a href="<?php echo esc_url( admin_url( 'admin.php?page=peaches-cache-settings' ) ); ?>"><?php esc_html_e( 'Peaches Cache Settings', 'peaches' ); ?></a>.
 			</p>
 		</div>
 		<?php
@@ -920,5 +930,26 @@ class Peaches_Ecwid_Settings {
 				});
 			' );
 		}
+	}
+
+	/**
+	 * Get shared Redis service from Peaches Bootstrap Blocks
+	 *
+	 * @since 0.2.0
+	 *
+	 * @return Peaches_Redis_Settings|null Redis service instance or null if not available
+	 */
+	private function get_shared_cache_service() {
+		// Check if Peaches Bootstrap Blocks is active
+		if ( ! class_exists( 'Peaches_Bootstrap_Blocks' ) ) {
+			return null;
+		}
+
+		$bootstrap_blocks = Peaches_Bootstrap_Blocks::get_instance();
+		if ( ! $bootstrap_blocks ) {
+			return null;
+		}
+
+		return $bootstrap_blocks->get_cache_manager();
 	}
 }

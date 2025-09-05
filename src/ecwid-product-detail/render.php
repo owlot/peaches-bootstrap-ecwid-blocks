@@ -10,55 +10,51 @@
  * @see https://github.com/WordPress/gutenberg/blob/trunk/docs/reference-guides/block-api/block-metadata.md#render
  */
 
-// Get the main plugin instance
-$ecwid_blocks = Peaches_Ecwid_Blocks::get_instance();
-$ecwid_api = $ecwid_blocks->get_ecwid_api();
-
-// Ensure proper language detection for Polylang and WPML
-$current_lang = Peaches_Ecwid_Utilities::get_current_language();
-$product_slug = get_query_var('ecwid_product_slug', '');
-$product_id = 0;
-
-// Use the utility function to get product ID from slug
-if (class_exists('Peaches_Ecwid_Utilities') && !empty($product_slug)) {
-    $product_id = $ecwid_api->get_product_id_from_slug($product_slug);
-}
-
-// Get full product data if we have an ID
+// Get product data and set interactivity state BEFORE caching check
+// This ensures client-side blocks always have access to the global state
+$product_id = peaches_ecwid_get_effective_product_id($attributes);
 $product_data = null;
+
 if (!empty($product_id)) {
-    // Get product data using Ecwid API
+    $ecwid_blocks = Peaches_Ecwid_Blocks::get_instance();
+    $ecwid_api = $ecwid_blocks->get_ecwid_api();
     $product = $ecwid_api->get_product_by_id($product_id);
-
-if ($product) {
-		// Convert the entire product object to array for JSON response
-		// This preserves all data from Ecwid API
-		$product_data = (array) $product;
-
-		// Ensure common fields are properly set (in case they're missing)
-		if (!isset($product_data['description'])) {
-			$product_data['description'] = '';
-		}
-		if (!isset($product_data['galleryImages'])) {
-			$product_data['galleryImages'] = array();
-		}
-		if (!isset($product_data['media'])) {
-			$product_data['media'] = null;
-		}
-		if (!isset($product_data['inStock'])) {
-			$product_data['inStock'] = true; // Default assumption
-		}
-		if (!isset($product_data['compareToPrice'])) {
-			$product_data['compareToPrice'] = null;
-		}
-	}
+    
+    if ($product) {
+        $product_data = (array) $product;
+        
+        // Ensure common fields are properly set
+        if (!isset($product_data['description'])) {
+            $product_data['description'] = '';
+        }
+        if (!isset($product_data['galleryImages'])) {
+            $product_data['galleryImages'] = array();
+        }
+        if (!isset($product_data['media'])) {
+            $product_data['media'] = null;
+        }
+        if (!isset($product_data['inStock'])) {
+            $product_data['inStock'] = true;
+        }
+        if (!isset($product_data['compareToPrice'])) {
+            $product_data['compareToPrice'] = null;
+        }
+    }
 }
 
-// Adds the global state with both product ID and full product data
+// Always set the global state - this is critical for client-side blocks
 wp_interactivity_state('peaches-ecwid-product-detail', array(
     'productId' => $product_id,
     'productData' => $product_data
 ));
+
+// Now check for cached block HTML using product-aware caching
+$cache_result = peaches_ecwid_start_product_block_cache('ecwid-product-detail', $attributes, $content);
+if ($cache_result === false) {
+    return; // Cached content was served
+}
+$cache_manager = $cache_result['cache_manager'] ?? null;
+$cache_factors = $cache_result['cache_factors'] ?? null;
 
 // If no product ID is found in the URL, check if we're in the admin preview
 if (empty($product_id) && is_admin()) {
@@ -71,8 +67,8 @@ if (empty($product_id) && is_admin()) {
 }
 // If we have a product ID, try to get product details
 if (!empty($product_id)) {
-    // We already have the product from above
-    if (!$product) {
+    // We already have the product data from above
+    if (empty($product_data)) {
 ?>
         <div class="alert alert-warning">
             <?php echo __('Product could not be found', 'ecwid-shopping-cart'); ?>
@@ -88,4 +84,7 @@ if (!empty($product_id)) {
     </div>
 <?php
 }
+
+// Cache the rendered HTML
+peaches_ecwid_end_block_cache('ecwid-product-detail', $cache_manager, $cache_factors, 300);
 ?>

@@ -85,7 +85,7 @@ function peaches_get_product_media_url($product_id, $tag_key, $size = 'large', $
  *
  * @return string Complete img HTML tag or empty string if invalid data.
  */
-function peaches_generate_responsive_image_html($media_data, $attributes = array()) {
+function peaches_generate_responsive_image_html($media_data, $attributes = array(), $force_auto_sizes = false) {
 	// Debug: Log function entry
 	if (defined('WP_DEBUG') && WP_DEBUG) {
 		error_log("peaches_generate_responsive_image_html - Entry with media_data: " . print_r($media_data, true));
@@ -149,7 +149,7 @@ function peaches_generate_responsive_image_html($media_data, $attributes = array
 	// Use existing sizes from media data, or fall back to auto
 	if (!empty($srcset)) {
 		$default_attributes['srcset'] = $srcset;
-		$default_attributes['sizes'] = isset($media_data['sizes']) && !empty($media_data['sizes']) ? $media_data['sizes'] : 'auto';
+		$default_attributes['sizes'] = $force_auto_sizes ? 'auto' : peaches_generate_smart_sizes_attribute(null, 'gallery', 400);
 	}
 
 	// Add responsive classes for Ecwid images
@@ -598,6 +598,81 @@ function peaches_the_responsive_product_media($product_id, $tag_key, $context = 
 			echo '</a>';
 			break;
 	}
+}
+
+/**
+ * Get product ID from URL slug using the same method as product-detail block
+ *
+ * This is the canonical way to get product ID from the current page URL.
+ * Used by both individual blocks and the product-detail block for consistency.
+ *
+ * @since 0.5.0
+ *
+ * @return int Product ID or 0 if not found
+ */
+function peaches_ecwid_get_product_id_from_current_url() {
+	$product_slug = get_query_var('ecwid_product_slug', '');
+
+	if (empty($product_slug)) {
+		return 0;
+	}
+
+	$ecwid_blocks = Peaches_Ecwid_Blocks::get_instance();
+	if (!$ecwid_blocks) {
+		return 0;
+	}
+
+	$ecwid_api = $ecwid_blocks->get_ecwid_api();
+	if (!$ecwid_api || !method_exists($ecwid_api, 'get_product_id_from_slug')) {
+		return 0;
+	}
+
+	$product_id = $ecwid_api->get_product_id_from_slug($product_slug);
+	return !empty($product_id) ? absint($product_id) : 0;
+}
+
+/**
+ * Get the effective product ID for cache key generation and product context
+ *
+ * Checks selectedProductId and id attributes first, then falls back to product detail state,
+ * and finally to URL-based detection. This ensures consistent product identification across
+ * different contexts (home page, product detail page, shop page, etc.) for the same product.
+ *
+ * @since 0.5.0
+ *
+ * @param array $attributes Block attributes
+ * @return int Product ID or 0 if not found
+ */
+function peaches_ecwid_get_effective_product_id($attributes) {
+	// First check if block has its own selectedProductId (most product blocks)
+	$selected_product_id = isset($attributes['selectedProductId']) ? absint($attributes['selectedProductId']) : 0;
+
+	if (!empty($selected_product_id)) {
+		return $selected_product_id;
+	}
+
+	// Check for 'id' attribute (ecwid-product block uses this)
+	$id = isset($attributes['id']) ? absint($attributes['id']) : 0;
+
+	if (!empty($id)) {
+		return $id;
+	}
+
+	// Check interactivity state first (fast, no API calls)
+	$product_detail_state = wp_interactivity_state('peaches-ecwid-product-detail');
+
+	if (!empty($product_detail_state['productId'])) {
+		$product_id = absint($product_detail_state['productId']);
+		return $product_id;
+	}
+
+	// Final fallback: get from URL using shared helper function
+	$url_product_id = peaches_ecwid_get_product_id_from_current_url();
+	if (!empty($url_product_id)) {
+		return $url_product_id;
+	}
+
+	return 0;
 }
 
 /**

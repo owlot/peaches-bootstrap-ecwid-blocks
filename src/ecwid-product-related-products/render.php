@@ -57,6 +57,14 @@ if (!function_exists('peaches_generate_related_product_col_block')) {
 	}
 }
 
+// Check for cached block HTML first using product-aware caching
+$cache_result = peaches_ecwid_start_product_block_cache('ecwid-product-related-products', $attributes, $content);
+if ($cache_result === false) {
+    return; // Cached content was served
+}
+$cache_manager = $cache_result['cache_manager'] ?? null;
+$cache_factors = $cache_result['cache_factors'] ?? null;
+
 // Get the main plugin instance
 $ecwid_blocks = Peaches_Ecwid_Blocks::get_instance();
 $ecwid_api = $ecwid_blocks->get_ecwid_api();
@@ -144,3 +152,6 @@ if ($is_in_carousel) {
 
 	<?php
 }
+
+// Cache the rendered HTML
+peaches_ecwid_end_block_cache('ecwid-product-related-products', $cache_manager, $cache_factors, 300);
