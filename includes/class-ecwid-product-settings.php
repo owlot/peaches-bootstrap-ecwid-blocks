@@ -1089,7 +1089,7 @@ class Peaches_Ecwid_Product_Settings {
 				'offset' => $offset,
 				'limit' => $limit,
 				'sortBy' => $sort_by,
-				'sortOrder' => $sort_order
+				'sortOrder' => $sort_order,
 			);
 
 			// Add search if provided
@@ -1288,6 +1288,10 @@ class Peaches_Ecwid_Product_Settings {
 				'product_name' => $product_name
 			) );
 
+			// Invalidate the product post ID cache for this product
+			$cache_key_base = $product_id . '_' . $product_sku;
+			$ecwid_api->invalidate_product_post_cache($cache_key_base);
+
 			// Return success with post data
 			wp_send_json_success( array(
 				'postId'    => $post_id,
@@ -1331,10 +1335,19 @@ class Peaches_Ecwid_Product_Settings {
 			wp_send_json_error(array('message' => 'Invalid post or product ID.'));
 		}
 
+		// Get the product SKU before deleting the post (for cache invalidation)
+		$product_sku = get_post_meta($post_id, '_ecwid_product_sku', true) ?: '';
+
 		// Delete the post
 		$result = wp_delete_post($post_id, true);
 
 		if ($result) {
+			// Invalidate the product post ID cache for this product
+			$ecwid_blocks = Peaches_Ecwid_Blocks::get_instance();
+			$ecwid_api = $ecwid_blocks->get_ecwid_api();
+			$cache_key_base = $product_id . '_' . $product_sku;
+			$ecwid_api->invalidate_product_post_cache($cache_key_base);
+
 			wp_send_json_success(array(
 				'message' => 'Product configuration deleted successfully.'
 			));

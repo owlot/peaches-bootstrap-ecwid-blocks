@@ -16,24 +16,7 @@ if (empty($product_id)) {
 	return;
 }
 
-// Check for cached block HTML first using cache helper
-// Note: ecwid-product uses 'id' attribute instead of 'selectedProductId'
-$cache_result = peaches_ecwid_start_product_block_cache('ecwid-product', $attributes, $content);
-if ($cache_result === false) {
-    return; // Cached content was served
-}
-$cache_manager = $cache_result['cache_manager'] ?? null;
-$cache_factors = $cache_result['cache_factors'] ?? null;
-
-// Get show add to cart setting
-$show_add_to_cart = isset($attributes['showAddToCart']) ? $attributes['showAddToCart'] : true;
-
-// Get hover media tag setting
-$hover_media_tag = isset($attributes['hoverMediaTag']) ? sanitize_text_field($attributes['hoverMediaTag']) : '';
-
-// Get computed className from attributes
-$computed_class_name = peaches_get_safe_string_attribute($attributes, 'computedClassName');
-
+// Fetch product data BEFORE caching check to ensure interactivity context is always fresh
 // Get the main plugin instance and fetch product data
 $ecwid_blocks = Peaches_Ecwid_Blocks::get_instance();
 $product = null;
@@ -60,6 +43,16 @@ if ($ecwid_blocks) {
 if (!$product) {
 	return;
 }
+
+// Get all necessary data BEFORE caching check to ensure fresh interactivity context
+// Get show add to cart setting
+$show_add_to_cart = isset($attributes['showAddToCart']) ? $attributes['showAddToCart'] : true;
+
+// Get hover media tag setting
+$hover_media_tag = isset($attributes['hoverMediaTag']) ? sanitize_text_field($attributes['hoverMediaTag']) : '';
+
+// Get computed className from attributes
+$computed_class_name = peaches_get_safe_string_attribute($attributes, 'computedClassName');
 
 // Get hover image URL if tag is specified
 $hover_image_url = '';
@@ -131,22 +124,33 @@ if (isset($product->price)) {
 	$formatted_price = '€ ' . number_format($product->price, 2, ',', '.');
 }
 
+// Set global interactivity state BEFORE caching check to ensure fresh data
+// Only store data needed for interactivity - display data is already in HTML
+wp_interactivity_state('peaches-ecwid-product', array(
+	'products' => array(
+		$product_id => array(
+			'hoverImageUrl' => $hover_image_url,
+			'productUrl' => $product_url
+		)
+	)
+));
+
+// Now check for cached block HTML using cache helper
+$cache_result = peaches_ecwid_start_product_block_cache('ecwid-product', $attributes, $content);
+if ($cache_result === false) {
+    return; // Cached content was served - but interactivity state is fresh!
+}
+$cache_manager = $cache_result['cache_manager'] ?? null;
+$cache_factors = $cache_result['cache_factors'] ?? null;
+
 // Prepare block wrapper attributes with computed Bootstrap classes
+// Context contains basic interaction state - product data comes from global state
 $wrapper_attributes = get_block_wrapper_attributes(array(
 	'class' => $computed_class_name,
 	'data-wp-interactive' => 'peaches-ecwid-product',
 	'data-wp-context' => json_encode(array(
 		'productId' => $product_id,
 		'isLoading' => false,
-		'product' => array(
-			'id' => $product->id,
-			'name' => $product->name,
-			'thumbnailUrl' => $product->thumbnailUrl ?? '',
-			'price' => $product->price ?? 0,
-			'url' => $product_url,
-			'subtitle' => (string)$product_subtitle
-		),
-		'hoverImageUrl' => $hover_image_url,
 		'isHovering' => false
 	), JSON_HEX_QUOT),
 	'data-wp-init' => 'callbacks.initProduct'

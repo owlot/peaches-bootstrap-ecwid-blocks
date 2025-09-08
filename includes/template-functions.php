@@ -676,6 +676,67 @@ function peaches_ecwid_get_effective_product_id($attributes) {
 }
 
 /**
+ * Generate bs-col block with ecwid-product inside, passing through all settings
+ *
+ * This function consolidates the duplicate product column generation logic
+ * used by both category-products and related-products blocks.
+ *
+ * @since 0.5.0
+ *
+ * @param int   $product_id Product ID
+ * @param array $attributes Parent block attributes to pass through
+ *
+ * @return string Rendered block HTML
+ */
+function peaches_generate_product_col_block($product_id, $attributes = array()) {
+	// Extract product-specific settings from parent attributes
+	$show_hover_shadow = isset($attributes['showCardHoverShadow']) ? $attributes['showCardHoverShadow'] : true;
+	$show_hover_jump = isset($attributes['showCardHoverJump']) ? $attributes['showCardHoverJump'] : true;
+
+	// Compute the className with hover effects (similar to ecwid-product edit.js)
+	$classes = array('card', 'h-100', 'border-0');
+
+	if ($show_hover_jump) {
+		$classes[] = 'hover-jump';
+	}
+
+	if ($show_hover_shadow) {
+		$classes[] = 'hover-shadow';
+	}
+
+	$computed_class_name = implode(' ', $classes);
+
+	$product_attrs = array(
+		'id' => $product_id,
+		'showAddToCart' => isset($attributes['showAddToCart']) ? $attributes['showAddToCart'] : true,
+		'buttonText' => isset($attributes['buttonText']) ? $attributes['buttonText'] : 'Add to cart',
+		'showCardHoverShadow' => $show_hover_shadow,
+		'showCardHoverJump' => $show_hover_jump,
+		'hoverMediaTag' => isset($attributes['hoverMediaTag']) ? $attributes['hoverMediaTag'] : '',
+		'translations' => isset($attributes['translations']) ? $attributes['translations'] : null,
+		// Pass the computed className to the product block
+		'computedClassName' => $computed_class_name,
+	);
+
+	// Render the product block with all settings
+	$product_html = render_block(array(
+		'blockName' => 'peaches/ecwid-product',
+		'attrs' => $product_attrs
+	));
+
+	// If product rendering fails, return empty
+	if (empty($product_html)) {
+		return '';
+	}
+
+	// Wrap the product in a column div
+	return sprintf(
+		'<div class="col">%s</div>',
+		$product_html
+	);
+}
+
+/**
  * Backwards compatibility function for old function name
  *
  * @since 0.4.3

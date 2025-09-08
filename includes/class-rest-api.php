@@ -182,7 +182,7 @@ class Peaches_REST_API {
 			)
 		);
 
-		// Product lines endpoint (NEW)
+		// Product lines endpoint
 		register_rest_route(
 			self::NAMESPACE,
 			'/product-lines/(?P<product_id>\d+)',
@@ -257,7 +257,7 @@ class Peaches_REST_API {
 			)
 		);
 
-		// All line types endpoint (NEW)
+		// All line types endpoint
 		register_rest_route(
 			self::NAMESPACE,
 			'/line-types',
@@ -268,7 +268,7 @@ class Peaches_REST_API {
 			)
 		);
 
-		// Product descriptions endpoint (NEW)
+		// Product descriptions endpoint
 		register_rest_route(
 			self::NAMESPACE,
 			'/product-descriptions/(?P<product_id>\d+)',

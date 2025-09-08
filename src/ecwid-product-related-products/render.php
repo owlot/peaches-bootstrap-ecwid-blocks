@@ -1,71 +1,6 @@
 <?php
-/**
- * Generate bs-col block with ecwid-product inside, passing through all settings
- *
- * @param int   $product_id Product ID
- * @param array $attributes Parent block attributes to pass through
- *
- * @return string Rendered block HTML
- */
-if (!function_exists('peaches_generate_related_product_col_block')) {
-	function peaches_generate_related_product_col_block($product_id, $attributes = array()) {
-		// Extract product-specific settings from parent attributes
-		$show_hover_shadow = isset($attributes['showCardHoverShadow']) ? $attributes['showCardHoverShadow'] : true;
-		$show_hover_jump = isset($attributes['showCardHoverJump']) ? $attributes['showCardHoverJump'] : true;
 
-		// Compute the className with hover effects (similar to ecwid-product edit.js)
-		$classes = array('card', 'h-100', 'border-0');
-
-		if ($show_hover_jump) {
-			$classes[] = 'hover-jump';
-		}
-
-		if ($show_hover_shadow) {
-			$classes[] = 'hover-shadow';
-		}
-
-		$computed_class_name = implode(' ', $classes);
-
-		$product_attrs = array(
-			'id' => $product_id,
-			'showAddToCart' => isset($attributes['showAddToCart']) ? $attributes['showAddToCart'] : true,
-			'buttonText' => isset($attributes['buttonText']) ? $attributes['buttonText'] : 'Add to cart',
-			'showCardHoverShadow' => $show_hover_shadow,
-			'showCardHoverJump' => $show_hover_jump,
-			'hoverMediaTag' => isset($attributes['hoverMediaTag']) ? $attributes['hoverMediaTag'] : '',
-			'translations' => isset($attributes['translations']) ? $attributes['translations'] : null,
-			// Pass the computed className to the product block
-			'computedClassName' => $computed_class_name,
-		);
-
-		// Render the product block with all settings
-		$product_html = render_block(array(
-			'blockName' => 'peaches/ecwid-product',
-			'attrs' => $product_attrs
-		));
-
-		// If product rendering fails, return empty
-		if (empty($product_html)) {
-			return '';
-		}
-
-		// Wrap the product in a column div
-		return sprintf(
-			'<div class="col">%s</div>',
-			$product_html
-		);
-	}
-}
-
-// Check for cached block HTML first using product-aware caching
-$cache_result = peaches_ecwid_start_product_block_cache('ecwid-product-related-products', $attributes, $content);
-if ($cache_result === false) {
-    return; // Cached content was served
-}
-$cache_manager = $cache_result['cache_manager'] ?? null;
-$cache_factors = $cache_result['cache_factors'] ?? null;
-
-// Get the main plugin instance
+// Get the main plugin instance and product data BEFORE caching check
 $ecwid_blocks = Peaches_Ecwid_Blocks::get_instance();
 $ecwid_api = $ecwid_blocks->get_ecwid_api();
 
@@ -101,6 +36,9 @@ if (empty($related_ids)) {
 	return;
 }
 
+// No caching for related products block to ensure interactivity works correctly
+// Individual product blocks within will still be cached for performance
+
 // Get computed className from attributes
 $computed_class_name = peaches_get_safe_string_attribute($attributes, 'computedClassName');
 
@@ -117,7 +55,7 @@ if ($is_in_carousel) {
 
 	foreach ($related_ids as $related_product_id) {
 		// Create bs-col block with product inside, passing all settings
-		$col_block_html = peaches_generate_related_product_col_block($related_product_id, $attributes);
+		$col_block_html = peaches_generate_product_col_block($related_product_id, $attributes);
 		echo wp_interactivity_process_directives($col_block_html);
 	}
 
@@ -143,7 +81,7 @@ if ($is_in_carousel) {
 			<?php foreach ($related_ids as $related_product_id): ?>
 				<?php
 				// Always create bs-col blocks with products inside, passing all settings
-				$col_block_html = peaches_generate_related_product_col_block($related_product_id, $attributes);
+				$col_block_html = peaches_generate_product_col_block($related_product_id, $attributes);
 				echo wp_interactivity_process_directives($col_block_html);
 				?>
 			<?php endforeach; ?>
@@ -153,5 +91,4 @@ if ($is_in_carousel) {
 	<?php
 }
 
-// Cache the rendered HTML
-peaches_ecwid_end_block_cache('ecwid-product-related-products', $cache_manager, $cache_factors, 300);
+// No caching for this block - individual products will be cached instead

@@ -918,6 +918,9 @@ class Peaches_Product_Settings_Manager {
 
 			$this->log_info('Product settings saved successfully', array('post_id' => $post_id));
 
+			// Invalidate caches after successful save
+			$this->invalidate_product_caches($post_id);
+
 		} catch (Exception $e) {
 			$this->log_error('Error saving meta data', array(
 				'post_id' => $post_id,
@@ -1579,6 +1582,79 @@ class Peaches_Product_Settings_Manager {
 	private function log_info($message, $context = array()) {
 		if (defined('WP_DEBUG') && WP_DEBUG) {
 			error_log('Product Settings Manager: ' . $message . ' ' . wp_json_encode($context));
+		}
+	}
+
+	/**
+	 * Invalidate product-related caches after saving
+	 *
+	 * @since 0.2.0
+	 *
+	 * @param int $post_id Post ID
+	 *
+	 * @return void
+	 */
+	private function invalidate_product_caches($post_id) {
+		try {
+			// Get the product ID from post meta
+			$product_id = get_post_meta($post_id, '_ecwid_product_id', true);
+			
+			if (empty($product_id)) {
+				$this->log_info('No product ID found for cache invalidation', array('post_id' => $post_id));
+				return;
+			}
+
+			// Get cache manager instance
+			$bootstrap_blocks = Peaches_Bootstrap_Blocks::get_instance();
+			if (!$bootstrap_blocks) {
+				$this->log_error('Bootstrap blocks instance not available for cache invalidation');
+				return;
+			}
+
+			$cache_manager = $bootstrap_blocks->get_cache_manager();
+			if (!$cache_manager) {
+				$this->log_error('Cache manager not available for cache invalidation');
+				return;
+			}
+
+			// Invalidate block HTML caches for this product
+			$block_types = array(
+				'ecwid-product-detail',
+				'ecwid-product-description', 
+				'ecwid-product-gallery-image',
+				'ecwid-product-related-products',
+				'ecwid-product-ingredients',
+				'ecwid-product-field'
+			);
+
+			$current_language = function_exists('peaches_get_render_language') ? peaches_get_render_language() : '';
+			
+			foreach ($block_types as $block_type) {
+				// Use the clear_block_cache method to invalidate all cached instances of this block type
+				// This is more aggressive but ensures all cached versions are cleared
+				$cache_manager->clear_block_cache($block_type);
+			}
+
+			// Also invalidate product description caches in the Ecwid API
+			$ecwid_blocks = Peaches_Ecwid_Blocks::get_instance();
+			if ($ecwid_blocks) {
+				$ecwid_api = $ecwid_blocks->get_ecwid_api();
+				if ($ecwid_api && method_exists($ecwid_api, 'invalidate_product_description_caches')) {
+					$ecwid_api->invalidate_product_description_caches($product_id);
+				}
+			}
+
+			$this->log_info('Successfully invalidated product caches', array(
+				'post_id' => $post_id, 
+				'product_id' => $product_id,
+				'blocks_invalidated' => count($block_types)
+			));
+
+		} catch (Exception $e) {
+			$this->log_error('Error invalidating product caches', array(
+				'post_id' => $post_id,
+				'error' => $e->getMessage()
+			));
 		}
 	}
 

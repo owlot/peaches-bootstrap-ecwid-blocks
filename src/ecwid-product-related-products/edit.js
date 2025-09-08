@@ -120,6 +120,13 @@ export default function Edit( {
 	// Get block editor methods
 	const { insertBlock, removeBlocks } = useDispatch( 'core/block-editor' );
 
+	/**
+	 * Compute className from Bootstrap attributes and store it
+	 */
+	const computedClassName = useMemo( () => {
+		return 'row ' + computeClassName( attributes );
+	}, [ attributes ] );
+
 	// Get parent block information to detect carousel and inner blocks
 	const isInCarousel = useSelect(
 		( select ) => {
@@ -689,12 +696,10 @@ export default function Edit( {
 			} );
 	}, [ productData?.id, clearInnerBlocks ] );
 
-	/**
-	 * Compute className from Bootstrap attributes and store it
-	 */
-	const computedClassName = useMemo( () => {
-		return 'row ' + computeClassName( attributes );
-	}, [ attributes ] );
+	// Update the computedClassName attribute when it changes
+	useEffect( () => {
+		setAttributes( { computedClassName } );
+	}, [ computedClassName, setAttributes ] );
 
 	const blockProps = useBlockProps();
 

@@ -42,36 +42,18 @@ if (empty($product_id)) {
 	return;
 }
 
-// If we don't have product data from global state, fetch it
-if (empty($product_data)) {
-	$ecwid_blocks = Peaches_Ecwid_Blocks::get_instance();
-	if (!$ecwid_blocks) {
-		return;
-	}
+// We have product data from global state, get description from API
+$ecwid_blocks = Peaches_Ecwid_Blocks::get_instance();
+$description_data = null;
 
+if ($ecwid_blocks) {
 	$ecwid_api = $ecwid_blocks->get_ecwid_api();
 	if ($ecwid_api && method_exists($ecwid_api, 'get_product_description_by_type')) {
-		// We only need the description, not the full product
 		$description_data = $ecwid_api->get_product_description_by_type(
 			$product_id,
 			$description_type,
 			$current_language
 		);
-	}
-} else {
-	// We have product data from global state, get description from API
-	$ecwid_blocks = Peaches_Ecwid_Blocks::get_instance();
-	$description_data = null;
-
-	if ($ecwid_blocks) {
-		$ecwid_api = $ecwid_blocks->get_ecwid_api();
-		if ($ecwid_api && method_exists($ecwid_api, 'get_product_description_by_type')) {
-			$description_data = $ecwid_api->get_product_description_by_type(
-				$product_id,
-				$description_type,
-				$current_language
-			);
-		}
 	}
 }
 

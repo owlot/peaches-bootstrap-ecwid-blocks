@@ -224,6 +224,37 @@ class Peaches_Ecwid_API implements Peaches_Ecwid_API_Interface {
 	}
 
 	/**
+	 * Delete cached data
+	 *
+	 * @since 0.1.2
+	 *
+	 * @param string $cache_key Cache key
+	 *
+	 * @return void
+	 */
+	private function delete_cached_data($cache_key) {
+		$settings = $this->get_settings();
+
+		// Ensure cache service is available (lazy init if needed)
+		$this->ensure_cache_service_available();
+
+		// Only use shared Cache service if enabled in local settings and service is available
+		if ($settings['enable_redis'] && $this->cache_service) {
+			$success = $this->cache_service->delete_cache($cache_key, self::CACHE_GROUP);
+
+			if ($success) {
+				$this->log_info('Shared cache delete successful for key: ' . $cache_key);
+			} else {
+				$this->log_info('Shared cache delete failed for key: ' . $cache_key);
+			}
+		}
+
+		// Also delete from WordPress transients (fallback)
+		delete_transient(self::CACHE_GROUP . '_' . $cache_key);
+		$this->log_info('Deleted transient cache for key: ' . $cache_key);
+	}
+
+	/**
 	 * Get product data by product ID.
 	 *
 	 * @since 0.1.2
@@ -564,11 +595,11 @@ class Peaches_Ecwid_API implements Peaches_Ecwid_API_Interface {
 			try {
 				// Try to get Redis connection (works for direct Redis)
 				$redis = $this->cache_service->get_redis();
-				
+
 				if ( $redis ) {
 					// Direct Redis connection - use key patterns
 					$site_prefix = defined( 'WP_REDIS_PREFIX' ) ? WP_REDIS_PREFIX : get_current_blog_id();
-					
+
 					$key_patterns = array(
 						'products' => self::CACHE_GROUP . ":peaches:{$site_prefix}:product_*",
 						'searches' => self::CACHE_GROUP . ":peaches:{$site_prefix}:search_*",
@@ -576,12 +607,12 @@ class Peaches_Ecwid_API implements Peaches_Ecwid_API_Interface {
 						'slugs' => self::CACHE_GROUP . ":peaches:{$site_prefix}:slug_*",
 						'descriptions' => self::CACHE_GROUP . ":peaches:{$site_prefix}:product_description_*",
 					);
-					
+
 					foreach ( $key_patterns as $type => $pattern ) {
 						$keys = $redis->keys( $pattern );
 						$stats[$type] = count( $keys );
 					}
-					
+
 					$all_pattern = self::CACHE_GROUP . ":peaches:{$site_prefix}:*";
 					$all_keys = $redis->keys( $all_pattern );
 					$stats['total'] = count( $all_keys );
@@ -591,7 +622,7 @@ class Peaches_Ecwid_API implements Peaches_Ecwid_API_Interface {
 					if ( $this->cache_service && method_exists( $this->cache_service, 'get_cache_stats_by_group' ) ) {
 						$group_stats = $this->cache_service->get_cache_stats_by_group();
 						$ecwid_stats = isset( $group_stats[self::CACHE_GROUP] ) ? $group_stats[self::CACHE_GROUP] : 0;
-						
+
 						// For Object Cache, we can't easily separate by cache key type,
 						// so show all as "other" for now
 						$stats['total'] = $ecwid_stats;
@@ -783,10 +814,9 @@ class Peaches_Ecwid_API implements Peaches_Ecwid_API_Interface {
 					$api_params['offset'] = 0;
 				}
 
-				if (isset($options['enabled'])) {
+				if (array_key_exists('enabled', $options)) {
+					$this->log_info("Searching for products enabled:", $options['enabled']);
 					$api_params['enabled'] = $options['enabled'];
-				} else {
-					$api_params['enabled'] = true; // Only get enabled products by default
 				}
 
 				if (isset($options['category'])) {
@@ -1001,6 +1031,49 @@ class Peaches_Ecwid_API implements Peaches_Ecwid_API_Interface {
 		$this->set_cached_data($cache_key, null);
 		$this->log_info('No post ID found for product: ' . $product_id . ', cached null result');
 		return null;
+	}
+
+	/**
+	 * Invalidate the cached product post ID for a specific product
+	 *
+	 * @param string $cache_key_base The cache key base (product_id_sku)
+	 */
+	public function invalidate_product_post_cache($cache_key_base) {
+		$cache_key = $this->get_cache_key('product_post_id', $cache_key_base);
+		$this->delete_cached_data($cache_key);
+		$this->log_info('Invalidated product post cache for key: ' . $cache_key_base);
+	}
+
+	/**
+	 * Invalidate all cached product descriptions for a specific product
+	 *
+	 * @param int $product_id The product ID
+	 */
+	public function invalidate_product_description_caches($product_id) {
+		// Common description types and languages to clear
+		$description_types = array('usage', 'ingredients', 'care', 'warranty', 'features', 'technical', 'custom');
+		$languages = array('en', 'nl', 'fr', 'de', 'es');
+
+		$deleted_count = 0;
+		
+		// Delete specific cache keys using the consistent wrapper method
+		foreach ($description_types as $type) {
+			foreach ($languages as $language) {
+				$cache_key = sprintf('product_description_%d_%s_%s', $product_id, $type, $language);
+				
+				// Use our consistent delete wrapper
+				$this->delete_cached_data($cache_key);
+				$deleted_count++;
+				
+				// Delete transient for null results (these use a different key format)
+				delete_transient($cache_key . '_null');
+			}
+		}
+		
+		$this->log_info('Invalidated product description caches', array(
+			'product_id' => $product_id,
+			'deleted_count' => $deleted_count
+		));
 	}
 
 	/**
