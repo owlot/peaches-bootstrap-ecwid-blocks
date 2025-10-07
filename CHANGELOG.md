@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.1] - 2025-10-07
+
+### Added
+- **Dynamic SEO Metadata for Product Pages** (@since 0.6.1)
+  - Automatic page title generation based on product slug using WordPress `document_title_parts` filter
+  - Dynamic meta descriptions extracted from Ecwid product descriptions (HTML stripped, 30 words max)
+  - Product image integration for Open Graph and social media sharing meta tags
+  - Smart template page detection using configurable settings from `Peaches -> Ecwid Blocks -> Templates`
+
+### Enhanced
+- **Template Page Configuration Integration** (@since 0.6.1)
+  - SEO filters now respect user-configured template page from plugin settings
+  - Robust fallback system: settings → auto-generated page → error logging
+  - Template page validation ensuring configured pages exist and are published
+  - Backwards compatibility with existing "product-detail" auto-generated pages
+
 ## [0.6.0] - 2025-09-18
 
 ### Added

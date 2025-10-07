@@ -55,6 +55,12 @@ class Peaches_Rewrite_Manager implements Peaches_Rewrite_Manager_Interface {
 		add_action('init', array($this, 'check_rewrite_rules'), 1000);
 		add_action('wp_head', array($this, 'add_product_og_tags'));
 		add_action('wp_footer', array($this, 'set_ecwid_config'), 1000);
+
+		// Add hooks for dynamic page title and meta content
+		add_filter('document_title_parts', array($this, 'filter_product_page_title'), 10, 1);
+		add_filter('the_title', array($this, 'filter_product_title'), 10, 2);
+		add_filter('get_the_excerpt', array($this, 'filter_product_excerpt'), 10, 2);
+		add_filter('wp_get_attachment_image_src', array($this, 'filter_product_featured_image'), 10, 4);
 	}
 
 	/**
@@ -70,20 +76,18 @@ class Peaches_Rewrite_Manager implements Peaches_Rewrite_Manager_Interface {
 	public function add_ecwid_rewrite_rules() {
 		add_rewrite_tag( '%ecwid_product_slug%', '([^&]+)' );
 
-		// Get the ID of the product template page
-		$template_page = get_page_by_path( 'product-detail' );
+		// Get the template page ID from settings
+		$template_page_id = $this->get_template_page_id();
 
-		if ( ! $template_page ) {
+		if ( ! $template_page_id ) {
 			$this->register_product_template();
-			$template_page = get_page_by_path( 'product-detail' );
+			$template_page_id = $this->get_template_page_id();
 		}
 
-		if ( ! $template_page ) {
-			error_log( 'Peaches Ecwid: Could not create or find product-detail template page' );
+		if ( ! $template_page_id ) {
+			error_log( 'Peaches Ecwid: Could not create or find product template page' );
 			return;
 		}
-
-		$template_page_id = $template_page->ID;
 
 		// Check if we have multilingual configuration
 		if ( $this->is_multilingual_site() ) {
@@ -278,8 +282,9 @@ class Peaches_Rewrite_Manager implements Peaches_Rewrite_Manager_Interface {
 			global $peaches_product_slug;
 			$peaches_product_slug = $product_slug;
 
-			// Get the product detail page
-			$template_page = get_page_by_path('product-detail');
+			// Get the product detail page from settings
+			$template_page_id = $this->get_template_page_id();
+			$template_page = $template_page_id ? get_post($template_page_id) : null;
 			if ($template_page) {
 				// If Polylang is active, get the translated page
 				if (function_exists('pll_get_post')) {
@@ -366,6 +371,258 @@ class Peaches_Rewrite_Manager implements Peaches_Rewrite_Manager_Interface {
 				}
 			}
 		}
+	}
+
+	/**
+	 * Filter the document title for product pages.
+	 *
+	 * @since 0.6.1
+	 *
+	 * @param array $title_parts The document title parts.
+	 *
+	 * @return array Modified title parts.
+	 */
+	public function filter_product_page_title($title_parts) {
+		$product_slug = get_query_var('ecwid_product_slug');
+
+		if ($product_slug) {
+			$product_id = $this->ecwid_api->get_product_id_from_slug($product_slug);
+
+			if ($product_id) {
+				$product = $this->ecwid_api->get_product_by_id($product_id);
+
+				if ($product && !empty($product->name)) {
+					$title_parts['title'] = $product->name;
+				}
+			}
+		}
+
+		return $title_parts;
+	}
+
+	/**
+	 * Filter the title for product pages.
+	 *
+	 * @since 0.6.1
+	 *
+	 * @param string $title The page title.
+	 * @param int    $id    The post ID.
+	 *
+	 * @return string Modified title.
+	 */
+	public function filter_product_title($title, $id = null) {
+		$product_slug = get_query_var('ecwid_product_slug');
+
+		if ($product_slug && $this->is_product_template_page($id)) {
+			$product_id = $this->ecwid_api->get_product_id_from_slug($product_slug);
+
+			if ($product_id) {
+				$product = $this->ecwid_api->get_product_by_id($product_id);
+
+				if ($product && !empty($product->name)) {
+					return $product->name;
+				}
+			}
+		}
+
+		return $title;
+	}
+
+	/**
+	 * Filter the excerpt for product pages.
+	 *
+	 * @since 0.6.1
+	 *
+	 * @param string $excerpt The page excerpt.
+	 * @param object $post    The post object.
+	 *
+	 * @return string Modified excerpt.
+	 */
+	public function filter_product_excerpt($excerpt, $post = null) {
+		$product_slug = get_query_var('ecwid_product_slug');
+
+		if ($product_slug && $this->is_product_template_page($post ? $post->ID : null)) {
+			$product_id = $this->ecwid_api->get_product_id_from_slug($product_slug);
+
+			if ($product_id) {
+				// First try to get translated custom description
+				$description_text = $this->get_translated_product_description($product_id);
+
+				// Fallback to Ecwid product description if no custom description
+				if (empty($description_text)) {
+					$product = $this->ecwid_api->get_product_by_id($product_id);
+					if ($product && !empty($product->description)) {
+						$description_text = wp_strip_all_tags($product->description);
+					}
+				}
+
+				if (!empty($description_text)) {
+					return wp_trim_words($description_text, 30);
+				}
+			}
+		}
+
+		return $excerpt;
+	}
+
+	/**
+	 * Filter the featured image for product pages.
+	 *
+	 * @since 0.6.1
+	 *
+	 * @param array|false  $image         Array of image data, or false if no image.
+	 * @param int          $attachment_id Image attachment ID.
+	 * @param string|array $size          Requested image size.
+	 * @param bool         $icon          Whether the image should be treated as an icon.
+	 *
+	 * @return array|false Modified image data.
+	 */
+	public function filter_product_featured_image($image, $attachment_id, $size, $icon) {
+		$product_slug = get_query_var('ecwid_product_slug');
+
+		if ($product_slug && $this->is_featured_image_request($attachment_id)) {
+			$product_id = $this->ecwid_api->get_product_id_from_slug($product_slug);
+
+			if ($product_id) {
+				$product = $this->ecwid_api->get_product_by_id($product_id);
+
+				if ($product && !empty($product->thumbnailUrl)) {
+					// Return product image data in WordPress format
+					return array(
+						$product->thumbnailUrl, // URL
+						800, // Width (default)
+						600, // Height (default)
+						false // Whether it's a resized image
+					);
+				}
+			}
+		}
+
+		return $image;
+	}
+
+	/**
+	 * Check if the current image request is for the page's featured image.
+	 *
+	 * @since 0.6.1
+	 *
+	 * @param int $attachment_id The attachment ID being requested.
+	 *
+	 * @return bool True if this is a featured image request.
+	 */
+	private function is_featured_image_request($attachment_id) {
+		// Get the template page ID
+		$template_page_id = $this->get_template_page_id();
+
+		if (!$template_page_id) {
+			return false;
+		}
+
+		// Check if the attachment ID matches the page's featured image
+		$page_thumbnail_id = get_post_thumbnail_id($template_page_id);
+
+		return $attachment_id == $page_thumbnail_id;
+	}
+
+	/**
+	 * Check if the current page is the product template page.
+	 *
+	 * @since 0.6.1
+	 *
+	 * @param int $page_id The page ID to check.
+	 *
+	 * @return bool True if it's the product template page.
+	 */
+	private function is_product_template_page($page_id = null) {
+		if ($page_id === null) {
+			$page_id = get_the_ID();
+		}
+
+		$template_page_id = $this->get_template_page_id();
+		return $template_page_id && $page_id == $template_page_id;
+	}
+
+	/**
+	 * Get the template page ID from settings.
+	 *
+	 * @since 0.6.1
+	 *
+	 * @return int|null Template page ID or null if not set.
+	 */
+	private function get_template_page_id() {
+		// Get settings from the settings manager
+		$settings_manager = Peaches_Ecwid_Settings::get_instance();
+		$settings = $settings_manager->get_settings();
+
+		$template_page_id = isset($settings['product_template_page']) ? absint($settings['product_template_page']) : 0;
+
+		if ($template_page_id > 0) {
+			// Verify the page still exists
+			$page = get_post($template_page_id);
+			if ($page && $page->post_type === 'page' && $page->post_status === 'publish') {
+				return $template_page_id;
+			}
+		}
+
+		// Fallback to auto-generated page if setting is empty or page doesn't exist
+		$template_page = get_page_by_path('product-detail');
+		return $template_page ? $template_page->ID : null;
+	}
+
+	/**
+	 * Get translated product description for SEO purposes.
+	 *
+	 * @since 0.6.1
+	 *
+	 * @param int $product_id Product ID.
+	 *
+	 * @return string Translated description text or empty string.
+	 */
+	private function get_translated_product_description($product_id) {
+		// Get the main plugin instance
+		$ecwid_blocks = Peaches_Ecwid_Blocks::get_instance();
+		if (!$ecwid_blocks) {
+			return '';
+		}
+
+		// Get the product settings manager
+		$product_settings_manager = $ecwid_blocks->get_product_settings_manager();
+		if (!$product_settings_manager || !method_exists($product_settings_manager, 'get_product_descriptions_with_translations')) {
+			return '';
+		}
+
+		try {
+			// Get current language
+			$current_language = Peaches_Ecwid_Utilities::get_current_language();
+
+			// Get translated descriptions
+			$descriptions = $product_settings_manager->get_product_descriptions_with_translations($product_id, $current_language);
+
+			// Look for a suitable description to use for SEO
+			// Priority: custom -> features -> usage -> ingredients
+			$preferred_types = array('custom', 'features', 'usage', 'ingredients');
+
+			foreach ($preferred_types as $type) {
+				foreach ($descriptions as $description) {
+					if ($description['type'] === $type && !empty($description['content'])) {
+						// Strip HTML tags and return
+						return wp_strip_all_tags($description['content']);
+					}
+				}
+			}
+
+			// If no preferred types found, use the first available description
+			foreach ($descriptions as $description) {
+				if (!empty($description['content'])) {
+					return wp_strip_all_tags($description['content']);
+				}
+			}
+		} catch (Exception $e) {
+			// Log error but don't break the page
+			error_log('Peaches Ecwid: Error getting translated product description: ' . $e->getMessage());
+		}
+
+		return '';
 	}
 
 	/**
