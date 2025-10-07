@@ -83,6 +83,13 @@ class Peaches_Product_Settings_Manager {
 		add_action('add_meta_boxes', array($this, 'add_meta_boxes'));
 		add_action('save_post_product_settings', array($this, 'save_meta_data'));
 		add_action('admin_enqueue_scripts', array($this, 'enqueue_admin_scripts'));
+		
+		// Add language switcher to product settings edit page
+		add_action('edit_form_after_title', array($this, 'render_language_switcher_for_product_settings'));
+		
+		// Add AJAX handler for refreshing ingredients when language changes
+		add_action('wp_ajax_refresh_ingredients_for_language', array($this, 'ajax_refresh_ingredients_for_language'));
+		add_action('wp_ajax_get_ingredient_description', array($this, 'ajax_get_ingredient_description'));
 	}
 
 	/**
@@ -520,10 +527,23 @@ class Peaches_Product_Settings_Manager {
 		$description = '';
 
 		if ($library_id) {
-			$ingredient_post = get_post($library_id);
-			if ($ingredient_post) {
-				$display_name = $ingredient_post->post_title;
-				$description = get_post_meta($ingredient_post->ID, '_ingredient_description', true);
+			// Get ingredient with translations using current language
+			$current_language = Peaches_Ecwid_Utilities::get_current_language();
+			
+			// Create ingredients library manager instance to get translated data
+			$ingredients_manager = new Peaches_Ingredients_Library_Manager();
+			$ingredient_data = $ingredients_manager->get_ingredient_with_translations($library_id, $current_language);
+			
+			if ($ingredient_data) {
+				$display_name = $ingredient_data['name'];
+				$description = $ingredient_data['description'];
+			} else {
+				// Fallback to basic post data if translation method fails
+				$ingredient_post = get_post($library_id);
+				if ($ingredient_post) {
+					$display_name = $ingredient_post->post_title;
+					$description = get_post_meta($ingredient_post->ID, '_ingredient_description', true);
+				}
 			}
 		}
 		?>
@@ -544,11 +564,19 @@ class Peaches_Product_Settings_Manager {
 					if (empty($product_ingredients)) {
 						echo '<option value="" disabled>' . __('No ingredients available - create one first', 'peaches') . '</option>';
 					} else {
+						// Get current language for translations
+						$current_language = Peaches_Ecwid_Utilities::get_current_language();
+						$ingredients_manager = new Peaches_Ingredients_Library_Manager();
+						
 						foreach ($product_ingredients as $pi) {
+							// Get translated name if available
+							$ingredient_data = $ingredients_manager->get_ingredient_with_translations($pi->ID, $current_language);
+							$ingredient_name = $ingredient_data ? $ingredient_data['name'] : $pi->post_title;
+							
 							printf('<option value="%d" %s>%s</option>',
 								$pi->ID,
 								selected($library_id, $pi->ID, false),
-								esc_html($pi->post_title)
+								esc_html($ingredient_name)
 							);
 						}
 					}
@@ -742,12 +770,10 @@ class Peaches_Product_Settings_Manager {
 			wp_nonce_field('save_product_descriptions', 'product_descriptions_nonce');
 			?>
 			<div class="product-descriptions-meta-box">
-				<div class="d-flex justify-content-between align-items-start mb-4">
-					<div>
-						<p class="description mb-2">
-							<?php _e('Add additional product descriptions that can be displayed using custom Gutenberg blocks. Each description type can be targeted specifically in your blocks.', 'peaches'); ?>
-						</p>
-					</div>
+				<div class="mb-4">
+					<p class="description mb-2">
+						<?php _e('Add additional product descriptions that can be displayed using custom Gutenberg blocks. Each description type can be targeted specifically in your blocks.', 'peaches'); ?>
+					</p>
 				</div>
 
 				<div id="descriptions-container" class="accordion descriptions-container">
@@ -882,6 +908,63 @@ class Peaches_Product_Settings_Manager {
 						}
 						?>
 					</div>
+					
+					<?php 
+					// Add translation fields if multiple languages are available
+					$available_languages = Peaches_Ecwid_Utilities::get_available_languages();
+					$default_language = Peaches_Ecwid_Utilities::get_default_language();
+					$has_translations = count($available_languages) > 1;
+					
+					if ($has_translations && !$is_template):
+						$translations = isset($description['translations']) ? $description['translations'] : array();
+					?>
+					<div class="mt-4">
+						<h6 class="mb-3"><?php _e('Translations', 'peaches'); ?></h6>
+						<?php foreach ($available_languages as $lang_code => $language): ?>
+							<?php if ($lang_code === $default_language) continue; // Skip default language ?>
+							<?php 
+							$lang_translation = isset($translations[$lang_code]) ? $translations[$lang_code] : array('title' => '', 'content' => '');
+							$lang_title = isset($lang_translation['title']) ? $lang_translation['title'] : '';
+							$lang_content = isset($lang_translation['content']) ? $lang_translation['content'] : '';
+							$lang_name = isset($language['name']) ? $language['name'] : strtoupper($lang_code);
+							?>
+							<div class="translation-fields mb-4 p-3 border rounded" data-language="<?php echo esc_attr($lang_code); ?>">
+								<h6 class="text-muted mb-3">
+									<?php printf(__('%s Translation', 'peaches'), $lang_name); ?>
+								</h6>
+								<div class="mb-3">
+									<label for="description_title_<?php echo esc_attr($index); ?>_<?php echo esc_attr($lang_code); ?>" class="form-label">
+										<?php printf(__('Title (%s)', 'peaches'), $lang_name); ?>
+									</label>
+									<input type="text"
+										   id="description_title_<?php echo esc_attr($index); ?>_<?php echo esc_attr($lang_code); ?>"
+										   name="product_descriptions[<?php echo esc_attr($index); ?>][translations][<?php echo esc_attr($lang_code); ?>][title]"
+										   value="<?php echo esc_attr($lang_title); ?>"
+										   class="form-control"
+										   placeholder="<?php printf(__('Title in %s', 'peaches'), $lang_name); ?>">
+								</div>
+								<div class="mb-3">
+									<label for="description_content_<?php echo esc_attr($index); ?>_<?php echo esc_attr($lang_code); ?>" class="form-label">
+										<?php printf(__('Content (%s)', 'peaches'), $lang_name); ?>
+									</label>
+									<?php
+									$lang_editor_id = 'description_content_' . $index . '_' . $lang_code;
+									wp_editor($lang_content, $lang_editor_id, array(
+										'textarea_name' => 'product_descriptions[' . $index . '][translations][' . $lang_code . '][content]',
+										'textarea_rows' => 4,
+										'teeny'         => true,
+										'media_buttons' => false,
+										'tinymce'       => array(
+											'toolbar1' => 'bold,italic,bullist,numlist,link,unlink',
+											'toolbar2' => ''
+										)
+									));
+									?>
+								</div>
+							</div>
+						<?php endforeach; ?>
+					</div>
+					<?php endif; ?>
 				</div>
 			</div>
 		</div>
@@ -1034,6 +1117,7 @@ class Peaches_Product_Settings_Manager {
 		}
 	}
 
+
 	/**
 	 * Save product lines data.
 	 *
@@ -1135,11 +1219,26 @@ class Peaches_Product_Settings_Manager {
 						continue;
 					}
 
-					$descriptions[] = array(
+					$description_entry = array(
 						'type'    => sanitize_text_field($description_data['type']),
 						'title'   => sanitize_text_field($description_data['title'] ?? ''),
 						'content' => wp_kses_post($description_data['content'])
 					);
+
+					// Handle translations if present
+					if (isset($description_data['translations']) && is_array($description_data['translations'])) {
+						$description_entry['translations'] = array();
+						foreach ($description_data['translations'] as $lang_code => $translation) {
+							if (!empty($translation['title']) || !empty($translation['content'])) {
+								$description_entry['translations'][$lang_code] = array(
+									'title'   => sanitize_text_field($translation['title'] ?? ''),
+									'content' => wp_kses_post($translation['content'] ?? '')
+								);
+							}
+						}
+					}
+
+					$descriptions[] = $description_entry;
 				}
 			}
 
@@ -1255,6 +1354,68 @@ class Peaches_Product_Settings_Manager {
 	}
 
 	/**
+	 * Get product descriptions for a given product ID with translation support.
+	 *
+	 * @since 0.5.0
+	 *
+	 * @param int    $product_id Product ID to get descriptions for.
+	 * @param string $language   Language code (e.g., 'en', 'nl'). If empty, uses current language.
+	 *
+	 * @return array Array of descriptions with translations or empty array
+	 *
+	 * @throws InvalidArgumentException If product ID is invalid
+	 */
+	public function get_product_descriptions_with_translations($product_id, $language = '') {
+		if (!is_numeric($product_id) || $product_id <= 0) {
+			throw new InvalidArgumentException('Invalid product ID provided');
+		}
+
+		$product_id = absint($product_id);
+
+		// Get current language if not specified
+		if (empty($language)) {
+			$language = Peaches_Ecwid_Utilities::get_current_language();
+		}
+
+		// Get base descriptions
+		$descriptions = $this->get_product_descriptions($product_id);
+		error_log('[TRANSLATION-DEBUG] Raw descriptions from database: ' . print_r($descriptions, true));
+		
+		// Get default language to check if we need translations
+		$default_language = Peaches_Ecwid_Utilities::get_default_language();
+		
+		// Apply translations if not default language
+		if (!empty($language) && $language !== $default_language) {
+			error_log('[TRANSLATION-DEBUG] Applying translations for language: ' . $language . ' (default: ' . $default_language . ')');
+			foreach ($descriptions as &$description) {
+				error_log('[TRANSLATION-DEBUG] Checking description type: ' . $description['type']);
+				error_log('[TRANSLATION-DEBUG] Available translations: ' . print_r(array_keys($description['translations'] ?? []), true));
+				
+				if (isset($description['translations'][$language])) {
+					$translation = $description['translations'][$language];
+					error_log('[TRANSLATION-DEBUG] Found translation for ' . $language . ': ' . print_r($translation, true));
+					
+					// Use translated title if available
+					if (!empty($translation['title'])) {
+						$description['title'] = $translation['title'];
+					}
+					
+					// Use translated content if available
+					if (!empty($translation['content'])) {
+						$description['content'] = $translation['content'];
+					}
+				} else {
+					error_log('[TRANSLATION-DEBUG] No translation found for language: ' . $language);
+				}
+			}
+		} else {
+			error_log('[TRANSLATION-DEBUG] Not applying translations - same as default language or empty');
+		}
+
+		return $descriptions;
+	}
+
+	/**
 	 * Get product descriptions by product ID
 	 *
 	 * @since 0.2.4
@@ -1275,6 +1436,7 @@ class Peaches_Product_Settings_Manager {
 		// Check cache first
 		$cache_key = 'product_descriptions_' . $product_id;
 		if (isset($this->cache[$cache_key])) {
+			error_log('[TRANSLATION-DEBUG] Returning cached descriptions for product: ' . $product_id);
 			return $this->cache[$cache_key];
 		}
 
@@ -1291,7 +1453,14 @@ class Peaches_Product_Settings_Manager {
 				),
 				'posts_per_page' => 1,
 				'post_status'    => 'publish',
+				'lang'           => '', // Disable language filtering for Polylang
+				'suppress_filters' => false, // Keep other filters but allow language override
 			);
+			
+			// For WPML compatibility - disable language filtering
+			if (function_exists('icl_object_id')) {
+				$args['suppress_filters'] = true;
+			}
 
 			$query = new WP_Query($args);
 
@@ -1305,21 +1474,38 @@ class Peaches_Product_Settings_Manager {
 
 			$product_settings = $query->posts[0];
 			$descriptions = get_post_meta($product_settings->ID, '_product_descriptions', true);
+			error_log('[TRANSLATION-DEBUG] Raw descriptions from database: ' . print_r($descriptions, true));
 
 			if (!is_array($descriptions)) {
 				$descriptions = array();
 			}
 
-			// Validate and sanitize descriptions
+			// Validate and sanitize descriptions while preserving translations
 			$validated_descriptions = array();
 			foreach ($descriptions as $description) {
 				if (isset($description['type']) && isset($description['content']) &&
 					!empty($description['type']) && !empty($description['content'])) {
-					$validated_descriptions[] = array(
+					$validated_description = array(
 						'type'    => sanitize_text_field($description['type']),
 						'title'   => isset($description['title']) ? sanitize_text_field($description['title']) : '',
 						'content' => wp_kses_post($description['content'])
 					);
+					
+					// Preserve translations if they exist
+					if (isset($description['translations']) && is_array($description['translations'])) {
+						$validated_translations = array();
+						foreach ($description['translations'] as $lang => $translation) {
+							if (is_array($translation)) {
+								$validated_translations[$lang] = array(
+									'title' => isset($translation['title']) ? sanitize_text_field($translation['title']) : '',
+									'content' => isset($translation['content']) ? wp_kses_post($translation['content']) : ''
+								);
+							}
+						}
+						$validated_description['translations'] = $validated_translations;
+					}
+					
+					$validated_descriptions[] = $validated_description;
 				}
 			}
 
@@ -1343,6 +1529,7 @@ class Peaches_Product_Settings_Manager {
 		}
 	}
 
+
 	/**
 	 * Get a specific product description by type
 	 *
@@ -1355,7 +1542,7 @@ class Peaches_Product_Settings_Manager {
 	 *
 	 * @throws InvalidArgumentException If parameters are invalid
 	 */
-	public function get_product_description_by_type($product_id, $type) {
+	public function get_product_description_by_type($product_id, $type, $language = '') {
 		if (!is_numeric($product_id) || $product_id <= 0) {
 			throw new InvalidArgumentException('Invalid product ID provided');
 		}
@@ -1365,13 +1552,20 @@ class Peaches_Product_Settings_Manager {
 		}
 
 		$type = sanitize_text_field($type);
-		$descriptions = $this->get_product_descriptions($product_id);
+		
+		// Use translation-aware method if language is provided
+		if (!empty($language)) {
+			$descriptions = $this->get_product_descriptions_with_translations($product_id, $language);
+		} else {
+			$descriptions = $this->get_product_descriptions($product_id);
+		}
 
 		foreach ($descriptions as $description) {
 			if ($description['type'] === $type) {
 				$this->log_info('Found product description by type', array(
 					'product_id' => $product_id,
 					'type'       => $type,
+					'language'   => $language,
 				));
 				return $description;
 			}
@@ -1380,6 +1574,7 @@ class Peaches_Product_Settings_Manager {
 		$this->log_info('Product description not found by type', array(
 			'product_id' => $product_id,
 			'type'       => $type,
+			'language'   => $language,
 		));
 
 		return null;
@@ -1441,20 +1636,38 @@ class Peaches_Product_Settings_Manager {
 			);
 
 			// Pass configuration to JavaScript
+			$available_languages = Peaches_Ecwid_Utilities::get_available_languages();
+			$default_language = Peaches_Ecwid_Utilities::get_default_language();
+			
 			wp_localize_script('peaches-admin-product-descriptions', 'ProductDescriptionsConfig', array(
 				'initialIndex' => 0, // Will be updated in render method
 				'nonce'        => wp_create_nonce('product_descriptions_admin'),
+				'languageNonce' => wp_create_nonce('product_settings_language_switch'),
 				'ajaxUrl'      => admin_url('admin-ajax.php'),
+				'languages'    => array(
+					'available'     => $available_languages,
+					'default'       => $default_language,
+					'hasMultiple'   => count($available_languages) > 1,
+				),
 				'i18n'         => array(
 					'confirmRemove'     => __('Are you sure you want to remove this description?', 'peaches'),
 					'validationFailed'  => __('Please fix the validation errors before saving.', 'peaches'),
 					'editorNotFound'    => __('Editor element not found.', 'peaches'),
 					'wpEditorNotAvail'  => __('WordPress editor not available.', 'peaches'),
+					'selectIngredientMessage' => __('Select an ingredient to see its description', 'peaches'),
+					'validationErrorsTitle' => __('Please fix the following errors:', 'peaches'),
+					'noValidMediaSelected' => __('Error: No valid media selected.', 'peaches'),
+					'confirmRemoveMedia' => __('Are you sure you want to remove this media?', 'peaches'),
+					'pleaseEnterUrl' => __('Please enter a URL first', 'peaches'),
+					'urlValidationFailed' => __('URL validation failed:', 'peaches'),
+					'errorValidatingUrl' => __('Error validating URL', 'peaches'),
+					'confirmRemoveProduct' => __('Are you sure you want to remove this product from the list?', 'peaches'),
+					'confirmRemoveIngredient' => __('Are you sure you want to remove this ingredient?', 'peaches'),
+					'validationError' => __('Please correct the validation errors before saving.', 'peaches'),
 				)
 			));
 
 			add_action('wp_ajax_validate_product_descriptions', array($this, 'ajax_validate_product_descriptions'));
-			add_action('wp_ajax_get_ingredient_description', array($this, 'ajax_get_ingredient_description'));
 
 		} catch (Exception $e) {
 			$this->log_error('Error enqueuing admin scripts', array(
@@ -1472,39 +1685,48 @@ class Peaches_Product_Settings_Manager {
 	 * @return void
 	 */
 	public function ajax_get_ingredient_description() {
-		try {
-			// Check nonce
-			if (!isset($_POST['nonce']) || !wp_verify_nonce($_POST['nonce'], 'get_ingredient_description')) {
-				wp_send_json_error('Invalid nonce');
-				return;
-			}
-
-			$ingredient_id = isset($_POST['ingredient_id']) ? absint($_POST['ingredient_id']) : 0;
-
-			if (!$ingredient_id) {
-				wp_send_json_error('Invalid ingredient ID');
-				return;
-			}
-
-			$ingredient_post = get_post($ingredient_id);
-
-			if (!$ingredient_post || $ingredient_post->post_type !== 'product_ingredient') {
-				wp_send_json_error('Ingredient not found');
-				return;
-			}
-
-			$description = get_post_meta($ingredient_id, '_ingredient_description', true);
-
-			wp_send_json_success(array(
-				'description' => $description ? wp_kses_post($description) : ''
-			));
-
-		} catch (Exception $e) {
-			$this->log_error('Error in AJAX get ingredient description', array(
-				'error' => $e->getMessage()
-			));
-			wp_send_json_error('Server error');
+		// Verify nonce
+		if (!wp_verify_nonce($_POST['nonce'], 'product_settings_language_switch')) {
+			wp_die('Security check failed');
 		}
+
+		// Check permissions
+		if (!current_user_can('edit_posts')) {
+			wp_die('Insufficient permissions');
+		}
+
+		$ingredient_id = absint($_POST['ingredient_id']);
+		$language = sanitize_text_field($_POST['language']);
+		
+		if (!$ingredient_id) {
+			wp_send_json_success(array(
+				'description' => __('Select an ingredient to see its description', 'peaches')
+			));
+			return;
+		}
+
+		// Get ingredient data with translations
+		$ingredients_manager = new Peaches_Ingredients_Library_Manager();
+		$ingredient_data = $ingredients_manager->get_ingredient_with_translations($ingredient_id, $language);
+		
+		$description = '';
+		if ($ingredient_data && !empty($ingredient_data['description'])) {
+			$description = $ingredient_data['description'];
+		} else {
+			// Fallback to basic post data if translation method fails
+			$ingredient_post = get_post($ingredient_id);
+			if ($ingredient_post) {
+				$description = get_post_meta($ingredient_post->ID, '_ingredient_description', true);
+			}
+		}
+
+		if (empty($description)) {
+			$description = __('No description available', 'peaches');
+		}
+
+		wp_send_json_success(array(
+			'description' => $description
+		));
 	}
 
 	/**
@@ -1635,6 +1857,11 @@ class Peaches_Product_Settings_Manager {
 				$cache_manager->clear_block_cache($block_type);
 			}
 
+			// Clear internal caches for this product
+			$cache_key = 'product_descriptions_' . $product_id;
+			unset($this->cache[$cache_key]);
+			error_log('[TRANSLATION-DEBUG] Cleared internal cache for product: ' . $product_id);
+
 			// Also invalidate product description caches in the Ecwid API
 			$ecwid_blocks = Peaches_Ecwid_Blocks::get_instance();
 			if ($ecwid_blocks) {
@@ -1672,6 +1899,124 @@ class Peaches_Product_Settings_Manager {
 		if (class_exists('Peaches_Utilities')) {
 			Peaches_Utilities::log_error('[Block Registration] ' . $message, $context);
 		}
+	}
+
+	/**
+	 * Render language switcher for product settings edit page.
+	 *
+	 * @since 0.5.0
+	 * @param WP_Post $post The current post object.
+	 */
+	public function render_language_switcher_for_product_settings($post) {
+		// Only show on product_settings post type
+		if (!$post || $post->post_type !== 'product_settings') {
+			return;
+		}
+
+		// Use centralized check for multilingual plugin availability
+		$available_languages = Peaches_Ecwid_Utilities::get_available_languages();
+		
+		// Only show if we have multiple languages
+		if (count($available_languages) < 2) {
+			return;
+		}
+
+		$current_language = Peaches_Ecwid_Utilities::get_current_language();
+		$default_language = Peaches_Ecwid_Utilities::get_default_language();
+		
+		// Start with default language if current is empty
+		if (empty($current_language)) {
+			$current_language = $default_language;
+		}
+		
+		?>
+		<div class="peaches-page-language-switcher-container" style="margin: 20px 0;">
+			<div class="peaches-page-language-switcher">
+				<div class="d-flex align-items-center gap-2">
+					<span class="text-muted"><?php _e('Language:', 'peaches'); ?></span>
+					<div class="btn-group" role="group" aria-label="<?php esc_attr_e('Language switcher', 'peaches'); ?>">
+						<?php foreach ($available_languages as $lang_code => $language): ?>
+							<?php 
+							$is_active = ($lang_code === $current_language);
+							$button_class = 'btn btn-outline-primary btn-sm';
+							if ($is_active) {
+								$button_class .= ' active';
+							}
+							?>
+							<button type="button" 
+									class="<?php echo esc_attr($button_class); ?>" 
+									data-language="<?php echo esc_attr($lang_code); ?>"
+									data-is-default="<?php echo $lang_code === $default_language ? 'true' : 'false'; ?>"
+									aria-pressed="<?php echo $is_active ? 'true' : 'false'; ?>">
+								<?php echo esc_html($language['name']); ?>
+							</button>
+						<?php endforeach; ?>
+					</div>
+				</div>
+			</div>
+		</div>
+		<?php
+	}
+
+	/**
+	 * AJAX handler to refresh ingredient dropdown options for a specific language.
+	 *
+	 * @since 0.5.0
+	 */
+	public function ajax_refresh_ingredients_for_language() {
+		// Verify nonce
+		if (!wp_verify_nonce($_POST['nonce'], 'product_settings_language_switch')) {
+			wp_die('Security check failed');
+		}
+
+		// Check permissions
+		if (!current_user_can('edit_posts')) {
+			wp_die('Insufficient permissions');
+		}
+
+		$language = sanitize_text_field($_POST['language']);
+		
+		// Get all product ingredients for the dropdown
+		$product_ingredients = get_posts(array(
+			'post_type' => 'product_ingredient',
+			'posts_per_page' => -1,
+			'orderby' => 'title',
+			'order' => 'ASC'
+		));
+
+		$options = array();
+		
+		if (empty($product_ingredients)) {
+			$options[] = array(
+				'value' => '',
+				'text' => __('No ingredients available - create one first', 'peaches'),
+				'disabled' => true
+			);
+		} else {
+			// Default option
+			$options[] = array(
+				'value' => '',
+				'text' => __('Select an ingredient...', 'peaches'),
+				'selected' => false
+			);
+
+			// Get ingredients manager for translations
+			$ingredients_manager = new Peaches_Ingredients_Library_Manager();
+			
+			foreach ($product_ingredients as $pi) {
+				// Get translated name if available
+				$ingredient_data = $ingredients_manager->get_ingredient_with_translations($pi->ID, $language);
+				$ingredient_name = $ingredient_data ? $ingredient_data['name'] : $pi->post_title;
+				
+				$options[] = array(
+					'value' => $pi->ID,
+					'text' => $ingredient_name,
+					'selected' => false
+				);
+			}
+		}
+
+		wp_send_json_success($options);
 	}
 }
 

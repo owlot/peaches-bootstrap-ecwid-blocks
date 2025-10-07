@@ -1988,6 +1988,9 @@ class Peaches_Product_Media_Manager implements Peaches_Product_Media_Manager_Int
 				'confirmRemove'       => __('Are you sure you want to remove this media?', 'peaches'),
 				'loadingText'         => __('Loading...', 'peaches'),
 				'errorText'           => __('Error occurred', 'peaches'),
+				'pleaseEnterUrl'      => __('Please enter a URL first', 'peaches'),
+				'urlValidationFailed' => __('URL validation failed:', 'peaches'),
+				'errorValidatingUrl'  => __('Error validating URL', 'peaches'),
 				'ajaxUrl'             => admin_url('admin-ajax.php'),
 				'postId'              => $post_id,
 				'autoLoadImages'      => true, // Flag to enable auto-loading

@@ -2,21 +2,6 @@
 
 Create beautiful, responsive Ecwid e-commerce pages with modern Bootstrap-styled Gutenberg blocks and advanced product management.
 
-## 🆕 What's New in 0.3.4
-
-### **Category Products Block**
-Our newest block brings powerful category-based product displays to your Gutenberg editor:
-
-- **🏷️ Universal Category Support**: Display products from any Ecwid category
-- **⭐ Featured Products**: Special support for Store Front Page featured products
-- **🎨 Full Customization**: Complete control over appearance and behavior
-- **📱 Responsive Design**: Bootstrap-powered responsive layouts
-- **🌍 Multilingual Ready**: Translation support for international stores
-- **🚀 High Performance**: Efficient API calls with intelligent caching
-- **🔄 Carousel Compatible**: Works seamlessly in carousel blocks
-
-Perfect for creating curated product showcases, category landing pages, and promotional displays!
-
 ## Description
 
 Peaches Bootstrap Ecwid Blocks transforms your Ecwid e-commerce store with modern, Bootstrap-styled Gutenberg blocks and comprehensive product management tools. Build custom product pages, manage ingredients libraries, organize product lines, and create stunning e-commerce experiences with the WordPress block editor.
@@ -36,15 +21,6 @@ Peaches Bootstrap Ecwid Blocks transforms your Ecwid e-commerce store with moder
 - **📝 Product Descriptions**: Multiple description types with rich text editing
 - **🔗 Related Products**: Dynamic related product displays
 - **🛒 Enhanced Add to Cart**: Customizable add to cart functionality
-
-### What's New in Version 0.3.5
-
-- **Category Products Block**: Display products from any Ecwid category including Featured Products from Store Front Page
-- **Enhanced REST API**: New comprehensive `/category-products/{category_id}` endpoint with advanced filtering
-- **Category Selection**: Intuitive dropdown with automatic category name detection
-- **Smart Titles**: Automatic category name display with custom title override support
-- **Performance Optimizations**: Improved API calls with intelligent caching and loading states
-- **Bootstrap Integration**: Seamless responsive grid integration with Bootstrap column blocks
 
 ### Available Blocks
 

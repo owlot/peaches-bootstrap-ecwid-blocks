@@ -218,7 +218,7 @@
 					.toJSON();
 
 				if ( ! attachment || ! attachment.id ) {
-					alert( 'Error: No valid media selected.' );
+					alert( ProductLinesParams.noValidMediaSelected );
 					return;
 				}
 
@@ -265,7 +265,7 @@
 		 * @param {jQuery} $button - The remove button that was clicked
 		 */
 		function removeMedia( $button ) {
-			if ( ! confirm( 'Are you sure you want to remove this media?' ) ) {
+			if ( ! confirm( ProductLinesParams.confirmRemoveMedia ) ) {
 				return;
 			}
 

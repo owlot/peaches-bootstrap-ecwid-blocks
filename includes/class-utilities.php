@@ -39,6 +39,19 @@ class Peaches_Ecwid_Utilities {
 	private static $language_cache = array();
 
 	/**
+	 * Check if peaches-multilingual plugin is available and active.
+	 *
+	 * @since 0.5.0
+	 *
+	 * @return bool True if peaches-multilingual plugin is available.
+	 */
+	public static function is_peaches_multilingual_available() {
+		return function_exists('peaches_get_render_language') || 
+		       function_exists('peaches_current_language') || 
+		       class_exists('Peaches_Multilingual_Integration');
+	}
+
+	/**
 	 * Sanitize attributes with enhanced validation.
 	 *
 	 * @since 0.2.0
@@ -99,16 +112,27 @@ class Peaches_Ecwid_Utilities {
 		$language = '';
 
 		try {
-			// Polylang support
-			if (function_exists('pll_current_language')) {
+			// 1. First priority: peaches-multilingual plugin
+			if (self::is_peaches_multilingual_available()) {
+				if (function_exists('peaches_get_render_language')) {
+					$language = peaches_get_render_language();
+				} elseif (function_exists('peaches_current_language')) {
+					$language = peaches_current_language();
+				}
+			}
+			
+			// 2. Second priority: Direct Polylang support
+			if (empty($language) && function_exists('pll_current_language')) {
 				$language = pll_current_language();
 			}
-			// WPML support
-			elseif (defined('ICL_LANGUAGE_CODE')) {
+			
+			// 3. Third priority: Direct WPML support
+			if (empty($language) && defined('ICL_LANGUAGE_CODE')) {
 				$language = ICL_LANGUAGE_CODE;
 			}
-			// WordPress locale fallback
-			else {
+			
+			// 4. WordPress locale fallback
+			if (empty($language)) {
 				$locale = get_locale();
 				$language = substr($locale, 0, 2);
 			}
@@ -149,8 +173,24 @@ class Peaches_Ecwid_Utilities {
 		$languages = array();
 
 		try {
-			// Polylang support
-			if (function_exists('pll_languages_list') && function_exists('pll_default_language')) {
+			// 1. First priority: peaches-multilingual plugin
+			if (self::is_peaches_multilingual_available() && function_exists('peaches_available_languages')) {
+				$lang_codes = peaches_available_languages();
+				$default_lang = function_exists('peaches_default_language') ? peaches_default_language() : '';
+				
+				if (is_array($lang_codes) && !empty($lang_codes)) {
+					foreach ($lang_codes as $code) {
+						$languages[$code] = array(
+							'code' => $code,
+							'is_default' => ($code === $default_lang),
+							'name' => $code // peaches-multilingual might provide names in the future
+						);
+					}
+				}
+			}
+			
+			// 2. Second priority: Direct Polylang support
+			if (empty($languages) && function_exists('pll_languages_list') && function_exists('pll_default_language')) {
 				$lang_codes = pll_languages_list(array('fields' => 'slug'));
 				$default_lang = pll_default_language('slug');
 
@@ -164,8 +204,9 @@ class Peaches_Ecwid_Utilities {
 					}
 				}
 			}
-			// WPML support
-			elseif (function_exists('icl_get_languages')) {
+			
+			// 3. Third priority: Direct WPML support
+			if (empty($languages) && function_exists('icl_get_languages')) {
 				$wpml_languages = icl_get_languages('skip_missing=0');
 				$default_lang = apply_filters('wpml_default_language', null);
 
@@ -179,8 +220,9 @@ class Peaches_Ecwid_Utilities {
 					}
 				}
 			}
-			// Fallback to English only
-			else {
+			
+			// 4. Fallback to English only
+			if (empty($languages)) {
 				$languages['en'] = array(
 					'code' => 'en',
 					'is_default' => true,
@@ -495,7 +537,7 @@ class Peaches_Ecwid_Utilities {
 	 *
 	 * @return string Default language code.
 	 */
-	private static function get_default_language() {
+	public static function get_default_language() {
 		static $default_language = null;
 
 		if ($default_language !== null) {
@@ -503,15 +545,25 @@ class Peaches_Ecwid_Utilities {
 		}
 
 		try {
-			if (function_exists('pll_default_language')) {
+			// 1. First priority: peaches-multilingual plugin
+			if (self::is_peaches_multilingual_available() && function_exists('peaches_default_language')) {
+				$default_language = peaches_default_language();
+			}
+			
+			// 2. Second priority: Direct Polylang support
+			if (empty($default_language) && function_exists('pll_default_language')) {
 				$default_language = pll_default_language('slug');
-			} elseif (defined('ICL_LANGUAGE_CODE') && class_exists('SitePress')) {
+			}
+			
+			// 3. Third priority: Direct WPML support
+			if (empty($default_language) && defined('ICL_LANGUAGE_CODE') && class_exists('SitePress')) {
 				global $sitepress;
 				if ($sitepress && method_exists($sitepress, 'get_default_language')) {
 					$default_language = $sitepress->get_default_language();
 				}
 			}
 
+			// 4. Fallback to English
 			if (empty($default_language)) {
 				$default_language = 'en';
 			}

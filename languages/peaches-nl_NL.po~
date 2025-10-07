@@ -1,0 +1,245 @@
+# Dutch (Netherlands) translations for Peaches Bootstrap Ecwid Blocks
+# Copyright (C) 2025 Peaches.io
+# This file is distributed under the GPL-2.0-or-later.
+msgid ""
+msgstr ""
+"Project-Id-Version: Peaches Bootstrap Ecwid Blocks 0.6.0\n"
+"Report-Msgid-Bugs-To: https://github.com/owlot/peaches-bootstrap-ecwid-blocks/issues\n"
+"POT-Creation-Date: 2025-09-18 12:00+0000\n"
+"PO-Revision-Date: 2025-09-18 12:00+0000\n"
+"Last-Translator: Peaches.io <support@peaches.io>\n"
+"Language-Team: Dutch\n"
+"Language: nl_NL\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Peaches i18n\n"
+"X-Domain: peaches\n"
+
+# Admin Interface Strings
+msgid "Product Settings"
+msgstr "Product Instellingen"
+
+msgid "Select Product"
+msgstr "Selecteer Product"
+
+msgid "No product selected"
+msgstr "Geen product geselecteerd"
+
+msgid "Select a product to configure its settings"
+msgstr "Selecteer een product om de instellingen te configureren"
+
+msgid "Ecwid Product ID"
+msgstr "Ecwid Product ID"
+
+# Description Types
+msgid "Usage Instructions"
+msgstr "Gebruiksinstructies"
+
+msgid "Ingredients"
+msgstr "Ingrediënten"
+
+msgid "Care Instructions"
+msgstr "Verzorgingsinstructies"
+
+msgid "Shipping Information"
+msgstr "Verzendingsinformatie"
+
+msgid "Warranty"
+msgstr "Garantie"
+
+msgid "Product Description"
+msgstr "Productbeschrijving"
+
+# Form Fields
+msgid "Add Description"
+msgstr "Beschrijving Toevoegen"
+
+msgid "Remove"
+msgstr "Verwijderen"
+
+msgid "Type"
+msgstr "Type"
+
+msgid "Title"
+msgstr "Titel"
+
+msgid "Content"
+msgstr "Inhoud"
+
+msgid "Description Type"
+msgstr "Beschrijvingstype"
+
+msgid "Custom Title"
+msgstr "Aangepaste Titel"
+
+msgid "Display Title"
+msgstr "Titel Weergeven"
+
+# Language Switcher
+msgid "Language"
+msgstr "Taal"
+
+msgid "Current language:"
+msgstr "Huidige taal:"
+
+msgid "Switch to"
+msgstr "Wisselen naar"
+
+# Ingredients
+msgid "Select an ingredient"
+msgstr "Selecteer een ingrediënt"
+
+msgid "Select an ingredient to see its description"
+msgstr "Selecteer een ingrediënt om de beschrijving te zien"
+
+msgid "Add ingredient"
+msgstr "Ingrediënt toevoegen"
+
+msgid "Remove ingredient"
+msgstr "Ingrediënt verwijderen"
+
+msgid "Ingredient"
+msgstr "Ingrediënt"
+
+msgid "Description"
+msgstr "Beschrijving"
+
+msgid "Actions"
+msgstr "Acties"
+
+# Block Editor
+msgid "Product Field"
+msgstr "Productveld"
+
+msgid "Product Detail"
+msgstr "Productdetail"
+
+msgid "Product Gallery Image"
+msgstr "Product Galerij Afbeelding"
+
+msgid "Product Add to Cart"
+msgstr "Product Toevoegen aan Winkelwagen"
+
+msgid "Product Related Products"
+msgstr "Gerelateerde Producten"
+
+msgid "Product Ingredients"
+msgstr "Product Ingrediënten"
+
+msgid "Ecwid Category"
+msgstr "Ecwid Categorie"
+
+msgid "Category Products"
+msgstr "Categorie Producten"
+
+# Block Attributes
+msgid "Field Type"
+msgstr "Veldtype"
+
+msgid "Field Value"
+msgstr "Veldwaarde"
+
+msgid "Product Image"
+msgstr "Productafbeelding"
+
+msgid "Image Size"
+msgstr "Afbeeldingsgrootte"
+
+msgid "Small"
+msgstr "Klein"
+
+msgid "Medium"
+msgstr "Middel"
+
+msgid "Large"
+msgstr "Groot"
+
+# Product Lines
+msgid "Product Lines"
+msgstr "Productlijnen"
+
+msgid "Line Type"
+msgstr "Lijntype"
+
+msgid "Display Mode"
+msgstr "Weergavemodus"
+
+msgid "Badges"
+msgstr "Badges"
+
+msgid "Pills"
+msgstr "Pillen"
+
+msgid "List"
+msgstr "Lijst"
+
+msgid "Inline"
+msgstr "Inline"
+
+# Navigation
+msgid "View Product"
+msgstr "Product Bekijken"
+
+msgid "Add to Cart"
+msgstr "Toevoegen aan Winkelwagen"
+
+msgid "Out of Stock"
+msgstr "Niet op Voorraad"
+
+msgid "Price"
+msgstr "Prijs"
+
+# JavaScript Interface Strings
+msgid "Please fix the following errors:"
+msgstr "Corrigeer de volgende fouten:"
+
+msgid "Error: No valid media selected."
+msgstr "Fout: Geen geldige media geselecteerd."
+
+msgid "Are you sure you want to remove this media?"
+msgstr "Weet je zeker dat je deze media wilt verwijderen?"
+
+msgid "Please enter a URL first"
+msgstr "Voer eerst een URL in"
+
+msgid "URL validation failed:"
+msgstr "URL validatie mislukt:"
+
+msgid "Error validating URL"
+msgstr "Fout bij valideren URL"
+
+msgid "Are you sure you want to remove this product from the list?"
+msgstr "Weet je zeker dat je dit product uit de lijst wilt verwijderen?"
+
+msgid "Are you sure you want to remove this ingredient?"
+msgstr "Weet je zeker dat je dit ingrediënt wilt verwijderen?"
+
+msgid "Please correct the validation errors before saving."
+msgstr "Corrigeer de validatiefouten voordat je opslaat."
+
+# Status Messages
+msgid "Loading..."
+msgstr "Laden..."
+
+msgid "No products found"
+msgstr "Geen producten gevonden"
+
+msgid "Search products..."
+msgstr "Zoek producten..."
+
+# Settings
+msgid "Settings"
+msgstr "Instellingen"
+
+msgid "General"
+msgstr "Algemeen"
+
+msgid "Advanced"
+msgstr "Geavanceerd"
+
+msgid "Save Changes"
+msgstr "Wijzigingen Opslaan"
+
+msgid "Settings saved successfully"
+msgstr "Instellingen succesvol opgeslagen"

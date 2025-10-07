@@ -249,7 +249,7 @@
 			$( document ).on( 'click', '.remove-ingredient', function () {
 				if (
 					confirm(
-						'Are you sure you want to remove this ingredient?'
+						ProductDescriptionsConfig.i18n.confirmRemoveIngredient
 					)
 				) {
 					const $row = $( this ).closest( '.ingredient-row' );
@@ -479,7 +479,8 @@
 				if ( hasErrors ) {
 					e.preventDefault();
 					alert(
-						'Please fix the following errors:\n\n' +
+						ProductDescriptionsConfig.i18n.validationErrorsTitle +
+							'\n\n' +
 							errors.join( '\n' )
 					);
 					return false;
@@ -550,7 +551,7 @@
 			$( document ).on( 'click', '.remove-ingredient', function ( e ) {
 				if (
 					! confirm(
-						'Are you sure you want to remove this ingredient?'
+						ProductDescriptionsConfig.i18n.confirmRemoveIngredient
 					)
 				) {
 					e.preventDefault();

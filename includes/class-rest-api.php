@@ -1031,8 +1031,11 @@ class Peaches_REST_API {
 				);
 			}
 
-			// Get product descriptions
-			$descriptions = $this->product_settings_manager->get_product_descriptions($product_id);
+			// Get current language for translations
+			$current_language = Peaches_Ecwid_Utilities::get_current_language();
+			
+			// Get product descriptions with translations
+			$descriptions = $this->product_settings_manager->get_product_descriptions_with_translations($product_id, $current_language);
 
 			// Filter by type if specified
 			if (!empty($type_filter)) {
@@ -1105,7 +1108,10 @@ class Peaches_REST_API {
 			}
 
 			// Get specific description by type
-			$description = $this->product_settings_manager->get_product_description_by_type($product_id, $type);
+			// Get current language for translations
+			$current_language = Peaches_Ecwid_Utilities::get_current_language();
+			
+			$description = $this->product_settings_manager->get_product_description_by_type($product_id, $type, $current_language);
 
 			if (!$description) {
 				return new WP_Error(

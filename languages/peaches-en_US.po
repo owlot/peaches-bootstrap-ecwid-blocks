@@ -1,0 +1,1353 @@
+# English (United States) translations for Peaches Bootstrap Ecwid Blocks
+# Copyright (C) 2025 Peaches.io
+# This file is distributed under the GPL-2.0-or-later.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Peaches Bootstrap Ecwid Blocks 0.6.0\n"
+"Report-Msgid-Bugs-To: https://github.com/owlot/peaches-bootstrap-ecwid-"
+"blocks/issues\n"
+"POT-Creation-Date: 2025-09-18 19:36+0200\n"
+"PO-Revision-Date: 2025-09-18 19:36+0200\n"
+"Last-Translator: Peaches.io <support@peaches.io>\n"
+"Language-Team: English\n"
+"Language: en_US\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Peaches i18n\n"
+"X-Domain: peaches\n"
+
+#: includes/class-ecwid-product-settings.php:110
+msgid "Ecwid Product Settings"
+msgstr "Ecwid Product Settings"
+
+#: includes/class-ecwid-product-settings.php:111
+msgid "Ecwid Products"
+msgstr "Ecwid Products"
+
+#: includes/class-ecwid-product-settings.php:140
+#: includes/class-enhanced-navigation.php:146
+msgid "Product Configuration"
+msgstr "Product Configuration"
+
+#: includes/class-ecwid-product-settings.php:141
+msgid "Product Ingredient"
+msgstr "Product Ingredient"
+
+#: includes/class-ecwid-product-settings.php:146
+msgid "Name"
+msgstr "Name"
+
+#: includes/class-ecwid-product-settings.php:153
+msgid "has been saved successfully!"
+msgstr "has been saved successfully!"
+
+#: includes/class-ecwid-product-settings.php:155
+msgid "Edit Again"
+msgstr "Edit Again"
+
+#: includes/class-ecwid-product-settings.php:618
+#, php-format
+msgid "Create First %s"
+msgstr "Create First %s"
+
+#: includes/class-ecwid-product-settings.php:648
+msgid "(no title)"
+msgstr "(no title)"
+
+#: includes/class-ecwid-product-settings.php:702
+msgid "No description"
+msgstr "No description"
+
+#: includes/class-ecwid-product-settings.php:741
+#: includes/class-ecwid-product-settings.php:888
+#, php-format
+msgid "%s more items available"
+msgstr "%s more items available"
+
+#: includes/class-ecwid-product-settings.php:747
+#: includes/class-ecwid-product-settings.php:894
+#, php-format
+msgid "Manage All %s"
+msgstr "Manage All %s"
+
+#: includes/class-ecwid-product-settings.php:954
+#: includes/class-product-media-manager.php:1494
+#: includes/class-product-media-manager.php:1989
+msgid "Loading..."
+msgstr "Loading..."
+
+#: includes/class-ecwid-product-settings.php:955
+msgid "Load More Products"
+msgstr "Load More Products"
+
+#: includes/class-ecwid-product-settings.php:956
+msgid "No products found"
+msgstr "No products found"
+
+#: includes/class-ecwid-product-settings.php:957
+msgid "Product configuration created successfully!"
+msgstr "Product configuration created successfully!"
+
+#: includes/class-ecwid-product-settings.php:958
+msgid "Failed to create product configuration"
+msgstr "Failed to create product configuration"
+
+#: includes/class-ecwid-product-settings.php:959
+msgid "Product configuration created! Would you like to edit it now?"
+msgstr "Product configuration created! Would you like to edit it now?"
+
+#: includes/class-ecwid-product-settings.php:960
+msgid "Network error occurred"
+msgstr "Network error occurred"
+
+#: includes/class-ecwid-product-settings.php:961
+msgid "Search products..."
+msgstr "Search products..."
+
+#: includes/class-ecwid-product-settings.php:1223
+#: includes/class-ecwid-product-settings.php:1327
+msgid "Security check failed"
+msgstr "Security check failed"
+
+#: includes/class-ecwid-product-settings.php:1229
+msgid "Insufficient permissions"
+msgstr "Insufficient permissions"
+
+#: includes/class-ecwid-product-settings.php:1242
+msgid "Product ID and name are required"
+msgstr "Product ID and name are required"
+
+#: includes/class-ecwid-product-settings.php:1255
+msgid "A post already exists for this product"
+msgstr "A post already exists for this product"
+
+#: includes/class-ecwid-product-settings.php:1281
+#: includes/class-ecwid-product-settings.php:1286
+#: includes/class-ecwid-product-settings.php:1311
+msgid "Failed to create post"
+msgstr "Failed to create post"
+
+#: includes/class-ecwid-product-settings.php:1303
+msgid "Product settings post created successfully"
+msgstr "Product settings post created successfully"
+
+#: includes/class-ecwid-product-settings.php:1388
+#: includes/class-product-settings-manager.php:1936
+msgid "Language:"
+msgstr "Language:"
+
+#: includes/class-ecwid-product-settings.php:1412
+msgid "(default)"
+msgstr "(default)"
+
+#: includes/class-ecwid-blocks.php:191
+msgid ""
+"Peaches Ecwid Blocks failed to initialize properly. Please check the error "
+"log for details."
+msgstr ""
+"Peaches Ecwid Blocks failed to initialize properly. Please check the error "
+"log for details."
+
+#: includes/class-ecwid-blocks.php:451 includes/class-product-manager.php:114
+msgid "Choose Product"
+msgstr "Choose Product"
+
+#: includes/class-ecwid-settings.php:124
+msgid "Peaches Settings"
+msgstr "Peaches Settings"
+
+#: includes/class-ecwid-settings.php:125
+msgid "Peaches"
+msgstr "Peaches"
+
+#: includes/class-ecwid-settings.php:137
+msgid "Ecwid Blocks Settings"
+msgstr "Ecwid Blocks Settings"
+
+#: includes/class-ecwid-settings.php:138
+msgid "Ecwid Blocks"
+msgstr "Ecwid Blocks"
+
+#: includes/class-ecwid-settings.php:171
+msgid "General Settings"
+msgstr "General Settings"
+
+#: includes/class-ecwid-settings.php:179
+msgid "Template Settings"
+msgstr "Template Settings"
+
+#: includes/class-ecwid-settings.php:202
+msgid "Cache Duration (minutes)"
+msgstr "Cache Duration (minutes)"
+
+#: includes/class-ecwid-settings.php:210
+msgid "Redis Caching"
+msgstr "Redis Caching"
+
+#: includes/class-ecwid-settings.php:219
+msgid "Cache Management"
+msgstr "Cache Management"
+
+#: includes/class-ecwid-settings.php:227
+msgid "Debug Mode"
+msgstr "Debug Mode"
+
+#: includes/class-ecwid-settings.php:247
+msgid "Product Template Page"
+msgstr "Product Template Page"
+
+#: includes/class-ecwid-settings.php:255
+msgid "Enable Breadcrumbs"
+msgstr "Enable Breadcrumbs"
+
+#: includes/class-ecwid-settings.php:281
+msgid "Security check failed."
+msgstr "Security check failed."
+
+#: includes/class-ecwid-settings.php:286
+msgid "You do not have permission to perform this action."
+msgstr "You do not have permission to perform this action."
+
+#: includes/class-ecwid-settings.php:919
+msgid "Recent Debug Logs"
+msgstr "Recent Debug Logs"
+
+#: includes/class-ecwid-settings.php:924
+msgid "No recent logs found."
+msgstr "No recent logs found."
+
+#: includes/class-ecwid-settings.php:927
+msgid "Close Logs"
+msgstr "Close Logs"
+
+#: includes/template-functions.php:216
+#, php-format
+msgid "Product media: %s"
+msgstr "Product media: %s"
+
+#: includes/template-functions.php:551
+msgid "Your browser does not support the video tag."
+msgstr "Your browser does not support the video tag."
+
+#: includes/template-functions.php:577
+msgid "Your browser does not support the audio element."
+msgstr "Your browser does not support the audio element."
+
+#: includes/template-functions.php:597
+msgid "Download"
+msgstr "Download"
+
+#: includes/class-ingredients-library-manager.php:53
+msgctxt "Post type general name"
+msgid "Ingredients Library"
+msgstr "Ingredients Library"
+
+#: includes/class-ingredients-library-manager.php:54
+msgctxt "Post type singular name"
+msgid "Product Ingredient"
+msgstr "Product Ingredient"
+
+#: includes/class-ingredients-library-manager.php:55
+msgctxt "Admin Menu text"
+msgid "Ingredients Library"
+msgstr "Ingredients Library"
+
+#: includes/class-ingredients-library-manager.php:56
+msgctxt "Add New on Toolbar"
+msgid "Product Ingredient"
+msgstr "Product Ingredient"
+
+#: includes/class-ingredients-library-manager.php:57
+#: includes/class-product-settings-manager.php:109
+msgid "Add New"
+msgstr "Add New"
+
+#: includes/class-ingredients-library-manager.php:58
+msgid "Add New Product Ingredient"
+msgstr "Add New Product Ingredient"
+
+#: includes/class-ingredients-library-manager.php:59
+msgid "New Product Ingredient"
+msgstr "New Product Ingredient"
+
+#: includes/class-ingredients-library-manager.php:60
+msgid "Edit Product Ingredient"
+msgstr "Edit Product Ingredient"
+
+#: includes/class-ingredients-library-manager.php:61
+msgid "View Product Ingredient"
+msgstr "View Product Ingredient"
+
+#: includes/class-ingredients-library-manager.php:62
+msgid "All Ingredients"
+msgstr "All Ingredients"
+
+#: includes/class-ingredients-library-manager.php:63
+msgid "Search Ingredients"
+msgstr "Search Ingredients"
+
+#: includes/class-ingredients-library-manager.php:64
+msgid "No ingredients found."
+msgstr "No ingredients found."
+
+#: includes/class-ingredients-library-manager.php:65
+msgid "No ingredients found in Trash."
+msgstr "No ingredients found in Trash."
+
+#: includes/class-ingredients-library-manager.php:95
+msgid "Ingredient Details"
+msgstr "Ingredient Details"
+
+#: includes/class-ingredients-library-manager.php:121
+msgid "Name (English):"
+msgstr "Name (English):"
+
+#: includes/class-ingredients-library-manager.php:128
+msgid "Description (English):"
+msgstr "Description (English):"
+
+#: includes/class-ingredients-library-manager.php:135
+#: includes/class-product-settings-manager.php:922
+msgid "Translations"
+msgstr "Translations"
+
+#: includes/class-ingredients-library-manager.php:140
+#: includes/class-product-settings-manager.php:933
+#, php-format
+msgid "%s Translation"
+msgstr "%s Translation"
+
+#: includes/class-ingredients-library-manager.php:146
+#, php-format
+msgid "Name (%s):"
+msgstr "Name (%s):"
+
+#: includes/class-ingredients-library-manager.php:157
+#, php-format
+msgid "Description (%s):"
+msgstr "Description (%s):"
+
+#: includes/class-ingredients-library-manager.php:288
+#: includes/class-product-settings-manager.php:379
+#: includes/class-product-settings-manager.php:450
+msgid "Description"
+msgstr "Description"
+
+#: includes/class-product-lines-manager.php:82
+msgctxt "taxonomy general name"
+msgid "Product Lines"
+msgstr "Product Lines"
+
+#: includes/class-product-lines-manager.php:83
+msgctxt "taxonomy singular name"
+msgid "Product Line"
+msgstr "Product Line"
+
+#: includes/class-product-lines-manager.php:84
+msgid "Search Product Lines"
+msgstr "Search Product Lines"
+
+#: includes/class-product-lines-manager.php:85
+#: includes/class-product-lines-manager.php:800
+msgid "All Product Lines"
+msgstr "All Product Lines"
+
+#: includes/class-product-lines-manager.php:86
+#: includes/class-product-lines-manager.php:796
+msgid "Edit Product Line"
+msgstr "Edit Product Line"
+
+#: includes/class-product-lines-manager.php:87
+msgid "Update Product Line"
+msgstr "Update Product Line"
+
+#: includes/class-product-lines-manager.php:88
+msgid "Add New Product Line"
+msgstr "Add New Product Line"
+
+#: includes/class-product-lines-manager.php:89
+msgid "New Product Line Name"
+msgstr "New Product Line Name"
+
+#: includes/class-product-lines-manager.php:90
+#: includes/class-product-settings-manager.php:172
+#: includes/class-enhanced-navigation.php:158
+msgid "Product Lines"
+msgstr "Product Lines"
+
+#: includes/class-product-lines-manager.php:123
+msgid "Line Media Tags"
+msgstr "Line Media Tags"
+
+#: includes/class-product-lines-manager.php:179
+msgid "Select Line Media"
+msgstr "Select Line Media"
+
+#: includes/class-product-lines-manager.php:180
+#: includes/class-product-media-manager.php:1987
+msgid "Use this media"
+msgstr "Use this media"
+
+#: includes/class-product-lines-manager.php:181
+#: includes/class-product-lines-manager.php:440
+msgid "Select Media"
+msgstr "Select Media"
+
+#: includes/class-product-lines-manager.php:182
+#: includes/class-product-lines-manager.php:440
+msgid "Change Media"
+msgstr "Change Media"
+
+#: includes/class-product-lines-manager.php:183
+#: includes/class-product-lines-manager.php:443
+#: includes/class-product-media-manager.php:1430
+msgid "Remove"
+msgstr "Remove"
+
+#: includes/class-product-lines-manager.php:184
+#: includes/class-product-lines-manager.php:445
+msgid "Delete"
+msgstr "Delete"
+
+#: includes/class-product-lines-manager.php:185
+#: includes/class-product-lines-manager.php:426
+msgid "Media Tag:"
+msgstr "Media Tag:"
+
+#: includes/class-product-lines-manager.php:186
+#: includes/class-product-settings-manager.php:1659
+msgid "Error: No valid media selected."
+msgstr "Error: No valid media selected."
+
+#: includes/class-product-lines-manager.php:187
+#: includes/class-product-media-manager.php:1988
+#: includes/class-product-settings-manager.php:1660
+msgid "Are you sure you want to remove this media?"
+msgstr "Are you sure you want to remove this media?"
+
+#: includes/class-product-lines-manager.php:240
+#: includes/class-product-lines-manager.php:244
+msgid "Short Description"
+msgstr "Short Description"
+
+#: includes/class-product-lines-manager.php:241
+#: includes/class-product-lines-manager.php:245
+msgid ""
+"Brief description for use in blocks and short displays (plain text "
+"recommended)."
+msgstr ""
+"Brief description for use in blocks and short displays (plain text "
+"recommended)."
+
+#: includes/class-product-lines-manager.php:266
+#: includes/class-product-lines-manager.php:339
+msgid "Line Type"
+msgstr "Line Type"
+
+#: includes/class-product-lines-manager.php:278
+#: includes/class-product-lines-manager.php:353
+msgid "Type of product line (e.g., fragrance, color_scheme, design_collection)"
+msgstr ""
+"Type of product line (e.g., fragrance, color_scheme, design_collection)"
+
+#: includes/class-product-lines-manager.php:282
+#: includes/class-product-lines-manager.php:359
+msgid "Full Description"
+msgstr "Full Description"
+
+#: includes/class-product-lines-manager.php:291
+#: includes/class-product-lines-manager.php:370
+msgid ""
+"Detailed rich text description of the product line with formatting and media "
+"support."
+msgstr ""
+"Detailed rich text description of the product line with formatting and media "
+"support."
+
+#: includes/class-product-lines-manager.php:295
+#: includes/class-product-lines-manager.php:376
+msgid "Line Media"
+msgstr "Line Media"
+
+#: includes/class-product-lines-manager.php:300
+#: includes/class-product-lines-manager.php:391
+msgid "Add Media"
+msgstr "Add Media"
+
+#: includes/class-product-lines-manager.php:302
+#: includes/class-product-lines-manager.php:393
+msgid "Add named media files for this product line."
+msgstr "Add named media files for this product line."
+
+#: includes/class-product-lines-manager.php:453
+msgid "No media selected"
+msgstr "No media selected"
+
+#: includes/class-product-lines-manager.php:603
+msgid "Type"
+msgstr "Type"
+
+#: includes/class-product-lines-manager.php:604
+msgid "Media"
+msgstr "Media"
+
+#: includes/class-product-lines-manager.php:605
+msgid "Products"
+msgstr "Products"
+
+#: includes/class-block-patterns.php:64
+msgid "Peaches Ecwid"
+msgstr "Peaches Ecwid"
+
+#: includes/class-product-media-manager.php:1311
+msgid "Fallback from Ecwid"
+msgstr "Fallback from Ecwid"
+
+#: includes/class-product-media-manager.php:1313
+msgid "Fallback Ecwid"
+msgstr "Fallback Ecwid"
+
+#: includes/class-product-media-manager.php:1345
+msgid "Upload File"
+msgstr "Upload File"
+
+#: includes/class-product-media-manager.php:1355
+msgid "External URL"
+msgstr "External URL"
+
+#: includes/class-product-media-manager.php:1365
+msgid "Ecwid Media"
+msgstr "Ecwid Media"
+
+#: includes/class-product-media-manager.php:1463
+msgid "Clear URL"
+msgstr "Clear URL"
+
+#: includes/class-product-media-manager.php:1486
+msgid "Select image position..."
+msgstr "Select image position..."
+
+#: includes/class-product-media-manager.php:1487
+#: includes/class-product-media-manager.php:1898
+msgid "Main image (position 1)"
+msgstr "Main image (position 1)"
+
+#: includes/class-product-media-manager.php:1496
+msgid "Loading product images..."
+msgstr "Loading product images..."
+
+#: includes/class-product-media-manager.php:1502
+msgid "Clear Selection"
+msgstr "Clear Selection"
+
+#: includes/class-product-media-manager.php:1567
+msgid "WP Media"
+msgstr "WP Media"
+
+#: includes/class-product-media-manager.php:1589
+msgid "External media"
+msgstr "External media"
+
+#: includes/class-product-media-manager.php:1595
+msgid "External"
+msgstr "External"
+
+#: includes/class-product-media-manager.php:1619
+msgid "Ecwid media"
+msgstr "Ecwid media"
+
+#: includes/class-product-media-manager.php:1621
+msgid "Ecwid"
+msgstr "Ecwid"
+
+#: includes/class-product-media-manager.php:1652
+msgid "Error loading media interface"
+msgstr "Error loading media interface"
+
+#: includes/class-product-media-manager.php:1908
+#, php-format
+msgid "Gallery image %d"
+msgstr "Gallery image %d"
+
+#: includes/class-product-media-manager.php:1986
+msgid "Select Product Media"
+msgstr "Select Product Media"
+
+#: includes/class-product-media-manager.php:1990
+msgid "Error occurred"
+msgstr "Error occurred"
+
+#: includes/class-product-media-manager.php:1991
+#: includes/class-product-settings-manager.php:1661
+msgid "Please enter a URL first"
+msgstr "Please enter a URL first"
+
+#: includes/class-product-media-manager.php:1992
+#: includes/class-product-settings-manager.php:1662
+msgid "URL validation failed:"
+msgstr "URL validation failed:"
+
+#: includes/class-product-media-manager.php:1993
+#: includes/class-product-settings-manager.php:1663
+msgid "Error validating URL"
+msgstr "Error validating URL"
+
+#: includes/class-mollie-subscriptions-block.php:157
+msgid "Subscribe Now"
+msgstr "Subscribe Now"
+
+#: includes/class-mollie-subscriptions-block.php:245
+msgid "Mollie Subscription Block"
+msgstr "Mollie Subscription Block"
+
+#: includes/class-mollie-subscriptions-block.php:246
+msgid ""
+"Please configure the block by selecting a product and adding subscription "
+"plans."
+msgstr ""
+"Please configure the block by selecting a product and adding subscription "
+"plans."
+
+#: includes/class-mollie-subscriptions-block.php:270
+msgid "Error"
+msgstr "Error"
+
+#: includes/class-mollie-subscriptions-block.php:457
+msgid "Mollie integration not available"
+msgstr "Mollie integration not available"
+
+#: includes/class-mollie-subscriptions-block.php:473
+msgid "Failed to create subscription"
+msgstr "Failed to create subscription"
+
+#: includes/class-mollie-subscriptions-block.php:477
+msgid "An error occurred while creating the subscription"
+msgstr "An error occurred while creating the subscription"
+
+#: includes/class-mollie-subscriptions-block.php:651
+msgid "Daily"
+msgstr "Daily"
+
+#: includes/class-mollie-subscriptions-block.php:652
+msgid "Weekly"
+msgstr "Weekly"
+
+#: includes/class-mollie-subscriptions-block.php:653
+msgid "Bi-weekly"
+msgstr "Bi-weekly"
+
+#: includes/class-mollie-subscriptions-block.php:654
+msgid "Monthly"
+msgstr "Monthly"
+
+#: includes/class-mollie-subscriptions-block.php:655
+msgid "Quarterly"
+msgstr "Quarterly"
+
+#: includes/class-mollie-subscriptions-block.php:656
+msgid "Semi-annually"
+msgstr "Semi-annually"
+
+#: includes/class-mollie-subscriptions-block.php:657
+msgid "Annually"
+msgstr "Annually"
+
+#: includes/class-mollie-integration.php:55
+msgid "Direct Mollie API integration not yet implemented"
+msgstr "Direct Mollie API integration not yet implemented"
+
+#: includes/class-mollie-integration.php:65
+msgid "Direct Mollie webhook handling not yet implemented"
+msgstr "Direct Mollie webhook handling not yet implemented"
+
+#: includes/class-media-tags-manager.php:373
+#: includes/class-media-tags-manager.php:474
+#: includes/class-media-tags-manager.php:526
+msgid "Tag not found."
+msgstr "Tag not found."
+
+#: includes/class-media-tags-manager.php:382
+msgid "Media type matches tag expectations."
+msgstr "Media type matches tag expectations."
+
+#: includes/class-media-tags-manager.php:392
+#, php-format
+msgid "Expected %s but got %s. This may not display correctly."
+msgstr "Expected %s but got %s. This may not display correctly."
+
+#: includes/class-media-tags-manager.php:421
+msgid "A tag with this key already exists."
+msgstr "A tag with this key already exists."
+
+#: includes/class-media-tags-manager.php:441
+msgid "Failed to save tag."
+msgstr "Failed to save tag."
+
+#: includes/class-media-tags-manager.php:448
+msgid "Error adding tag."
+msgstr "Error adding tag."
+
+#: includes/class-media-tags-manager.php:494
+msgid "Failed to update tag."
+msgstr "Failed to update tag."
+
+#: includes/class-media-tags-manager.php:501
+msgid "Error updating tag."
+msgstr "Error updating tag."
+
+#: includes/class-media-tags-manager.php:516
+msgid "Invalid tag key provided."
+msgstr "Invalid tag key provided."
+
+#: includes/class-media-tags-manager.php:521
+msgid "Default tags cannot be deleted."
+msgstr "Default tags cannot be deleted."
+
+#: includes/class-media-tags-manager.php:540
+msgid "Failed to delete tag."
+msgstr "Failed to delete tag."
+
+#: includes/class-media-tags-manager.php:547
+msgid "Error deleting tag."
+msgstr "Error deleting tag."
+
+#: includes/class-media-tags-manager.php:564
+msgid "Tag key, label, and expected media type are required."
+msgstr "Tag key, label, and expected media type are required."
+
+#: includes/class-media-tags-manager.php:569
+msgid "Tag key can only contain lowercase letters, numbers, and underscores."
+msgstr "Tag key can only contain lowercase letters, numbers, and underscores."
+
+#: includes/class-media-tags-manager.php:574
+msgid "Invalid media type selected."
+msgstr "Invalid media type selected."
+
+#: includes/class-media-tags-manager.php:615
+msgid "Are you sure you want to delete this tag? This action cannot be undone."
+msgstr ""
+"Are you sure you want to delete this tag? This action cannot be undone."
+
+#: includes/class-media-tags-manager.php:616
+msgid "Edit Tag"
+msgstr "Edit Tag"
+
+#: includes/class-media-tags-manager.php:617
+msgid "Update Tag"
+msgstr "Update Tag"
+
+#: includes/class-media-tags-manager.php:618
+msgid "Add Tag"
+msgstr "Add Tag"
+
+#: includes/class-media-tags-manager.php:619
+msgid "Auto-generated from label"
+msgstr "Auto-generated from label"
+
+#: includes/class-media-tags-manager.php:620
+msgid "Manual override active"
+msgstr "Manual override active"
+
+#: includes/class-media-tags-manager.php:650
+msgid "Error loading media tags interface."
+msgstr "Error loading media tags interface."
+
+#: includes/class-media-tags-manager.php:1102
+#: includes/class-media-tags-manager.php:1142
+#: includes/class-media-tags-manager.php:1181
+msgid "Insufficient permissions."
+msgstr "Insufficient permissions."
+
+#: includes/class-media-tags-manager.php:1118
+msgid "Tag added successfully."
+msgstr "Tag added successfully."
+
+#: includes/class-media-tags-manager.php:1126
+msgid "An error occurred while adding the tag."
+msgstr "An error occurred while adding the tag."
+
+#: includes/class-media-tags-manager.php:1158
+msgid "Tag updated successfully."
+msgstr "Tag updated successfully."
+
+#: includes/class-media-tags-manager.php:1165
+msgid "An error occurred while updating the tag."
+msgstr "An error occurred while updating the tag."
+
+#: includes/class-media-tags-manager.php:1192
+msgid "Tag deleted successfully."
+msgstr "Tag deleted successfully."
+
+#: includes/class-media-tags-manager.php:1198
+msgid "An error occurred while deleting the tag."
+msgstr "An error occurred while deleting the tag."
+
+#: includes/class-product-manager.php:243
+msgid "Shop"
+msgstr "Shop"
+
+#: includes/class-product-manager.php:267
+msgid "Home"
+msgstr "Home"
+
+#: includes/class-product-settings-manager.php:105
+msgctxt "Post type general name"
+msgid "Product Settings"
+msgstr "Product Settings"
+
+#: includes/class-product-settings-manager.php:106
+msgctxt "Post type singular name"
+msgid "Product Setting"
+msgstr "Product Setting"
+
+#: includes/class-product-settings-manager.php:107
+msgctxt "Admin Menu text"
+msgid "Product Settings"
+msgstr "Product Settings"
+
+#: includes/class-product-settings-manager.php:108
+msgctxt "Add New on Toolbar"
+msgid "Product Setting"
+msgstr "Product Setting"
+
+#: includes/class-product-settings-manager.php:110
+msgid "Add New Product Setting"
+msgstr "Add New Product Setting"
+
+#: includes/class-product-settings-manager.php:111
+msgid "New Product Setting"
+msgstr "New Product Setting"
+
+#: includes/class-product-settings-manager.php:112
+msgid "Edit Product Setting"
+msgstr "Edit Product Setting"
+
+#: includes/class-product-settings-manager.php:113
+msgid "View Product Setting"
+msgstr "View Product Setting"
+
+#: includes/class-product-settings-manager.php:114
+msgid "All Product Settings"
+msgstr "All Product Settings"
+
+#: includes/class-product-settings-manager.php:115
+msgid "Search Product Settings"
+msgstr "Search Product Settings"
+
+#: includes/class-product-settings-manager.php:116
+msgid "Parent Product Settings:"
+msgstr "Parent Product Settings:"
+
+#: includes/class-product-settings-manager.php:117
+msgid "No product settings found."
+msgstr "No product settings found."
+
+#: includes/class-product-settings-manager.php:118
+msgid "No product settings found in Trash."
+msgstr "No product settings found in Trash."
+
+#: includes/class-product-settings-manager.php:164
+msgid "Product Tags"
+msgstr "Product Tags"
+
+#: includes/class-product-settings-manager.php:181
+msgid "Product Ingredients"
+msgstr "Product Ingredients"
+
+#: includes/class-product-settings-manager.php:190
+msgid "Named Product Media"
+msgstr "Named Product Media"
+
+#: includes/class-product-settings-manager.php:199
+msgid "Additional Product Descriptions"
+msgstr "Additional Product Descriptions"
+
+#: includes/class-product-settings-manager.php:242
+msgid ""
+"Select which product lines this product belongs to. Products can belong to "
+"multiple lines."
+msgstr ""
+"Select which product lines this product belongs to. Products can belong to "
+"multiple lines."
+
+#: includes/class-product-settings-manager.php:250
+msgid "Create New Product Line"
+msgstr "Create New Product Line"
+
+#: includes/class-product-settings-manager.php:255
+msgid "No product lines available."
+msgstr "No product lines available."
+
+#: includes/class-product-settings-manager.php:257
+msgid "Create a product line"
+msgstr "Create a product line"
+
+#: includes/class-product-settings-manager.php:285
+msgid "Error loading product lines."
+msgstr "Error loading product lines."
+
+#: includes/class-product-settings-manager.php:310
+msgid ""
+"Add tags to describe product properties like \"waterproof\", \"organic\", "
+"\"limited-edition\". These can be used for filtering and search."
+msgstr ""
+"Add tags to describe product properties like \"waterproof\", \"organic\", "
+"\"limited-edition\". These can be used for filtering and search."
+
+#: includes/class-product-settings-manager.php:318
+msgid "Separate tags with commas. Existing tags will be suggested as you type."
+msgstr ""
+"Separate tags with commas. Existing tags will be suggested as you type."
+
+#: includes/class-product-settings-manager.php:327
+msgid "Error loading product tags."
+msgstr "Error loading product tags."
+
+#: includes/class-product-settings-manager.php:354
+msgid ""
+"Select ingredients from your ingredients library for this product. Each "
+"ingredient will be displayed on the product page."
+msgstr ""
+"Select ingredients from your ingredients library for this product. Each "
+"ingredient will be displayed on the product page."
+
+#: includes/class-product-settings-manager.php:362
+msgid "Create New Ingredient"
+msgstr "Create New Ingredient"
+
+#: includes/class-product-settings-manager.php:371
+#: includes/class-product-settings-manager.php:471
+msgid "No ingredients selected yet."
+msgstr "No ingredients selected yet."
+
+#: includes/class-product-settings-manager.php:372
+#: includes/class-product-settings-manager.php:472
+msgid "Add First Ingredient"
+msgstr "Add First Ingredient"
+
+#: includes/class-product-settings-manager.php:378
+#: includes/class-product-settings-manager.php:449
+msgid "Ingredient"
+msgstr "Ingredient"
+
+#: includes/class-product-settings-manager.php:380
+#: includes/class-product-settings-manager.php:451
+msgid "Actions"
+msgstr "Actions"
+
+#: includes/class-product-settings-manager.php:395
+msgid "Add Ingredient"
+msgstr "Add Ingredient"
+
+#: includes/class-product-settings-manager.php:405
+#: includes/class-product-settings-manager.php:526
+#: includes/class-product-settings-manager.php:555
+#: includes/class-product-settings-manager.php:1999
+msgid "Select an ingredient..."
+msgstr "Select an ingredient..."
+
+#: includes/class-product-settings-manager.php:422
+#: includes/class-product-settings-manager.php:497
+#: includes/class-product-settings-manager.php:588
+#: includes/class-product-settings-manager.php:1657
+#: includes/class-product-settings-manager.php:1703
+msgid "Select an ingredient to see its description"
+msgstr "Select an ingredient to see its description"
+
+#: includes/class-product-settings-manager.php:491
+#: includes/class-product-settings-manager.php:1724
+msgid "No description available"
+msgstr "No description available"
+
+#: includes/class-product-settings-manager.php:493
+msgid "Error loading description"
+msgstr "Error loading description"
+
+#: includes/class-product-settings-manager.php:508
+msgid "Error loading ingredients interface."
+msgstr "Error loading ingredients interface."
+
+#: includes/class-product-settings-manager.php:565
+#: includes/class-product-settings-manager.php:1992
+msgid "No ingredients available - create one first"
+msgstr "No ingredients available - create one first"
+
+#: includes/class-product-settings-manager.php:639
+msgid ""
+"Assign media files, URLs, or Ecwid images to predefined tags for this "
+"product. Each tag can have one media item from any source."
+msgstr ""
+"Assign media files, URLs, or Ecwid images to predefined tags for this "
+"product. Each tag can have one media item from any source."
+
+#: includes/class-product-settings-manager.php:643
+msgid "No media tags available."
+msgstr "No media tags available."
+
+#: includes/class-product-settings-manager.php:644
+msgid "Please create some media tags first."
+msgstr "Please create some media tags first."
+
+#: includes/class-product-settings-manager.php:646
+msgid "Manage Media Tags"
+msgstr "Manage Media Tags"
+
+#: includes/class-product-settings-manager.php:654
+msgid "Manage Tags"
+msgstr "Manage Tags"
+
+#: includes/class-product-settings-manager.php:671
+msgid "Error loading media management interface."
+msgstr "Error loading media management interface."
+
+#: includes/class-product-settings-manager.php:696
+msgid "Primary Images"
+msgstr "Primary Images"
+
+#: includes/class-product-settings-manager.php:697
+msgid "Gallery Images"
+msgstr "Gallery Images"
+
+#: includes/class-product-settings-manager.php:698
+msgid "Secondary Images"
+msgstr "Secondary Images"
+
+#: includes/class-product-settings-manager.php:699
+msgid "Reference Materials"
+msgstr "Reference Materials"
+
+#: includes/class-product-settings-manager.php:700
+msgid "Rich Media"
+msgstr "Rich Media"
+
+#: includes/class-product-settings-manager.php:701
+msgid "Other"
+msgstr "Other"
+
+#: includes/class-product-settings-manager.php:713
+msgid "tags"
+msgstr "tags"
+
+#: includes/class-product-settings-manager.php:761
+#: includes/class-product-settings-manager.php:1592
+msgid "Product Usage"
+msgstr "Product Usage"
+
+#: includes/class-product-settings-manager.php:762
+#: includes/class-product-settings-manager.php:1593
+msgid "Detailed Ingredients"
+msgstr "Detailed Ingredients"
+
+#: includes/class-product-settings-manager.php:763
+#: includes/class-product-settings-manager.php:1594
+msgid "Care Instructions"
+msgstr "Care Instructions"
+
+#: includes/class-product-settings-manager.php:764
+#: includes/class-product-settings-manager.php:1595
+msgid "Warranty Information"
+msgstr "Warranty Information"
+
+#: includes/class-product-settings-manager.php:765
+#: includes/class-product-settings-manager.php:1596
+msgid "Key Features"
+msgstr "Key Features"
+
+#: includes/class-product-settings-manager.php:766
+#: includes/class-product-settings-manager.php:1597
+msgid "Technical Specifications"
+msgstr "Technical Specifications"
+
+#: includes/class-product-settings-manager.php:767
+#: includes/class-product-settings-manager.php:1598
+msgid "Custom Description"
+msgstr "Custom Description"
+
+#: includes/class-product-settings-manager.php:775
+msgid ""
+"Add additional product descriptions that can be displayed using custom "
+"Gutenberg blocks. Each description type can be targeted specifically in your "
+"blocks."
+msgstr ""
+"Add additional product descriptions that can be displayed using custom "
+"Gutenberg blocks. Each description type can be targeted specifically in your "
+"blocks."
+
+#: includes/class-product-settings-manager.php:787
+msgid ""
+"No additional descriptions yet. Click \"Add Description\" to get started."
+msgstr ""
+"No additional descriptions yet. Click \"Add Description\" to get started."
+
+#: includes/class-product-settings-manager.php:794
+msgid "Add Description"
+msgstr "Add Description"
+
+#: includes/class-product-settings-manager.php:808
+msgid "Error loading product descriptions interface."
+msgstr "Error loading product descriptions interface."
+
+#: includes/class-product-settings-manager.php:847
+msgid "Select Type"
+msgstr "Select Type"
+
+#: includes/class-product-settings-manager.php:937
+#, php-format
+msgid "Title (%s)"
+msgstr "Title (%s)"
+
+#: includes/class-product-settings-manager.php:944
+#, php-format
+msgid "Title in %s"
+msgstr "Title in %s"
+
+#: includes/class-product-settings-manager.php:948
+#, php-format
+msgid "Content (%s)"
+msgstr "Content (%s)"
+
+#: includes/class-product-settings-manager.php:1653
+msgid "Are you sure you want to remove this description?"
+msgstr "Are you sure you want to remove this description?"
+
+#: includes/class-product-settings-manager.php:1654
+msgid "Please fix the validation errors before saving."
+msgstr "Please fix the validation errors before saving."
+
+#: includes/class-product-settings-manager.php:1655
+msgid "Editor element not found."
+msgstr "Editor element not found."
+
+#: includes/class-product-settings-manager.php:1656
+msgid "WordPress editor not available."
+msgstr "WordPress editor not available."
+
+#: includes/class-product-settings-manager.php:1658
+msgid "Please fix the following errors:"
+msgstr "Please fix the following errors:"
+
+#: includes/class-product-settings-manager.php:1664
+msgid "Are you sure you want to remove this product from the list?"
+msgstr "Are you sure you want to remove this product from the list?"
+
+#: includes/class-product-settings-manager.php:1665
+msgid "Are you sure you want to remove this ingredient?"
+msgstr "Are you sure you want to remove this ingredient?"
+
+#: includes/class-product-settings-manager.php:1666
+msgid "Please correct the validation errors before saving."
+msgstr "Please correct the validation errors before saving."
+
+#: includes/class-product-settings-manager.php:1758
+#, php-format
+msgid "Description %d is missing a type."
+msgstr "Description %d is missing a type."
+
+#: includes/class-product-settings-manager.php:1762
+#, php-format
+msgid "Description %d is missing content."
+msgstr "Description %d is missing content."
+
+#: includes/class-product-settings-manager.php:1768
+#, php-format
+msgid "Duplicate description type: %s"
+msgstr "Duplicate description type: %s"
+
+#: includes/class-product-settings-manager.php:1777
+msgid "Validation failed"
+msgstr "Validation failed"
+
+#: includes/class-product-settings-manager.php:1782
+msgid "Validation passed"
+msgstr "Validation passed"
+
+#: includes/class-utilities.php:710 includes/class-utilities.php:736
+#: includes/class-utilities.php:804
+msgid "Product image"
+msgstr "Product image"
+
+#: includes/class-utilities.php:747 includes/class-utilities.php:789
+msgid "Thumbnail"
+msgstr "Thumbnail"
+
+#: includes/class-enhanced-navigation.php:150
+msgid "Ingredients Library"
+msgstr "Ingredients Library"
+
+#: includes/class-enhanced-navigation.php:192
+#, php-format
+msgid "Back to %s"
+msgstr "Back to %s"
+
+#: includes/class-rest-api.php:170 includes/class-rest-api.php:195
+#: includes/class-rest-api.php:220 includes/class-rest-api.php:281
+#: includes/class-rest-api.php:306 includes/class-rest-api.php:331
+#: includes/class-rest-api.php:386 includes/class-rest-api.php:413
+msgid "Ecwid product ID."
+msgstr "Ecwid product ID."
+
+#: includes/class-rest-api.php:176 includes/class-rest-api.php:201
+#: includes/class-rest-api.php:232
+msgid "Language code for multilingual sites."
+msgstr "Language code for multilingual sites."
+
+#: includes/class-rest-api.php:226
+msgid "Filter by line type."
+msgstr "Filter by line type."
+
+#: includes/class-rest-api.php:251
+msgid "Product line ID."
+msgstr "Product line ID."
+
+#: includes/class-rest-api.php:287
+msgid "Filter by description type."
+msgstr "Filter by description type."
+
+#: includes/class-rest-api.php:312
+msgid "Description type."
+msgstr "Description type."
+
+#: includes/class-rest-api.php:337
+msgid "Media tag key."
+msgstr "Media tag key."
+
+#: includes/class-rest-api.php:356
+msgid "Filter by category."
+msgstr "Filter by category."
+
+#: includes/class-rest-api.php:392
+msgid "Number of related products to return."
+msgstr "Number of related products to return."
+
+#: includes/class-rest-api.php:432
+msgid "Parent category ID."
+msgstr "Parent category ID."
+
+#: includes/class-rest-api.php:438
+msgid "Filter enabled categories only."
+msgstr "Filter enabled categories only."
+
+#: includes/class-rest-api.php:457
+msgid "Category ID. Use 0 for featured products (Store Front Page)."
+msgstr "Category ID. Use 0 for featured products (Store Front Page)."
+
+#: includes/class-rest-api.php:463
+msgid "Number of products to return."
+msgstr "Number of products to return."
+
+#: includes/class-rest-api.php:471
+msgid "Number of products to skip for pagination."
+msgstr "Number of products to skip for pagination."
+
+#: includes/class-rest-api.php:478
+msgid "Sort products by field."
+msgstr "Sort products by field."
+
+#: includes/class-rest-api.php:485
+msgid "Sort order."
+msgstr "Sort order."
+
+#: includes/class-rest-api.php:492
+msgid "Filter by enabled status."
+msgstr "Filter by enabled status."
+
+#: includes/class-rest-api.php:498
+msgid "Filter by stock status."
+msgstr "Filter by stock status."
+
+#: includes/class-rest-api.php:503
+msgid "Return only product IDs instead of full product data."
+msgstr "Return only product IDs instead of full product data."
+
+#: includes/class-rest-api.php:532 includes/class-rest-api.php:787
+#: includes/class-rest-api.php:1019 includes/class-rest-api.php:1087
+#: includes/class-rest-api.php:1162 includes/class-rest-api.php:1318
+#: includes/class-rest-api.php:1565
+msgid "Invalid product ID provided."
+msgstr "Invalid product ID provided."
+
+#: includes/class-rest-api.php:542 includes/class-rest-api.php:797
+#: includes/class-rest-api.php:1029 includes/class-rest-api.php:1105
+#: includes/class-rest-api.php:1329 includes/class-rest-api.php:1599
+msgid "Product not found."
+msgstr "Product not found."
+
+#: includes/class-rest-api.php:556
+msgid "No product lines found for this product."
+msgstr "No product lines found for this product."
+
+#: includes/class-rest-api.php:605 includes/class-rest-api.php:765
+#: includes/class-rest-api.php:855 includes/class-rest-api.php:1064
+#: includes/class-rest-api.php:1138 includes/class-rest-api.php:1210
+#: includes/class-rest-api.php:1264 includes/class-rest-api.php:1296
+#: includes/class-rest-api.php:1360 includes/class-rest-api.php:1543
+#: includes/class-rest-api.php:1641 includes/class-rest-api.php:1690
+msgid "Internal server error."
+msgstr "Internal server error."
+
+#: includes/class-rest-api.php:627
+msgid "Invalid line ID provided."
+msgstr "Invalid line ID provided."
+
+#: includes/class-rest-api.php:637
+msgid "Product line not found."
+msgstr "Product line not found."
+
+#: includes/class-rest-api.php:693
+msgid "Error fetching line media."
+msgstr "Error fetching line media."
+
+#: includes/class-rest-api.php:720
+msgid "Error retrieving product lines."
+msgstr "Error retrieving product lines."
+
+#: includes/class-rest-api.php:1095
+msgid "Description type is required."
+msgstr "Description type is required."
+
+#: includes/class-rest-api.php:1119
+#, php-format
+msgid "Description of type \"%s\" not found for this product."
+msgstr "Description of type \"%s\" not found for this product."
+
+#: includes/class-rest-api.php:1170
+msgid "Media tag key is required."
+msgstr "Media tag key is required."
+
+#: includes/class-rest-api.php:1179
+#, php-format
+msgid "Media tag \"%s\" does not exist."
+msgstr "Media tag \"%s\" does not exist."
+
+#: includes/class-rest-api.php:1190
+#, php-format
+msgid "No media found for tag \"%s\" on this product."
+msgstr "No media found for tag \"%s\" on this product."
+
+#: includes/class-rest-api.php:1340
+msgid "No related products found."
+msgstr "No related products found."
+
+#: includes/class-rest-api.php:1404
+msgid "Invalid category ID provided."
+msgstr "Invalid category ID provided."
+
+#: includes/class-rest-api.php:1453
+msgid "Ecwid API not available."
+msgstr "Ecwid API not available."
+
+#: includes/class-rest-api.php:1463
+msgid "Search products method not available."
+msgstr "Search products method not available."
+
+#: includes/class-rest-api.php:1485
+#, php-format
+msgid "No products found in %s."
+msgstr "No products found in %s."
+
+#: includes/class-rest-api.php:1740
+#, php-format
+msgid "%s must be a positive integer."
+msgstr "%s must be a positive integer."

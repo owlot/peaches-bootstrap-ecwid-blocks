@@ -1,0 +1,1535 @@
+# Dutch (Netherlands) translations for Peaches Bootstrap Ecwid Blocks
+# Copyright (C) 2025 Peaches.io
+# This file is distributed under the GPL-2.0-or-later.
+msgid ""
+msgstr ""
+"Project-Id-Version: Peaches Bootstrap Ecwid Blocks 0.6.0\n"
+"Report-Msgid-Bugs-To: https://github.com/owlot/peaches-bootstrap-ecwid-"
+"blocks/issues\n"
+"POT-Creation-Date: 2025-09-18 19:36+0200\n"
+"PO-Revision-Date: 2025-09-18 12:00+0000\n"
+"Last-Translator: Peaches.io <support@peaches.io>\n"
+"Language-Team: Dutch\n"
+"Language: nl_NL\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Peaches i18n\n"
+"X-Domain: peaches\n"
+
+# Admin Interface Strings
+#: includes/class-ecwid-product-settings.php:110
+msgid "Ecwid Product Settings"
+msgstr "Ecwid Product Instellingen"
+
+#: includes/class-ecwid-product-settings.php:111
+msgid "Ecwid Products"
+msgstr "Ecwid Producten"
+
+#: includes/class-ecwid-product-settings.php:140
+#: includes/class-enhanced-navigation.php:146
+msgid "Product Configuration"
+msgstr "Productconfiguratie"
+
+#: includes/class-ecwid-product-settings.php:141
+msgid "Product Ingredient"
+msgstr "Product Ingrediënten"
+
+#: includes/class-ecwid-product-settings.php:146
+msgid "Name"
+msgstr "Naam"
+
+#: includes/class-ecwid-product-settings.php:153
+msgid "has been saved successfully!"
+msgstr "is succesvol opgeslagen"
+
+#: includes/class-ecwid-product-settings.php:155
+msgid "Edit Again"
+msgstr "Opnieuw Bewerken"
+
+#: includes/class-ecwid-product-settings.php:618
+#, php-format
+msgid "Create First %s"
+msgstr "Eerste %s Aanmaken"
+
+#: includes/class-ecwid-product-settings.php:648
+msgid "(no title)"
+msgstr "(geen titel)"
+
+#: includes/class-ecwid-product-settings.php:702
+msgid "No description"
+msgstr "Geen Beschrijving"
+
+#: includes/class-ecwid-product-settings.php:741
+#: includes/class-ecwid-product-settings.php:888
+#, php-format
+msgid "%s more items available"
+msgstr "%s meer items beschikbaar"
+
+#: includes/class-ecwid-product-settings.php:747
+#: includes/class-ecwid-product-settings.php:894
+#, php-format
+msgid "Manage All %s"
+msgstr "Alle %s Beheren"
+
+# Status Messages
+#: includes/class-ecwid-product-settings.php:954
+#: includes/class-product-media-manager.php:1494
+#: includes/class-product-media-manager.php:1989
+msgid "Loading..."
+msgstr "Laden..."
+
+#: includes/class-ecwid-product-settings.php:955
+msgid "Load More Products"
+msgstr "Meer producten laden"
+
+#: includes/class-ecwid-product-settings.php:956
+msgid "No products found"
+msgstr "Geen producten gevonden"
+
+#: includes/class-ecwid-product-settings.php:957
+msgid "Product configuration created successfully!"
+msgstr "Product configuratie successvol aangemaakt!"
+
+#: includes/class-ecwid-product-settings.php:958
+msgid "Failed to create product configuration"
+msgstr "Probleem bij het aanmaken van de productconfiguratie"
+
+#: includes/class-ecwid-product-settings.php:959
+msgid "Product configuration created! Would you like to edit it now?"
+msgstr "Productconfiguratie aangemaakt! Wil je deze nu bewerken?"
+
+#: includes/class-ecwid-product-settings.php:960
+msgid "Network error occurred"
+msgstr "Netwerkfout opgetreden"
+
+#: includes/class-ecwid-product-settings.php:961
+msgid "Search products..."
+msgstr "Zoek producten..."
+
+#: includes/class-ecwid-product-settings.php:1242
+msgid "Product ID and name are required"
+msgstr "Product ID en naam zijn verplicht"
+
+#: includes/class-ecwid-product-settings.php:1255
+msgid "A post already exists for this product"
+msgstr "Er bestaat al een bericht voor dit product"
+
+#: includes/class-ecwid-product-settings.php:1281
+#: includes/class-ecwid-product-settings.php:1286
+#: includes/class-ecwid-product-settings.php:1311
+msgid "Failed to create post"
+msgstr "Bericht aanmaken mislukt"
+
+#: includes/class-ecwid-product-settings.php:1303
+msgid "Product settings post created successfully"
+msgstr "Productinstellingen pagina succesvol aangemaakt"
+
+# Language Switcher
+#: includes/class-ecwid-product-settings.php:1388
+#: includes/class-product-settings-manager.php:1936
+msgid "Language:"
+msgstr "Taal:"
+
+#: includes/class-ecwid-product-settings.php:1412
+msgid "(default)"
+msgstr "(standaard)"
+
+#: includes/class-ecwid-blocks.php:191
+msgid ""
+"Peaches Ecwid Blocks failed to initialize properly. Please check the error "
+"log for details."
+msgstr ""
+"Peaches Ecwid Blocks kon niet geinitialiseerd worden. Bekijk de error log voor"
+"meer Informatie."
+
+# Navigation
+#: includes/class-ecwid-blocks.php:451 includes/class-product-manager.php:114
+msgid "Choose Product"
+msgstr "Kies Product"
+
+# Admin Interface Strings
+#: includes/class-ecwid-settings.php:124
+msgid "Peaches Settings"
+msgstr "Peaches Instellingen"
+
+#: includes/class-ecwid-settings.php:125
+msgid "Peaches"
+msgstr ""
+
+#: includes/class-ecwid-settings.php:137
+msgid "Ecwid Blocks Settings"
+msgstr "Ecwid Blocks Instellingen"
+
+#: includes/class-ecwid-settings.php:138
+msgid "Ecwid Blocks"
+msgstr ""
+
+# Settings
+#: includes/class-ecwid-settings.php:171
+msgid "General Settings"
+msgstr "Algemene Instellingen"
+
+# Settings
+#: includes/class-ecwid-settings.php:179
+msgid "Template Settings"
+msgstr "Template Instellingen"
+
+#: includes/class-ecwid-settings.php:202
+msgid "Cache Duration (minutes)"
+msgstr "Cache Duur (minuten)"
+
+#: includes/class-ecwid-settings.php:210
+msgid "Redis Caching"
+msgstr "Redis Caching"
+
+#: includes/class-ecwid-settings.php:219
+msgid "Cache Management"
+msgstr "Cache Beheer"
+
+#: includes/class-ecwid-settings.php:227
+msgid "Debug Mode"
+msgstr "Debug Modus"
+
+#: includes/class-ecwid-settings.php:247
+msgid "Product Template Page"
+msgstr "Producttemplate pagina"
+
+#: includes/class-ecwid-settings.php:255
+msgid "Enable Breadcrumbs"
+msgstr "Zet breadcrumbs aan"
+
+#: includes/class-ecwid-product-settings.php:1223
+#: includes/class-ecwid-product-settings.php:1327
+#: includes/class-ecwid-settings.php:281
+msgid "Security check failed."
+msgstr "Beveiligingscontrole mislukt."
+
+#: includes/class-ecwid-settings.php:286
+msgid "You do not have permission to perform this action."
+msgstr ""
+
+#: includes/class-ecwid-settings.php:919
+msgid "Recent Debug Logs"
+msgstr ""
+
+#: includes/class-ecwid-settings.php:924
+#, fuzzy
+msgid "No recent logs found."
+msgstr "Geen producten gevonden"
+
+#: includes/class-ecwid-settings.php:927
+msgid "Close Logs"
+msgstr ""
+
+# Admin Interface Strings
+#: includes/template-functions.php:216
+#, fuzzy, php-format
+msgid "Product media: %s"
+msgstr "Product Instellingen"
+
+#: includes/template-functions.php:551
+msgid "Your browser does not support the video tag."
+msgstr ""
+
+#: includes/template-functions.php:577
+msgid "Your browser does not support the audio element."
+msgstr ""
+
+#: includes/template-functions.php:597
+msgid "Download"
+msgstr "Downloaden"
+
+#: includes/class-ingredients-library-manager.php:53
+#, fuzzy
+msgctxt "Post type general name"
+msgid "Ingredients Library"
+msgstr "Ingrediënten"
+
+#: includes/class-ingredients-library-manager.php:54
+#, fuzzy
+msgctxt "Post type singular name"
+msgid "Product Ingredient"
+msgstr "Product Ingrediënten"
+
+#: includes/class-ingredients-library-manager.php:55
+#, fuzzy
+msgctxt "Admin Menu text"
+msgid "Ingredients Library"
+msgstr "Ingrediënten"
+
+#: includes/class-ingredients-library-manager.php:56
+#, fuzzy
+msgctxt "Add New on Toolbar"
+msgid "Product Ingredient"
+msgstr "Product Ingrediënten"
+
+#: includes/class-ingredients-library-manager.php:57
+#: includes/class-product-settings-manager.php:109
+msgid "Add New"
+msgstr ""
+
+#: includes/class-ingredients-library-manager.php:58
+#, fuzzy
+msgid "Add New Product Ingredient"
+msgstr "Product Ingrediënten"
+
+#: includes/class-ingredients-library-manager.php:59
+#, fuzzy
+msgid "New Product Ingredient"
+msgstr "Product Ingrediënten"
+
+#: includes/class-ingredients-library-manager.php:60
+#, fuzzy
+msgid "Edit Product Ingredient"
+msgstr "Product Ingrediënten"
+
+#: includes/class-ingredients-library-manager.php:61
+#, fuzzy
+msgid "View Product Ingredient"
+msgstr "Product Ingrediënten"
+
+#: includes/class-ingredients-library-manager.php:62
+#, fuzzy
+msgid "All Ingredients"
+msgstr "Ingrediënten"
+
+#: includes/class-ingredients-library-manager.php:63
+#, fuzzy
+msgid "Search Ingredients"
+msgstr "Ingrediënten"
+
+#: includes/class-ingredients-library-manager.php:64
+#, fuzzy
+msgid "No ingredients found."
+msgstr "Geen producten gevonden"
+
+#: includes/class-ingredients-library-manager.php:65
+msgid "No ingredients found in Trash."
+msgstr ""
+
+#: includes/class-ingredients-library-manager.php:95
+#, fuzzy
+msgid "Ingredient Details"
+msgstr "Ingrediënten"
+
+#: includes/class-ingredients-library-manager.php:121
+msgid "Name (English):"
+msgstr ""
+
+#: includes/class-ingredients-library-manager.php:128
+#, fuzzy
+msgid "Description (English):"
+msgstr "Beschrijving"
+
+#: includes/class-ingredients-library-manager.php:135
+#: includes/class-product-settings-manager.php:922
+msgid "Translations"
+msgstr ""
+
+#: includes/class-ingredients-library-manager.php:140
+#: includes/class-product-settings-manager.php:933
+#, php-format
+msgid "%s Translation"
+msgstr ""
+
+#: includes/class-ingredients-library-manager.php:146
+#, php-format
+msgid "Name (%s):"
+msgstr ""
+
+#: includes/class-ingredients-library-manager.php:157
+#, fuzzy, php-format
+msgid "Description (%s):"
+msgstr "Beschrijving"
+
+#: includes/class-ingredients-library-manager.php:288
+#: includes/class-product-settings-manager.php:379
+#: includes/class-product-settings-manager.php:450
+msgid "Description"
+msgstr "Beschrijving"
+
+# Product Lines
+#: includes/class-product-lines-manager.php:82
+#, fuzzy
+msgctxt "taxonomy general name"
+msgid "Product Lines"
+msgstr "Productlijnen"
+
+# Product Lines
+#: includes/class-product-lines-manager.php:83
+#, fuzzy
+msgctxt "taxonomy singular name"
+msgid "Product Line"
+msgstr "Productlijnen"
+
+# Product Lines
+#: includes/class-product-lines-manager.php:84
+#, fuzzy
+msgid "Search Product Lines"
+msgstr "Productlijnen"
+
+# Product Lines
+#: includes/class-product-lines-manager.php:85
+#: includes/class-product-lines-manager.php:800
+#, fuzzy
+msgid "All Product Lines"
+msgstr "Productlijnen"
+
+# Product Lines
+#: includes/class-product-lines-manager.php:86
+#: includes/class-product-lines-manager.php:796
+#, fuzzy
+msgid "Edit Product Line"
+msgstr "Productlijnen"
+
+# Product Lines
+#: includes/class-product-lines-manager.php:87
+#, fuzzy
+msgid "Update Product Line"
+msgstr "Productlijnen"
+
+# Product Lines
+#: includes/class-product-lines-manager.php:88
+#, fuzzy
+msgid "Add New Product Line"
+msgstr "Productlijnen"
+
+# Product Lines
+#: includes/class-product-lines-manager.php:89
+#, fuzzy
+msgid "New Product Line Name"
+msgstr "Productlijnen"
+
+# Product Lines
+#: includes/class-product-lines-manager.php:90
+#: includes/class-product-settings-manager.php:172
+#: includes/class-enhanced-navigation.php:158
+msgid "Product Lines"
+msgstr "Productlijnen"
+
+#: includes/class-product-lines-manager.php:123
+msgid "Line Media Tags"
+msgstr ""
+
+# Ingredients
+#: includes/class-product-lines-manager.php:179
+#, fuzzy
+msgid "Select Line Media"
+msgstr "Selecteer een ingrediënt"
+
+#: includes/class-product-lines-manager.php:180
+#: includes/class-product-media-manager.php:1987
+msgid "Use this media"
+msgstr ""
+
+# Ingredients
+#: includes/class-product-lines-manager.php:181
+#: includes/class-product-lines-manager.php:440
+#, fuzzy
+msgid "Select Media"
+msgstr "Selecteer een ingrediënt"
+
+#: includes/class-product-lines-manager.php:182
+#: includes/class-product-lines-manager.php:440
+msgid "Change Media"
+msgstr ""
+
+#: includes/class-product-lines-manager.php:183
+#: includes/class-product-lines-manager.php:443
+#: includes/class-product-media-manager.php:1430
+msgid "Remove"
+msgstr "Verwijderen"
+
+#: includes/class-product-lines-manager.php:184
+#: includes/class-product-lines-manager.php:445
+msgid "Delete"
+msgstr ""
+
+#: includes/class-product-lines-manager.php:185
+#: includes/class-product-lines-manager.php:426
+msgid "Media Tag:"
+msgstr ""
+
+#: includes/class-product-lines-manager.php:186
+#: includes/class-product-settings-manager.php:1659
+msgid "Error: No valid media selected."
+msgstr "Fout: Geen geldige media geselecteerd."
+
+#: includes/class-product-lines-manager.php:187
+#: includes/class-product-media-manager.php:1988
+#: includes/class-product-settings-manager.php:1660
+msgid "Are you sure you want to remove this media?"
+msgstr "Weet je zeker dat je deze media wilt verwijderen?"
+
+#: includes/class-product-lines-manager.php:240
+#: includes/class-product-lines-manager.php:244
+#, fuzzy
+msgid "Short Description"
+msgstr "Beschrijving"
+
+#: includes/class-product-lines-manager.php:241
+#: includes/class-product-lines-manager.php:245
+msgid ""
+"Brief description for use in blocks and short displays (plain text "
+"recommended)."
+msgstr ""
+
+#: includes/class-product-lines-manager.php:266
+#: includes/class-product-lines-manager.php:339
+msgid "Line Type"
+msgstr "Lijntype"
+
+#: includes/class-product-lines-manager.php:278
+#: includes/class-product-lines-manager.php:353
+msgid "Type of product line (e.g., fragrance, color_scheme, design_collection)"
+msgstr ""
+
+#: includes/class-product-lines-manager.php:282
+#: includes/class-product-lines-manager.php:359
+#, fuzzy
+msgid "Full Description"
+msgstr "Beschrijving"
+
+#: includes/class-product-lines-manager.php:291
+#: includes/class-product-lines-manager.php:370
+msgid ""
+"Detailed rich text description of the product line with formatting and media "
+"support."
+msgstr ""
+
+#: includes/class-product-lines-manager.php:295
+#: includes/class-product-lines-manager.php:376
+#, fuzzy
+msgid "Line Media"
+msgstr "Lijntype"
+
+#: includes/class-product-lines-manager.php:300
+#: includes/class-product-lines-manager.php:391
+#, fuzzy
+msgid "Add Media"
+msgstr "Ingrediënt toevoegen"
+
+#: includes/class-product-lines-manager.php:302
+#: includes/class-product-lines-manager.php:393
+msgid "Add named media files for this product line."
+msgstr ""
+
+#: includes/class-product-lines-manager.php:453
+#, fuzzy
+msgid "No media selected"
+msgstr "Geen product geselecteerd"
+
+#: includes/class-product-lines-manager.php:603
+msgid "Type"
+msgstr "Type"
+
+#: includes/class-product-lines-manager.php:604
+#, fuzzy
+msgid "Media"
+msgstr "Middel"
+
+# Product Lines
+#: includes/class-product-lines-manager.php:605
+#, fuzzy
+msgid "Products"
+msgstr "Productlijnen"
+
+#: includes/class-block-patterns.php:64
+msgid "Peaches Ecwid"
+msgstr ""
+
+#: includes/class-product-media-manager.php:1311
+msgid "Fallback from Ecwid"
+msgstr ""
+
+#: includes/class-product-media-manager.php:1313
+msgid "Fallback Ecwid"
+msgstr ""
+
+#: includes/class-product-media-manager.php:1345
+msgid "Upload File"
+msgstr ""
+
+#: includes/class-product-media-manager.php:1355
+msgid "External URL"
+msgstr ""
+
+#: includes/class-product-media-manager.php:1365
+msgid "Ecwid Media"
+msgstr ""
+
+#: includes/class-product-media-manager.php:1463
+msgid "Clear URL"
+msgstr ""
+
+#: includes/class-product-media-manager.php:1486
+msgid "Select image position..."
+msgstr ""
+
+#: includes/class-product-media-manager.php:1487
+#: includes/class-product-media-manager.php:1898
+msgid "Main image (position 1)"
+msgstr ""
+
+#: includes/class-product-media-manager.php:1496
+#, fuzzy
+msgid "Loading product images..."
+msgstr "Zoek producten..."
+
+#: includes/class-product-media-manager.php:1502
+msgid "Clear Selection"
+msgstr ""
+
+#: includes/class-product-media-manager.php:1567
+msgid "WP Media"
+msgstr ""
+
+#: includes/class-product-media-manager.php:1589
+msgid "External media"
+msgstr ""
+
+#: includes/class-product-media-manager.php:1595
+msgid "External"
+msgstr ""
+
+#: includes/class-product-media-manager.php:1619
+msgid "Ecwid media"
+msgstr ""
+
+#: includes/class-product-media-manager.php:1621
+msgid "Ecwid"
+msgstr ""
+
+#: includes/class-product-media-manager.php:1652
+#, fuzzy
+msgid "Error loading media interface"
+msgstr "Fout: Geen geldige media geselecteerd."
+
+#: includes/class-product-media-manager.php:1908
+#, fuzzy, php-format
+msgid "Gallery image %d"
+msgstr "Product Galerij Afbeelding"
+
+#: includes/class-product-media-manager.php:1986
+#, fuzzy
+msgid "Select Product Media"
+msgstr "Selecteer Product"
+
+#: includes/class-product-media-manager.php:1990
+msgid "Error occurred"
+msgstr "Fout opgetreden"
+
+#: includes/class-product-media-manager.php:1991
+#: includes/class-product-settings-manager.php:1661
+msgid "Please enter a URL first"
+msgstr "Voer eerst een URL in"
+
+#: includes/class-product-media-manager.php:1992
+#: includes/class-product-settings-manager.php:1662
+msgid "URL validation failed:"
+msgstr "URL validatie mislukt:"
+
+#: includes/class-product-media-manager.php:1993
+#: includes/class-product-settings-manager.php:1663
+msgid "Error validating URL"
+msgstr "Fout bij valideren URL"
+
+#: includes/class-mollie-subscriptions-block.php:157
+msgid "Subscribe Now"
+msgstr ""
+
+#: includes/class-mollie-subscriptions-block.php:245
+msgid "Mollie Subscription Block"
+msgstr ""
+
+#: includes/class-mollie-subscriptions-block.php:246
+msgid ""
+"Please configure the block by selecting a product and adding subscription "
+"plans."
+msgstr ""
+
+#: includes/class-mollie-subscriptions-block.php:270
+msgid "Error"
+msgstr ""
+
+#: includes/class-mollie-subscriptions-block.php:457
+msgid "Mollie integration not available"
+msgstr ""
+
+#: includes/class-mollie-subscriptions-block.php:473
+msgid "Failed to create subscription"
+msgstr ""
+
+#: includes/class-mollie-subscriptions-block.php:477
+msgid "An error occurred while creating the subscription"
+msgstr ""
+
+#: includes/class-mollie-subscriptions-block.php:651
+msgid "Daily"
+msgstr ""
+
+#: includes/class-mollie-subscriptions-block.php:652
+msgid "Weekly"
+msgstr ""
+
+#: includes/class-mollie-subscriptions-block.php:653
+msgid "Bi-weekly"
+msgstr ""
+
+#: includes/class-mollie-subscriptions-block.php:654
+msgid "Monthly"
+msgstr ""
+
+#: includes/class-mollie-subscriptions-block.php:655
+msgid "Quarterly"
+msgstr ""
+
+#: includes/class-mollie-subscriptions-block.php:656
+msgid "Semi-annually"
+msgstr ""
+
+#: includes/class-mollie-subscriptions-block.php:657
+msgid "Annually"
+msgstr ""
+
+#: includes/class-mollie-integration.php:55
+msgid "Direct Mollie API integration not yet implemented"
+msgstr ""
+
+#: includes/class-mollie-integration.php:65
+msgid "Direct Mollie webhook handling not yet implemented"
+msgstr ""
+
+#: includes/class-media-tags-manager.php:373
+#: includes/class-media-tags-manager.php:474
+#: includes/class-media-tags-manager.php:526
+msgid "Tag not found."
+msgstr ""
+
+#: includes/class-media-tags-manager.php:382
+msgid "Media type matches tag expectations."
+msgstr ""
+
+#: includes/class-media-tags-manager.php:392
+#, php-format
+msgid "Expected %s but got %s. This may not display correctly."
+msgstr ""
+
+#: includes/class-media-tags-manager.php:421
+msgid "A tag with this key already exists."
+msgstr ""
+
+#: includes/class-media-tags-manager.php:441
+msgid "Failed to save tag."
+msgstr ""
+
+#: includes/class-media-tags-manager.php:448
+#, fuzzy
+msgid "Error adding tag."
+msgstr "Fout bij valideren URL"
+
+#: includes/class-media-tags-manager.php:494
+msgid "Failed to update tag."
+msgstr ""
+
+#: includes/class-media-tags-manager.php:501
+#, fuzzy
+msgid "Error updating tag."
+msgstr "Fout bij valideren URL"
+
+#: includes/class-media-tags-manager.php:516
+msgid "Invalid tag key provided."
+msgstr ""
+
+#: includes/class-media-tags-manager.php:521
+msgid "Default tags cannot be deleted."
+msgstr ""
+
+#: includes/class-media-tags-manager.php:540
+msgid "Failed to delete tag."
+msgstr ""
+
+#: includes/class-media-tags-manager.php:547
+#, fuzzy
+msgid "Error deleting tag."
+msgstr "Fout bij valideren URL"
+
+#: includes/class-media-tags-manager.php:564
+msgid "Tag key, label, and expected media type are required."
+msgstr ""
+
+#: includes/class-media-tags-manager.php:569
+msgid "Tag key can only contain lowercase letters, numbers, and underscores."
+msgstr ""
+
+#: includes/class-media-tags-manager.php:574
+#, fuzzy
+msgid "Invalid media type selected."
+msgstr "Fout: Geen geldige media geselecteerd."
+
+#: includes/class-media-tags-manager.php:615
+#, fuzzy
+msgid "Are you sure you want to delete this tag? This action cannot be undone."
+msgstr "Weet je zeker dat je dit ingrediënt wilt verwijderen?"
+
+#: includes/class-media-tags-manager.php:616
+msgid "Edit Tag"
+msgstr ""
+
+#: includes/class-media-tags-manager.php:617
+msgid "Update Tag"
+msgstr ""
+
+#: includes/class-media-tags-manager.php:618
+msgid "Add Tag"
+msgstr ""
+
+#: includes/class-media-tags-manager.php:619
+msgid "Auto-generated from label"
+msgstr ""
+
+#: includes/class-media-tags-manager.php:620
+msgid "Manual override active"
+msgstr ""
+
+#: includes/class-media-tags-manager.php:650
+#, fuzzy
+msgid "Error loading media tags interface."
+msgstr "Fout: Geen geldige media geselecteerd."
+
+#: includes/class-ecwid-product-settings.php:1229
+#: includes/class-media-tags-manager.php:1102
+#: includes/class-media-tags-manager.php:1142
+#: includes/class-media-tags-manager.php:1181
+msgid "Insufficient permissions."
+msgstr "Onvoldoende rechten."
+
+#: includes/class-media-tags-manager.php:1118
+#, fuzzy
+msgid "Tag added successfully."
+msgstr "Instellingen succesvol opgeslagen"
+
+#: includes/class-media-tags-manager.php:1126
+msgid "An error occurred while adding the tag."
+msgstr ""
+
+#: includes/class-media-tags-manager.php:1158
+#, fuzzy
+msgid "Tag updated successfully."
+msgstr "Instellingen succesvol opgeslagen"
+
+#: includes/class-media-tags-manager.php:1165
+msgid "An error occurred while updating the tag."
+msgstr ""
+
+#: includes/class-media-tags-manager.php:1192
+#, fuzzy
+msgid "Tag deleted successfully."
+msgstr "Instellingen succesvol opgeslagen"
+
+#: includes/class-media-tags-manager.php:1198
+msgid "An error occurred while deleting the tag."
+msgstr ""
+
+#: includes/class-product-manager.php:243
+msgid "Shop"
+msgstr ""
+
+#: includes/class-product-manager.php:267
+msgid "Home"
+msgstr ""
+
+# Admin Interface Strings
+#: includes/class-product-settings-manager.php:105
+#, fuzzy
+msgctxt "Post type general name"
+msgid "Product Settings"
+msgstr "Product Instellingen"
+
+# Admin Interface Strings
+#: includes/class-product-settings-manager.php:106
+#, fuzzy
+msgctxt "Post type singular name"
+msgid "Product Setting"
+msgstr "Product Instellingen"
+
+# Admin Interface Strings
+#: includes/class-product-settings-manager.php:107
+#, fuzzy
+msgctxt "Admin Menu text"
+msgid "Product Settings"
+msgstr "Product Instellingen"
+
+# Admin Interface Strings
+#: includes/class-product-settings-manager.php:108
+#, fuzzy
+msgctxt "Add New on Toolbar"
+msgid "Product Setting"
+msgstr "Product Instellingen"
+
+# Admin Interface Strings
+#: includes/class-product-settings-manager.php:110
+#, fuzzy
+msgid "Add New Product Setting"
+msgstr "Product Instellingen"
+
+# Admin Interface Strings
+#: includes/class-product-settings-manager.php:111
+#, fuzzy
+msgid "New Product Setting"
+msgstr "Product Instellingen"
+
+# Admin Interface Strings
+#: includes/class-product-settings-manager.php:112
+#, fuzzy
+msgid "Edit Product Setting"
+msgstr "Product Instellingen"
+
+# Admin Interface Strings
+#: includes/class-product-settings-manager.php:113
+#, fuzzy
+msgid "View Product Setting"
+msgstr "Product Instellingen"
+
+# Admin Interface Strings
+#: includes/class-product-settings-manager.php:114
+#, fuzzy
+msgid "All Product Settings"
+msgstr "Product Instellingen"
+
+# Admin Interface Strings
+#: includes/class-product-settings-manager.php:115
+#, fuzzy
+msgid "Search Product Settings"
+msgstr "Product Instellingen"
+
+# Admin Interface Strings
+#: includes/class-product-settings-manager.php:116
+#, fuzzy
+msgid "Parent Product Settings:"
+msgstr "Product Instellingen"
+
+#: includes/class-product-settings-manager.php:117
+#, fuzzy
+msgid "No product settings found."
+msgstr "Geen producten gevonden"
+
+#: includes/class-product-settings-manager.php:118
+#, fuzzy
+msgid "No product settings found in Trash."
+msgstr "Geen producten gevonden"
+
+#: includes/class-product-settings-manager.php:164
+#, fuzzy
+msgid "Product Tags"
+msgstr "Productafbeelding"
+
+#: includes/class-product-settings-manager.php:181
+msgid "Product Ingredients"
+msgstr "Product Ingrediënten"
+
+# Block Editor
+#: includes/class-product-settings-manager.php:190
+#, fuzzy
+msgid "Named Product Media"
+msgstr "Productveld"
+
+#: includes/class-product-settings-manager.php:199
+#, fuzzy
+msgid "Additional Product Descriptions"
+msgstr "Productbeschrijving"
+
+#: includes/class-product-settings-manager.php:242
+msgid ""
+"Select which product lines this product belongs to. Products can belong to "
+"multiple lines."
+msgstr ""
+
+# Product Lines
+#: includes/class-product-settings-manager.php:250
+#, fuzzy
+msgid "Create New Product Line"
+msgstr "Productlijnen"
+
+#: includes/class-product-settings-manager.php:255
+#, fuzzy
+msgid "No product lines available."
+msgstr "Geen product geselecteerd"
+
+#: includes/class-product-settings-manager.php:257
+msgid "Create a product line"
+msgstr ""
+
+#: includes/class-product-settings-manager.php:285
+msgid "Error loading product lines."
+msgstr ""
+
+#: includes/class-product-settings-manager.php:310
+msgid ""
+"Add tags to describe product properties like \"waterproof\", \"organic\", "
+"\"limited-edition\". These can be used for filtering and search."
+msgstr ""
+
+#: includes/class-product-settings-manager.php:318
+msgid "Separate tags with commas. Existing tags will be suggested as you type."
+msgstr ""
+
+#: includes/class-product-settings-manager.php:327
+msgid "Error loading product tags."
+msgstr ""
+
+#: includes/class-product-settings-manager.php:354
+msgid ""
+"Select ingredients from your ingredients library for this product. Each "
+"ingredient will be displayed on the product page."
+msgstr ""
+
+#: includes/class-product-settings-manager.php:362
+#, fuzzy
+msgid "Create New Ingredient"
+msgstr "Product Ingrediënten"
+
+#: includes/class-product-settings-manager.php:371
+#: includes/class-product-settings-manager.php:471
+#, fuzzy
+msgid "No ingredients selected yet."
+msgstr "Geen product geselecteerd"
+
+#: includes/class-product-settings-manager.php:372
+#: includes/class-product-settings-manager.php:472
+#, fuzzy
+msgid "Add First Ingredient"
+msgstr "Ingrediënt toevoegen"
+
+#: includes/class-product-settings-manager.php:378
+#: includes/class-product-settings-manager.php:449
+msgid "Ingredient"
+msgstr "Ingrediënt"
+
+#: includes/class-product-settings-manager.php:380
+#: includes/class-product-settings-manager.php:451
+msgid "Actions"
+msgstr "Acties"
+
+#: includes/class-product-settings-manager.php:395
+#, fuzzy
+msgid "Add Ingredient"
+msgstr "Ingrediënt toevoegen"
+
+# Ingredients
+#: includes/class-product-settings-manager.php:405
+#: includes/class-product-settings-manager.php:526
+#: includes/class-product-settings-manager.php:555
+#: includes/class-product-settings-manager.php:1999
+#, fuzzy
+msgid "Select an ingredient..."
+msgstr "Selecteer een ingrediënt"
+
+#: includes/class-product-settings-manager.php:422
+#: includes/class-product-settings-manager.php:497
+#: includes/class-product-settings-manager.php:588
+#: includes/class-product-settings-manager.php:1657
+#: includes/class-product-settings-manager.php:1703
+msgid "Select an ingredient to see its description"
+msgstr "Selecteer een ingrediënt om de beschrijving te zien"
+
+#: includes/class-product-settings-manager.php:491
+#: includes/class-product-settings-manager.php:1724
+#, fuzzy
+msgid "No description available"
+msgstr "Beschrijvingstype"
+
+#: includes/class-product-settings-manager.php:493
+#, fuzzy
+msgid "Error loading description"
+msgstr "Productbeschrijving"
+
+#: includes/class-product-settings-manager.php:508
+msgid "Error loading ingredients interface."
+msgstr ""
+
+#: includes/class-product-settings-manager.php:565
+#: includes/class-product-settings-manager.php:1992
+msgid "No ingredients available - create one first"
+msgstr ""
+
+#: includes/class-product-settings-manager.php:639
+msgid ""
+"Assign media files, URLs, or Ecwid images to predefined tags for this "
+"product. Each tag can have one media item from any source."
+msgstr ""
+
+#: includes/class-product-settings-manager.php:643
+msgid "No media tags available."
+msgstr ""
+
+#: includes/class-product-settings-manager.php:644
+#, fuzzy
+msgid "Please create some media tags first."
+msgstr "Voer eerst een URL in"
+
+#: includes/class-product-settings-manager.php:646
+msgid "Manage Media Tags"
+msgstr ""
+
+#: includes/class-product-settings-manager.php:654
+msgid "Manage Tags"
+msgstr ""
+
+#: includes/class-product-settings-manager.php:671
+msgid "Error loading media management interface."
+msgstr ""
+
+#: includes/class-product-settings-manager.php:696
+#, fuzzy
+msgid "Primary Images"
+msgstr "Product Galerij Afbeelding"
+
+#: includes/class-product-settings-manager.php:697
+#, fuzzy
+msgid "Gallery Images"
+msgstr "Product Galerij Afbeelding"
+
+#: includes/class-product-settings-manager.php:698
+msgid "Secondary Images"
+msgstr ""
+
+#: includes/class-product-settings-manager.php:699
+msgid "Reference Materials"
+msgstr ""
+
+#: includes/class-product-settings-manager.php:700
+msgid "Rich Media"
+msgstr ""
+
+#: includes/class-product-settings-manager.php:701
+msgid "Other"
+msgstr ""
+
+#: includes/class-product-settings-manager.php:713
+msgid "tags"
+msgstr ""
+
+#: includes/class-product-settings-manager.php:761
+#: includes/class-product-settings-manager.php:1592
+#, fuzzy
+msgid "Product Usage"
+msgstr "Productafbeelding"
+
+#: includes/class-product-settings-manager.php:762
+#: includes/class-product-settings-manager.php:1593
+#, fuzzy
+msgid "Detailed Ingredients"
+msgstr "Ingrediënten"
+
+#: includes/class-product-settings-manager.php:763
+#: includes/class-product-settings-manager.php:1594
+msgid "Care Instructions"
+msgstr "Verzorgingsinstructies"
+
+#: includes/class-product-settings-manager.php:764
+#: includes/class-product-settings-manager.php:1595
+#, fuzzy
+msgid "Warranty Information"
+msgstr "Verzendingsinformatie"
+
+#: includes/class-product-settings-manager.php:765
+#: includes/class-product-settings-manager.php:1596
+msgid "Key Features"
+msgstr ""
+
+#: includes/class-product-settings-manager.php:766
+#: includes/class-product-settings-manager.php:1597
+msgid "Technical Specifications"
+msgstr ""
+
+#: includes/class-product-settings-manager.php:767
+#: includes/class-product-settings-manager.php:1598
+#, fuzzy
+msgid "Custom Description"
+msgstr "Beschrijving"
+
+#: includes/class-product-settings-manager.php:775
+msgid ""
+"Add additional product descriptions that can be displayed using custom "
+"Gutenberg blocks. Each description type can be targeted specifically in your "
+"blocks."
+msgstr ""
+
+#: includes/class-product-settings-manager.php:787
+msgid ""
+"No additional descriptions yet. Click \"Add Description\" to get started."
+msgstr ""
+
+# Form Fields
+#: includes/class-product-settings-manager.php:794
+msgid "Add Description"
+msgstr "Beschrijving Toevoegen"
+
+#: includes/class-product-settings-manager.php:808
+msgid "Error loading product descriptions interface."
+msgstr ""
+
+# Block Attributes
+#: includes/class-product-settings-manager.php:847
+#, fuzzy
+msgid "Select Type"
+msgstr "Veldtype"
+
+#: includes/class-product-settings-manager.php:937
+#, fuzzy, php-format
+msgid "Title (%s)"
+msgstr "Titel"
+
+#: includes/class-product-settings-manager.php:944
+#, fuzzy, php-format
+msgid "Title in %s"
+msgstr "Titel"
+
+#: includes/class-product-settings-manager.php:948
+#, fuzzy, php-format
+msgid "Content (%s)"
+msgstr "Inhoud"
+
+#: includes/class-product-settings-manager.php:1653
+#, fuzzy
+msgid "Are you sure you want to remove this description?"
+msgstr "Weet je zeker dat je deze media wilt verwijderen?"
+
+#: includes/class-product-settings-manager.php:1654
+#, fuzzy
+msgid "Please fix the validation errors before saving."
+msgstr "Corrigeer de validatiefouten voordat je opslaat."
+
+#: includes/class-product-settings-manager.php:1655
+msgid "Editor element not found."
+msgstr ""
+
+#: includes/class-product-settings-manager.php:1656
+msgid "WordPress editor not available."
+msgstr ""
+
+# JavaScript Interface Strings
+#: includes/class-product-settings-manager.php:1658
+msgid "Please fix the following errors:"
+msgstr "Corrigeer de volgende fouten:"
+
+#: includes/class-product-settings-manager.php:1664
+msgid "Are you sure you want to remove this product from the list?"
+msgstr "Weet je zeker dat je dit product uit de lijst wilt verwijderen?"
+
+#: includes/class-product-settings-manager.php:1665
+msgid "Are you sure you want to remove this ingredient?"
+msgstr "Weet je zeker dat je dit ingrediënt wilt verwijderen?"
+
+#: includes/class-product-settings-manager.php:1666
+msgid "Please correct the validation errors before saving."
+msgstr "Corrigeer de validatiefouten voordat je opslaat."
+
+#: includes/class-product-settings-manager.php:1758
+#, fuzzy, php-format
+msgid "Description %d is missing a type."
+msgstr "Beschrijvingstype"
+
+#: includes/class-product-settings-manager.php:1762
+#, php-format
+msgid "Description %d is missing content."
+msgstr ""
+
+#: includes/class-product-settings-manager.php:1768
+#, fuzzy, php-format
+msgid "Duplicate description type: %s"
+msgstr "Beschrijvingstype"
+
+#: includes/class-product-settings-manager.php:1777
+#, fuzzy
+msgid "Validation failed"
+msgstr "URL validatie mislukt:"
+
+#: includes/class-product-settings-manager.php:1782
+#, fuzzy
+msgid "Validation passed"
+msgstr "URL validatie mislukt:"
+
+#: includes/class-utilities.php:710 includes/class-utilities.php:736
+#: includes/class-utilities.php:804
+#, fuzzy
+msgid "Product image"
+msgstr "Productafbeelding"
+
+#: includes/class-utilities.php:747 includes/class-utilities.php:789
+msgid "Thumbnail"
+msgstr ""
+
+#: includes/class-enhanced-navigation.php:150
+#, fuzzy
+msgid "Ingredients Library"
+msgstr "Ingrediënten"
+
+#: includes/class-enhanced-navigation.php:192
+#, php-format
+msgid "Back to %s"
+msgstr ""
+
+#: includes/class-rest-api.php:170 includes/class-rest-api.php:195
+#: includes/class-rest-api.php:220 includes/class-rest-api.php:281
+#: includes/class-rest-api.php:306 includes/class-rest-api.php:331
+#: includes/class-rest-api.php:386 includes/class-rest-api.php:413
+#, fuzzy
+msgid "Ecwid product ID."
+msgstr "Ecwid Product ID"
+
+#: includes/class-rest-api.php:176 includes/class-rest-api.php:201
+#: includes/class-rest-api.php:232
+msgid "Language code for multilingual sites."
+msgstr ""
+
+#: includes/class-rest-api.php:226
+msgid "Filter by line type."
+msgstr ""
+
+# Product Lines
+#: includes/class-rest-api.php:251
+#, fuzzy
+msgid "Product line ID."
+msgstr "Productlijnen"
+
+#: includes/class-rest-api.php:287
+#, fuzzy
+msgid "Filter by description type."
+msgstr "Beschrijvingstype"
+
+#: includes/class-rest-api.php:312
+#, fuzzy
+msgid "Description type."
+msgstr "Beschrijvingstype"
+
+#: includes/class-rest-api.php:337
+msgid "Media tag key."
+msgstr ""
+
+#: includes/class-rest-api.php:356
+msgid "Filter by category."
+msgstr ""
+
+#: includes/class-rest-api.php:392
+msgid "Number of related products to return."
+msgstr ""
+
+#: includes/class-rest-api.php:432
+msgid "Parent category ID."
+msgstr ""
+
+#: includes/class-rest-api.php:438
+msgid "Filter enabled categories only."
+msgstr ""
+
+#: includes/class-rest-api.php:457
+msgid "Category ID. Use 0 for featured products (Store Front Page)."
+msgstr ""
+
+#: includes/class-rest-api.php:463
+#, fuzzy
+msgid "Number of products to return."
+msgstr "Geen producten gevonden"
+
+#: includes/class-rest-api.php:471
+msgid "Number of products to skip for pagination."
+msgstr ""
+
+#: includes/class-rest-api.php:478
+#, fuzzy
+msgid "Sort products by field."
+msgstr "Geen producten gevonden"
+
+#: includes/class-rest-api.php:485
+msgid "Sort order."
+msgstr ""
+
+#: includes/class-rest-api.php:492
+msgid "Filter by enabled status."
+msgstr ""
+
+#: includes/class-rest-api.php:498
+msgid "Filter by stock status."
+msgstr ""
+
+#: includes/class-rest-api.php:503
+msgid "Return only product IDs instead of full product data."
+msgstr ""
+
+#: includes/class-rest-api.php:532 includes/class-rest-api.php:787
+#: includes/class-rest-api.php:1019 includes/class-rest-api.php:1087
+#: includes/class-rest-api.php:1162 includes/class-rest-api.php:1318
+#: includes/class-rest-api.php:1565
+msgid "Invalid product ID provided."
+msgstr "Ongeldig product ID opgegeven."
+
+#: includes/class-rest-api.php:542 includes/class-rest-api.php:797
+#: includes/class-rest-api.php:1029 includes/class-rest-api.php:1105
+#: includes/class-rest-api.php:1329 includes/class-rest-api.php:1599
+#, fuzzy
+msgid "Product not found."
+msgstr "Geen producten gevonden"
+
+#: includes/class-rest-api.php:556
+msgid "No product lines found for this product."
+msgstr ""
+
+#: includes/class-rest-api.php:605 includes/class-rest-api.php:765
+#: includes/class-rest-api.php:855 includes/class-rest-api.php:1064
+#: includes/class-rest-api.php:1138 includes/class-rest-api.php:1210
+#: includes/class-rest-api.php:1264 includes/class-rest-api.php:1296
+#: includes/class-rest-api.php:1360 includes/class-rest-api.php:1543
+#: includes/class-rest-api.php:1641 includes/class-rest-api.php:1690
+msgid "Internal server error."
+msgstr "Interne server fout."
+
+#: includes/class-rest-api.php:627
+msgid "Invalid line ID provided."
+msgstr ""
+
+# Block Editor
+#: includes/class-rest-api.php:637
+#, fuzzy
+msgid "Product line not found."
+msgstr "Productveld"
+
+#: includes/class-rest-api.php:693
+msgid "Error fetching line media."
+msgstr ""
+
+#: includes/class-rest-api.php:720
+msgid "Error retrieving product lines."
+msgstr ""
+
+#: includes/class-rest-api.php:1095
+#, fuzzy
+msgid "Description type is required."
+msgstr "Beschrijvingstype"
+
+#: includes/class-rest-api.php:1119
+#, php-format
+msgid "Description of type \"%s\" not found for this product."
+msgstr ""
+
+#: includes/class-rest-api.php:1170
+msgid "Media tag key is required."
+msgstr ""
+
+#: includes/class-rest-api.php:1179
+#, php-format
+msgid "Media tag \"%s\" does not exist."
+msgstr ""
+
+#: includes/class-rest-api.php:1190
+#, php-format
+msgid "No media found for tag \"%s\" on this product."
+msgstr ""
+
+#: includes/class-rest-api.php:1340
+#, fuzzy
+msgid "No related products found."
+msgstr "Geen producten gevonden"
+
+#: includes/class-rest-api.php:1404
+msgid "Invalid category ID provided."
+msgstr ""
+
+#: includes/class-rest-api.php:1453
+msgid "Ecwid API not available."
+msgstr ""
+
+#: includes/class-rest-api.php:1463
+msgid "Search products method not available."
+msgstr ""
+
+#: includes/class-rest-api.php:1485
+#, fuzzy, php-format
+msgid "No products found in %s."
+msgstr "Geen producten gevonden"
+
+#: includes/class-rest-api.php:1740
+#, php-format
+msgid "%s must be a positive integer."
+msgstr ""
+
+# Description Types
+#~ msgid "Usage Instructions"
+#~ msgstr "Gebruiksinstructies"
+
+#~ msgid "Warranty"
+#~ msgstr "Garantie"
+
+#~ msgid "Custom Title"
+#~ msgstr "Aangepaste Titel"
+
+#~ msgid "Display Title"
+#~ msgstr "Titel Weergeven"
+
+#~ msgid "Current language:"
+#~ msgstr "Huidige taal:"
+
+#~ msgid "Switch to"
+#~ msgstr "Wisselen naar"
+
+#~ msgid "Remove ingredient"
+#~ msgstr "Ingrediënt verwijderen"
+
+#~ msgid "Product Detail"
+#~ msgstr "Productdetail"
+
+#~ msgid "Product Add to Cart"
+#~ msgstr "Product Toevoegen aan Winkelwagen"
+
+#~ msgid "Product Related Products"
+#~ msgstr "Gerelateerde Producten"
+
+#~ msgid "Ecwid Category"
+#~ msgstr "Ecwid Categorie"
+
+#~ msgid "Field Value"
+#~ msgstr "Veldwaarde"
+
+#~ msgid "Image Size"
+#~ msgstr "Afbeeldingsgrootte"
+
+#~ msgid "Small"
+#~ msgstr "Klein"
+
+#~ msgid "Large"
+#~ msgstr "Groot"
+
+#~ msgid "Display Mode"
+#~ msgstr "Weergavemodus"
+
+#~ msgid "Badges"
+#~ msgstr "Badges"
+
+#~ msgid "Pills"
+#~ msgstr "Pillen"
+
+#~ msgid "List"
+#~ msgstr "Lijst"
+
+#~ msgid "Inline"
+#~ msgstr "Inline"
+
+#~ msgid "Add to Cart"
+#~ msgstr "Toevoegen aan Winkelwagen"
+
+#~ msgid "Out of Stock"
+#~ msgstr "Niet op Voorraad"
+
+#~ msgid "Price"
+#~ msgstr "Prijs"
+
+#~ msgid "General"
+#~ msgstr "Algemeen"
+
+#~ msgid "Advanced"
+#~ msgstr "Geavanceerd"
+
+#~ msgid "Save Changes"
+#~ msgstr "Wijzigingen Opslaan"

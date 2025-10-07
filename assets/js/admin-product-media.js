@@ -166,7 +166,7 @@
 			const url = $input.val().trim();
 
 			if ( ! url ) {
-				alert( 'Please enter a URL first' );
+				alert( ProductMediaParams.pleaseEnterUrl );
 				return;
 			}
 
@@ -516,11 +516,15 @@
 						}\nIs Image: ${ response.data.is_image ? 'Yes' : 'No' }`
 					);
 				} else {
-					alert( `URL validation failed: ${ response.data }` );
+					alert(
+						ProductMediaParams.urlValidationFailed +
+							' ' +
+							response.data
+					);
 				}
 			},
 			error() {
-				alert( 'Error validating URL' );
+				alert( ProductMediaParams.errorValidatingUrl );
 			},
 			complete() {
 				$button.html( originalText ).prop( 'disabled', false );

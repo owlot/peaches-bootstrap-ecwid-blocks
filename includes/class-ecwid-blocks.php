@@ -385,9 +385,9 @@ class Peaches_Ecwid_Blocks {
 	 */
 	public function load_textdomain() {
 		load_plugin_textdomain(
-			'peaches-bootstrap-ecwid-blocks',
+			'peaches',
 			false,
-			dirname( plugin_basename( __FILE__ ) ) . '/languages'
+			dirname( plugin_basename( PEACHES_ECWID_PLUGIN_FILE ) ) . '/languages'
 		);
 	}
 

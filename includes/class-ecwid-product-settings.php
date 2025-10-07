@@ -178,8 +178,12 @@ class Peaches_Ecwid_Product_Settings {
 
 		?>
 		<div class="wrap">
-			<h1 class="wp-heading-inline"><?php esc_html_e( 'Ecwid Product Management', 'peaches' ); ?></h1>
-			<p class="description"><?php esc_html_e( 'Manage product settings, ingredients, lines, media tags, and media for your Ecwid store.', 'peaches' ); ?></p>
+			<div class="d-flex justify-content-between align-items-start mb-3">
+				<div>
+					<h1 class="wp-heading-inline"><?php esc_html_e( 'Ecwid Product Management', 'peaches' ); ?></h1>
+					<p class="description"><?php esc_html_e( 'Manage product settings, ingredients, lines, media tags, and media for your Ecwid store.', 'peaches' ); ?></p>
+				</div>
+			</div>
 
 			<!-- Bootstrap Nav Tabs -->
 			<ul class="nav nav-tabs my-3" id="productManagementTabs" role="tablist">
@@ -1216,13 +1220,13 @@ class Peaches_Ecwid_Product_Settings {
 			// Verify nonce
 			if (!check_ajax_referer('create_product_post', 'nonce', false)) {
 				$this->log_error( 'Create product post: Nonce verification failed' );
-				wp_send_json_error( array( 'message' => __( 'Security check failed', 'peaches' ) ) );
+				wp_send_json_error( array( 'message' => __( 'Security check failed.', 'peaches' ) ) );
 			}
 
 			// Check permissions
 			if ( ! current_user_can( 'edit_posts' ) ) {
 				$this->log_error( 'Create product post: Permission check failed' );
-				wp_send_json_error( array( 'message' => __( 'Insufficient permissions', 'peaches' ) ) );
+				wp_send_json_error( array( 'message' => __( 'Insufficient permissions.', 'peaches' ) ) );
 			}
 
 			// Get product data
@@ -1320,7 +1324,7 @@ class Peaches_Ecwid_Product_Settings {
 		// Verify nonce
 		if (!check_ajax_referer('delete_product_post', 'nonce', false)) {
 			$this->log_error( 'Delete product post: Nonce verification failed' );
-			wp_send_json_error( array( 'message' => __( 'Security check failed', 'peaches' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Security check failed.', 'peaches' ) ) );
 		}
 
 		// Check permissions
@@ -1354,6 +1358,65 @@ class Peaches_Ecwid_Product_Settings {
 		} else {
 			wp_send_json_error(array('message' => 'Failed to delete product configuration.'));
 		}
+	}
+
+	/**
+	 * Render page-level language switcher.
+	 *
+	 * @since 0.5.0
+	 *
+	 * @param array $available_languages Available languages array
+	 *
+	 * @return void
+	 */
+	private function render_page_language_switcher($available_languages) {
+		if (empty($available_languages) || count($available_languages) < 2) {
+			return;
+		}
+
+		$current_language = Peaches_Ecwid_Utilities::get_current_language();
+		$default_language = Peaches_Ecwid_Utilities::get_default_language();
+
+		// Start with default language if current is empty
+		if (empty($current_language)) {
+			$current_language = $default_language;
+		}
+
+		?>
+		<div class="peaches-page-language-switcher">
+			<div class="d-flex align-items-center gap-2">
+				<span class="text-muted"><?php _e('Language:', 'peaches'); ?></span>
+				<div class="btn-group" role="group" aria-label="<?php esc_attr_e('Language switcher', 'peaches'); ?>">
+					<?php foreach ($available_languages as $lang_code => $language): ?>
+						<?php
+						$is_active = ($lang_code === $current_language);
+						$button_class = 'btn btn-outline-primary btn-sm';
+						if ($is_active) {
+							$button_class .= ' active';
+						}
+						?>
+						<button type="button"
+								class="<?php echo esc_attr($button_class); ?>"
+								data-language="<?php echo esc_attr($lang_code); ?>"
+								data-is-default="<?php echo $lang_code === $default_language ? 'true' : 'false'; ?>"
+								aria-pressed="<?php echo $is_active ? 'true' : 'false'; ?>">
+							<i class="dashicons dashicons-translation" style="font-size: 14px; line-height: 1;"></i>
+							<?php
+							if (isset($language['name'])) {
+								echo esc_html($language['name']);
+							} else {
+								echo esc_html(strtoupper($lang_code));
+							}
+							?>
+							<?php if ($lang_code === $default_language): ?>
+								<small class="text-muted ms-1"><?php _e('(default)', 'peaches'); ?></small>
+							<?php endif; ?>
+						</button>
+					<?php endforeach; ?>
+				</div>
+			</div>
+		</div>
+		<?php
 	}
 
 	/**

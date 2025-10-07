@@ -17,6 +17,7 @@
         <!-- Make post types translatable -->
         <custom-type translate="1">product_ingredients</custom-type>
         <custom-type translate="1">master_ingredient</custom-type>
+        <custom-type translate="1">product_settings</custom-type>
     </custom-types>
 
     <custom-fields>
@@ -27,5 +28,6 @@
         <custom-field action="copy">_ecwid_product_id</custom-field>
         <custom-field action="copy">_ecwid_product_sku</custom-field>
         <custom-field action="copy">_product_ingredients</custom-field>
+        <custom-field action="translate">_product_descriptions</custom-field>
     </custom-fields>
 </wpml-config>

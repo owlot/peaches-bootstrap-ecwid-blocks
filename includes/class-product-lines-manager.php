@@ -176,15 +176,17 @@ class Peaches_Product_Lines_Manager implements Peaches_Product_Lines_Manager_Int
 
 			// Complete localization with all required parameters
 			wp_localize_script($script_handle, 'ProductLinesParams', array(
-				'selectMediaTitle'  => __('Select Line Media', 'peaches'),
-				'selectMediaButton' => __('Use this media', 'peaches'),
-				'selectMediaText'   => __('Select Media', 'peaches'),
-				'changeMediaText'   => __('Change Media', 'peaches'),
-				'removeText'        => __('Remove', 'peaches'),
-				'deleteText'        => __('Delete', 'peaches'),
-				'mediaTagLabel'     => __('Media Tag:', 'peaches'),
-				'nonce'             => wp_create_nonce('product_lines_admin'),
-				'ajaxUrl'           => admin_url('admin-ajax.php'),
+				'selectMediaTitle'     => __('Select Line Media', 'peaches'),
+				'selectMediaButton'    => __('Use this media', 'peaches'),
+				'selectMediaText'      => __('Select Media', 'peaches'),
+				'changeMediaText'      => __('Change Media', 'peaches'),
+				'removeText'           => __('Remove', 'peaches'),
+				'deleteText'           => __('Delete', 'peaches'),
+				'mediaTagLabel'        => __('Media Tag:', 'peaches'),
+				'noValidMediaSelected' => __('Error: No valid media selected.', 'peaches'),
+				'confirmRemoveMedia'   => __('Are you sure you want to remove this media?', 'peaches'),
+				'nonce'                => wp_create_nonce('product_lines_admin'),
+				'ajaxUrl'              => admin_url('admin-ajax.php'),
 			));
 
 			// Add some inline CSS to help with styling

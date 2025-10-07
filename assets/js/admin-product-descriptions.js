@@ -362,6 +362,250 @@
 		);
 	}
 
+	/**
+	 * Initialize page-level language switcher functionality
+	 *
+	 * Sets up language switching for all translation fields on the page.
+	 * Shows/hides translation fields based on selected language.
+	 *
+	 * @param language
+	 * @since 0.5.0
+	 */
+	function refreshIngredientDropdowns( language ) {
+		console.log(
+			'Refreshing ingredient dropdowns for language:',
+			language
+		);
+
+		// Find all ingredient dropdowns
+		$( '.library-ingredient-select' ).each( function () {
+			const $select = $( this );
+			const currentValue = $select.val();
+
+			// Make AJAX request to get updated options
+			$.ajax( {
+				url: ProductDescriptionsConfig.ajaxUrl,
+				type: 'POST',
+				data: {
+					action: 'refresh_ingredients_for_language',
+					language,
+					nonce: ProductDescriptionsConfig.languageNonce,
+				},
+				success( response ) {
+					if ( response.success && response.data ) {
+						// Clear existing options
+						$select.empty();
+
+						// Add new options
+						response.data.forEach( function ( option ) {
+							const $option = $( '<option>' )
+								.val( option.value )
+								.text( option.text );
+
+							if ( option.disabled ) {
+								$option.prop( 'disabled', true );
+							}
+
+							$select.append( $option );
+						} );
+
+						// Restore selection if the same ingredient exists
+						if ( currentValue ) {
+							$select.val( currentValue );
+						}
+
+						// Update description for the selected ingredient in the new language
+						if ( currentValue ) {
+							updateIngredientDescription(
+								$select,
+								currentValue,
+								language
+							);
+						} else {
+							// Reset to default message if no ingredient is selected
+							const $row = $select.closest( '.ingredient-row' );
+							const $descriptionDiv = $row.find(
+								'.ingredient-description'
+							);
+							$descriptionDiv.text(
+								ProductDescriptionsConfig.i18n
+									.selectIngredientMessage ||
+									'Select an ingredient to see its description'
+							);
+						}
+					}
+				},
+				error( xhr, status, error ) {
+					console.error(
+						'Error refreshing ingredient dropdowns:',
+						error
+					);
+				},
+			} );
+		} );
+	}
+
+	// Global variable to track current language
+	let currentPageLanguage = '';
+
+	function initializePageLanguageSwitcher() {
+		console.log( 'Initializing page-level language switcher' );
+
+		const config = ProductDescriptionsConfig.languages;
+		const defaultLanguage = config.default || 'en';
+		currentPageLanguage = defaultLanguage; // Initialize global variable
+
+		// Function to update UI based on current language
+		function updateLanguageUI( selectedLanguage ) {
+			console.log( 'Switching page language to:', selectedLanguage );
+			currentPageLanguage = selectedLanguage;
+
+			// Update active button
+			$( '.peaches-page-language-switcher button' ).each( function () {
+				const $button = $( this );
+				const buttonLang = $button.data( 'language' );
+				const isActive = buttonLang === selectedLanguage;
+
+				$button.toggleClass( 'active', isActive );
+				$button.attr( 'aria-pressed', isActive ? 'true' : 'false' );
+			} );
+
+			// Show/hide appropriate content throughout the entire page
+			if ( selectedLanguage === defaultLanguage ) {
+				// Show default language content, hide all translation fields
+				$( '.translation-fields' ).hide();
+				$( '.description-content' ).show();
+				$(
+					'input[name*="[title]"]:not([name*="[translations]"])'
+				).show();
+				$( 'select[name*="[type]"]' ).show();
+
+				// Show default language ingredient names/descriptions
+				$(
+					'.ingredient-name-default, .ingredient-description-default'
+				).show();
+				$(
+					'.ingredient-name-translation, .ingredient-description-translation'
+				).hide();
+			} else {
+				// Hide default content, show translation content
+				$( '.description-content' ).hide();
+				$(
+					'input[name*="[title]"]:not([name*="[translations]"])'
+				).hide();
+				$( 'select[name*="[type]"]' ).show(); // Always show type selector
+
+				// Hide all translation fields first
+				$( '.translation-fields' ).hide();
+				$(
+					'.ingredient-name-translation, .ingredient-description-translation'
+				).hide();
+
+				// Show only the selected language translation fields
+				$(
+					`.translation-fields[data-language="${ selectedLanguage }"]`
+				).show();
+				$(
+					`.ingredient-name-translation[data-language="${ selectedLanguage }"], .ingredient-description-translation[data-language="${ selectedLanguage }"]`
+				).show();
+
+				// Hide default ingredient fields
+				$(
+					'.ingredient-name-default, .ingredient-description-default'
+				).hide();
+			}
+
+			// Trigger a refresh of ingredient dropdowns to show translated names
+			// by dispatching a custom event that can be caught by other scripts
+			$( document ).trigger( 'language-changed', [ selectedLanguage ] );
+
+			// Refresh ingredient dropdowns via AJAX
+			refreshIngredientDropdowns( selectedLanguage );
+		}
+
+		// Handle language button clicks
+		$( '.peaches-page-language-switcher button' ).on(
+			'click',
+			function ( e ) {
+				e.preventDefault();
+				const selectedLanguage = $( this ).data( 'language' );
+				updateLanguageUI( selectedLanguage );
+			}
+		);
+
+		// Initialize with default language
+		updateLanguageUI( defaultLanguage );
+
+		console.log(
+			'Page-level language switcher initialized with default language:',
+			defaultLanguage
+		);
+	}
+
+	function updateIngredientDescription( $select, ingredientId, language ) {
+		const $row = $select.closest( '.ingredient-row' );
+		const $descriptionDiv = $row.find( '.ingredient-description' );
+
+		if ( ! ingredientId ) {
+			$descriptionDiv.text(
+				ProductDescriptionsConfig.i18n.selectIngredientMessage ||
+					'Select an ingredient to see its description'
+			);
+			return;
+		}
+
+		// Make AJAX request to get description
+		$.ajax( {
+			url: ProductDescriptionsConfig.ajaxUrl,
+			type: 'POST',
+			data: {
+				action: 'get_ingredient_description',
+				ingredient_id: ingredientId,
+				language,
+				nonce: ProductDescriptionsConfig.languageNonce,
+			},
+			success( response ) {
+				if (
+					response.success &&
+					response.data &&
+					response.data.description
+				) {
+					$descriptionDiv.html( response.data.description );
+				}
+			},
+			error( xhr, status, error ) {
+				console.error( 'Error getting ingredient description:', error );
+				$descriptionDiv.text( 'Error loading description' );
+			},
+		} );
+	}
+
+	function initializeIngredientDropdowns() {
+		// Handle ingredient dropdown changes
+		$( document ).on( 'change', '.library-ingredient-select', function () {
+			const $select = $( this );
+			const ingredientId = $select.val();
+			updateIngredientDescription(
+				$select,
+				ingredientId,
+				currentPageLanguage
+			);
+		} );
+
+		// Initialize descriptions for already selected ingredients
+		$( '.library-ingredient-select' ).each( function () {
+			const $select = $( this );
+			const ingredientId = $select.val();
+			if ( ingredientId ) {
+				updateIngredientDescription(
+					$select,
+					ingredientId,
+					currentPageLanguage
+				);
+			}
+		} );
+	}
+
 	// Initialize when document is ready
 	$( document ).ready( function () {
 		// Debug: Check what elements we can find
@@ -440,6 +684,17 @@
 
 		// Update dropdown filters on page load
 		updateDescriptionTypeDropdowns();
+
+		// Initialize page-level language switcher if multiple languages are available
+		if (
+			ProductDescriptionsConfig.languages &&
+			ProductDescriptionsConfig.languages.hasMultiple
+		) {
+			initializePageLanguageSwitcher();
+		}
+
+		// Initialize ingredient dropdown handling
+		initializeIngredientDropdowns();
 
 		// Add description button
 		$( '#add-description' ).on( 'click', function ( e ) {
@@ -649,7 +904,9 @@
 			if ( errors.length > 0 ) {
 				e.preventDefault();
 				alert(
-					'Please fix the following errors:\n\n' + errors.join( '\n' )
+					ProductDescriptionsConfig.i18n.validationErrorsTitle +
+						'\n\n' +
+						errors.join( '\n' )
 				);
 				console.error( 'Form validation failed:', errors );
 				return false;
