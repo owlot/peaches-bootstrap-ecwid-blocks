@@ -5,6 +5,48 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.2] - 2025-01-29
+
+### Added
+- **GTM Product Block Tracking** (@since 0.6.2)
+  - Product impression tracking when products become visible in viewport (50% threshold)
+  - Product click tracking when users navigate from listing to detail pages
+  - Intersection Observer API integration for efficient viewport detection
+  - Enhanced E-commerce event format for GTM dataLayer
+  - Product data (id, name, price, brand, category, variant) passed to frontend via Interactivity API
+  - Comprehensive documentation for GTM setup and configuration
+  - Event tracking for product cards on homepage, shop page, and category listings
+
+### Enhanced
+- **Ecwid Integration** (@since 0.6.2)
+  - Seamless integration with Ecwid's native add-to-cart tracking (GA4 format)
+  - No duplicate event tracking - leverages Ecwid's built-in analytics for cart events
+  - Category data extraction from Ecwid product objects for enhanced tracking
+
+### Refactored
+- **Product Debug Tool** (@since 0.6.2)
+  - Converted from procedural code to proper class-based architecture
+  - New `Peaches_Ecwid_Product_Debug` class following plugin patterns
+  - Integrated into main plugin initialization via `class-ecwid-blocks.php`
+  - Improved dependency injection using Ecwid API instance
+  - Enhanced security with proper capability checks
+  - Maintained admin page and shortcode functionality
+  - Admin-only initialization for better performance
+
+### Fixed
+- **Product Debug Tool Early Execution** (@since 0.6.2)
+  - Fixed fatal error caused by calling `current_user_can()` before WordPress fully loaded
+  - Moved capability checks from `init_hooks()` to actual callback methods
+  - Ensures proper WordPress initialization order
+
+### Documentation
+- **GTM Tracking Guides** (@since 0.6.2)
+  - Complete GTM setup step-by-step guide with tag and trigger configuration
+  - Quick reference guide for event structures and testing
+  - Visual guide for viewing events in browser console and GTM Preview Mode
+  - Troubleshooting documentation for common issues
+  - Implementation summary with complete e-commerce funnel tracking
+
 ## [0.6.1] - 2025-10-07
 
 ### Added

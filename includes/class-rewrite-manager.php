@@ -386,9 +386,269 @@ class Peaches_Rewrite_Manager implements Peaches_Rewrite_Manager_Interface {
 	<?php if (!empty($product->thumbnailUrl)): ?>
 	<meta name="twitter:image" content="<?php echo esc_url($product->thumbnailUrl); ?>">
 	<?php endif; ?>
-<?php
+
+	<?php
+					// Add Google Shopping Product Schema (JSON-LD)
+					$this->add_product_schema_markup($product, $product_url);
+
+					// Add Google Tag Manager data layer for product view
+					$this->add_gtm_product_view($product);
 				}
 			}
+		}
+	}
+
+	/**
+	 * Add Google Shopping Product Schema markup (JSON-LD).
+	 *
+	 * Outputs structured data for Google Shopping and other search engines.
+	 *
+	 * @since 0.6.1
+	 * @param object $product The product object from Ecwid API.
+	 * @param string $product_url The canonical product URL.
+	 */
+	private function add_product_schema_markup($product, $product_url) {
+		// Build the product schema
+		$schema = array(
+			'@context' => 'https://schema.org/',
+			'@type' => 'Product',
+			'name' => $product->name,
+			'description' => wp_strip_all_tags($product->description),
+			'url' => $product_url,
+		);
+
+		// Add images
+		$images = array();
+		if (!empty($product->thumbnailUrl)) {
+			$images[] = $product->thumbnailUrl;
+		}
+		if (!empty($product->imageUrl)) {
+			$images[] = $product->imageUrl;
+		}
+		if (!empty($product->galleryImages)) {
+			foreach ($product->galleryImages as $gallery_image) {
+				if (!empty($gallery_image->imageUrl)) {
+					$images[] = $gallery_image->imageUrl;
+				}
+			}
+		}
+		if (!empty($images)) {
+			$schema['image'] = array_unique($images);
+		}
+
+		// Add SKU if available
+		if (!empty($product->sku)) {
+			$schema['sku'] = $product->sku;
+		}
+
+		// Add brand if available in product options or attributes
+		$brand = get_bloginfo('name'); // Default to site name
+		if (!empty($product->attributes)) {
+			foreach ($product->attributes as $attribute) {
+				if (strtolower($attribute->name) === 'brand' || strtolower($attribute->name) === 'merk') {
+					$brand = $attribute->value;
+					break;
+				}
+			}
+		}
+		$schema['brand'] = array(
+			'@type' => 'Brand',
+			'name' => $brand
+		);
+
+		// Add offers (price and availability)
+		$offer = array(
+			'@type' => 'Offer',
+			'url' => $product_url,
+			'priceCurrency' => !empty($product->defaultDisplayedPriceFormatted) ?
+				$this->extract_currency_code($product) : 'EUR',
+			'price' => !empty($product->price) ? number_format($product->price, 2, '.', '') : '0.00',
+			'availability' => $this->get_product_availability($product),
+			'seller' => array(
+				'@type' => 'Organization',
+				'name' => get_bloginfo('name')
+			)
+		);
+
+		// Add sale price if available
+		if (!empty($product->compareToPrice) && $product->compareToPrice > $product->price) {
+			$offer['priceValidUntil'] = date('Y-m-d', strtotime('+1 year'));
+		}
+
+		$schema['offers'] = $offer;
+
+		// Add aggregate rating if available
+		// Note: Ecwid doesn't provide ratings by default, but this can be extended
+		// if you're using a review system
+		if (!empty($product->rating)) {
+			$schema['aggregateRating'] = array(
+				'@type' => 'AggregateRating',
+				'ratingValue' => $product->rating,
+				'reviewCount' => !empty($product->reviewCount) ? $product->reviewCount : 1
+			);
+		}
+
+		// Output the JSON-LD script
+		?>
+	<script type="application/ld+json">
+	<?php echo wp_json_encode($schema, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT); ?>
+	</script>
+		<?php
+	}
+
+	/**
+	 * Extract currency code from product data.
+	 *
+	 * @since 0.6.1
+	 * @param object $product The product object.
+	 * @return string Currency code (default: EUR).
+	 */
+	private function extract_currency_code($product) {
+		// Try to extract from formatted price string
+		if (!empty($product->defaultDisplayedPriceFormatted)) {
+			$formatted = $product->defaultDisplayedPriceFormatted;
+
+			// Common currency symbols and codes
+			$currencies = array(
+				'€' => 'EUR',
+				'$' => 'USD',
+				'£' => 'GBP',
+				'¥' => 'JPY',
+				'CHF' => 'CHF',
+				'EUR' => 'EUR',
+				'USD' => 'USD',
+				'GBP' => 'GBP',
+			);
+
+			foreach ($currencies as $symbol => $code) {
+				if (strpos($formatted, $symbol) !== false) {
+					return $code;
+				}
+			}
+		}
+
+		// Default to EUR for European shops
+		return 'EUR';
+	}
+
+	/**
+	 * Add Google Tag Manager data layer for product view event.
+	 *
+	 * Pushes product view data to the GTM data layer for enhanced e-commerce tracking.
+	 *
+	 * @since 0.6.1
+	 * @param object $product The product object from Ecwid API.
+	 */
+	private function add_gtm_product_view($product) {
+		$gtm_product = array(
+			'event' => 'productView',
+			'ecommerce' => array(
+				'detail' => array(
+					'products' => array(
+						array(
+							'id' => $product->id,
+							'name' => $product->name,
+							'price' => !empty($product->price) ? $product->price : 0,
+							'brand' => get_bloginfo('name'),
+							'category' => $this->get_category_name_safe($product),
+							'variant' => !empty($product->sku) ? $product->sku : '',
+						)
+					)
+				)
+			)
+		);
+
+		?>
+	<script>
+	window.dataLayer = window.dataLayer || [];
+	window.dataLayer.push(<?php echo wp_json_encode($gtm_product, JSON_UNESCAPED_SLASHES); ?>);
+	</script>
+		<?php
+	}
+
+	/**
+	 * Get category name from product data safely.
+	 *
+	 * @since 0.6.1
+	 * @param object $product The product object.
+	 * @return string Category name or empty string.
+	 */
+	private function get_category_name_safe($product) {
+		// Try to get category from product's categories array (if Ecwid provides it)
+		if (!empty($product->categories) && is_array($product->categories)) {
+			$first_category = reset($product->categories);
+			if (!empty($first_category->name)) {
+				return $first_category->name;
+			}
+		}
+
+		// Fallback: try to extract from product object if category data is embedded
+		if (!empty($product->categoryName)) {
+			return $product->categoryName;
+		}
+
+		// If we have category IDs but no names, return empty string
+		// Getting categories by ID would require additional API calls which could slow down the page
+		return '';
+	}
+
+	/**
+	 * Get product availability status for schema.org markup.
+	 *
+	 * Handles different availability scenarios including pre-order and backorder.
+	 *
+	 * @since 0.6.1
+	 * @param object $product The product object from Ecwid API.
+	 * @return string Schema.org availability URL.
+	 */
+	private function get_product_availability($product) {
+		// Check if product is in stock
+		$in_stock = !empty($product->inStock);
+
+		// Check if unlimited quantity (always available)
+		$unlimited = !empty($product->unlimited);
+
+		// Check if out of stock purchases are allowed (pre-order/backorder)
+		// Ecwid properties to check (in order of priority):
+		// 1. warningLimit - if quantity is 0 but product enabled, it may be pre-order
+		// 2. enabled - if product is enabled but not in stock
+		// 3. showOnFrontpage - product visibility
+		$available_for_purchase = false;
+
+		// If product is enabled and not in stock, check if it's available for purchase
+		if (isset($product->enabled) && $product->enabled) {
+			// Product is enabled - check if purchases are allowed when out of stock
+			if (!$in_stock && !$unlimited) {
+				// Check quantity - if 0 or negative but enabled, likely pre-order
+				$quantity = isset($product->quantity) ? intval($product->quantity) : 0;
+				if ($quantity <= 0) {
+					$available_for_purchase = true; // Enabled with 0 stock = pre-order allowed
+				}
+			}
+		}
+
+		// Optional debug logging (enable WP_DEBUG to see)
+		if (defined('WP_DEBUG') && WP_DEBUG && defined('WP_DEBUG_LOG') && WP_DEBUG_LOG) {
+			error_log(sprintf(
+				'[Product Schema] Product #%d availability: inStock=%s, unlimited=%s, enabled=%s, quantity=%s, available_for_purchase=%s',
+				$product->id ?? 'unknown',
+				$in_stock ? 'true' : 'false',
+				$unlimited ? 'true' : 'false',
+				isset($product->enabled) ? ($product->enabled ? 'true' : 'false') : 'not-set',
+				isset($product->quantity) ? $product->quantity : 'not-set',
+				$available_for_purchase ? 'true' : 'false'
+			));
+		}
+
+		// Determine availability
+		if ($in_stock || $unlimited) {
+			return 'https://schema.org/InStock';
+		} elseif (!$in_stock && $available_for_purchase) {
+			// Out of stock but enabled with 0 quantity = PreOrder
+			return 'https://schema.org/PreOrder';
+		} else {
+			// Out of stock and cannot purchase (disabled)
+			return 'https://schema.org/OutOfStock';
 		}
 	}
 

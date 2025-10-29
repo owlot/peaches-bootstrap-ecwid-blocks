@@ -306,10 +306,8 @@ class Peaches_Product_Media_Manager implements Peaches_Product_Media_Manager_Int
 
 				// No custom media found, try fallback to Ecwid images if enabled
 				if ($fallback) {
-					$fallback_url = $this->get_ecwid_image_by_position($product, 0);
-					if ($fallback_url) {
-						return $this->create_fallback_media_data($product, $fallback_url, $tag_key);
-					}
+					// Pass null to use enhanced fallback with responsive srcset
+					return $this->create_fallback_media_data($product, null, $tag_key);
 				}
 				return null;
 			}
@@ -323,10 +321,8 @@ class Peaches_Product_Media_Manager implements Peaches_Product_Media_Manager_Int
 
 			// If processing failed, try fallback
 			if ($fallback) {
-				$fallback_url = $this->get_ecwid_image_by_position($product, 0);
-				if ($fallback_url) {
-					return $this->create_fallback_media_data($product, $fallback_url, $tag_key);
-				}
+				// Pass null to use enhanced fallback with responsive srcset
+				return $this->create_fallback_media_data($product, null, $tag_key);
 			}
 
 			return null;
@@ -341,10 +337,8 @@ class Peaches_Product_Media_Manager implements Peaches_Product_Media_Manager_Int
 
 			// Try fallback on error
 			if ($fallback && isset($product)) {
-				$fallback_url = $this->get_ecwid_image_by_position($product, 0);
-				if ($fallback_url) {
-					return $this->create_fallback_media_data($product, $fallback_url, $tag_key);
-				}
+				// Pass null to use enhanced fallback with responsive srcset
+				return $this->create_fallback_media_data($product, null, $tag_key);
 			}
 
 			return null;

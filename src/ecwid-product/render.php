@@ -44,6 +44,12 @@ if (!$product) {
 	return;
 }
 
+// Generate responsive image data for main product image
+$main_image_data = null;
+if (!empty($product->thumbnailUrl) && class_exists('Peaches_Ecwid_Image_Utilities')) {
+	$main_image_data = Peaches_Ecwid_Image_Utilities::generate_ecwid_image_data($product, 0, 'gallery');
+}
+
 // Get all necessary data BEFORE caching check to ensure fresh interactivity context
 // Get show add to cart setting
 $show_add_to_cart = isset($attributes['showAddToCart']) ? $attributes['showAddToCart'] : true;
@@ -54,15 +60,16 @@ $hover_media_tag = isset($attributes['hoverMediaTag']) ? sanitize_text_field($at
 // Get computed className from attributes
 $computed_class_name = peaches_get_safe_string_attribute($attributes, 'computedClassName');
 
-// Get hover image URL if tag is specified
-$hover_image_url = '';
+// Get hover image data if tag is specified (with full responsive data)
+$hover_image_data = null;
 if (!empty($hover_media_tag)) {
-	// Use the template function for consistency
-	$hover_image_url = peaches_get_product_media_url($product_id, $hover_media_tag, 'large');
+	// Get full media data with srcset for responsive images
+	// Use 'medium' size for carousel context - browser will select optimal size from srcset
+	$hover_image_data = peaches_get_product_media_data($product_id, $hover_media_tag, 'medium');
 
 	// Debug: Log the hover image retrieval
 	if (defined('WP_DEBUG') && WP_DEBUG) {
-		error_log("Hover image debug - Product ID: {$product_id}, Tag: {$hover_media_tag}, URL: " . ($hover_image_url ?: 'NULL'));
+		error_log("Hover image debug - Product ID: {$product_id}, Tag: {$hover_media_tag}, Data: " . print_r($hover_image_data, true));
 	}
 }
 
@@ -124,13 +131,29 @@ if (isset($product->price)) {
 	$formatted_price = '€ ' . number_format($product->price, 2, ',', '.');
 }
 
+// Get category name for GTM tracking
+$category_name = '';
+if (!empty($product->categories) && is_array($product->categories)) {
+	$first_category = reset($product->categories);
+	if (!empty($first_category->name)) {
+		$category_name = $first_category->name;
+	}
+}
+
 // Set global interactivity state BEFORE caching check to ensure fresh data
 // Only store data needed for interactivity - display data is already in HTML
 wp_interactivity_state('peaches-ecwid-product', array(
 	'products' => array(
 		$product_id => array(
-			'hoverImageUrl' => $hover_image_url,
-			'productUrl' => $product_url
+			'hoverImageUrl' => $hover_image_data ? $hover_image_data['url'] : '',
+			'productUrl' => $product_url,
+			// GTM tracking data
+			'id' => $product->id,
+			'name' => $product->name,
+			'price' => isset($product->price) ? $product->price : 0,
+			'brand' => get_bloginfo('name'),
+			'category' => $category_name,
+			'variant' => !empty($product->sku) ? $product->sku : ''
 		)
 	)
 ));
@@ -151,7 +174,8 @@ $wrapper_attributes = get_block_wrapper_attributes(array(
 	'data-wp-context' => json_encode(array(
 		'productId' => $product_id,
 		'isLoading' => false,
-		'isHovering' => false
+		'isHovering' => false,
+		'impressionTracked' => false
 	), JSON_HEX_QUOT),
 	'data-wp-init' => 'callbacks.initProduct'
 ));
@@ -161,20 +185,39 @@ $wrapper_attributes = get_block_wrapper_attributes(array(
 	<div class="ratio ratio-1x1 product-image-container"
 		 data-wp-on--mouseenter="actions.handleMouseEnter"
 		 data-wp-on--mouseleave="actions.handleMouseLeave">
-		<img class="card-img-top product-image-main"
-			 src="<?php echo esc_url($product->thumbnailUrl ?? ''); ?>"
-			 alt="<?php echo esc_attr($product->name); ?>"
-			 role="button"
-			 data-wp-class--visible="!context.isHovering">
-
-		<?php if (!empty($hover_image_url)): ?>
-			<img class="card-img-top product-image-hover"
-				 src="<?php echo esc_url($hover_image_url); ?>"
-				 alt="<?php echo esc_attr($product->name . ' - hover image'); ?>"
+		<?php
+		// Main image with smart responsive sizes
+		if (!empty($main_image_data) && function_exists('peaches_generate_responsive_image_html')) {
+			echo peaches_generate_responsive_image_html($main_image_data, array(
+				'class' => 'card-img-top product-image-main',
+				'role' => 'button',
+				'data-wp-class--visible' => '!context.isHovering'
+			));
+		} else {
+			// Fallback if responsive image function not available
+			?>
+			<img class="card-img-top product-image-main"
+				 src="<?php echo esc_url($product->thumbnailUrl ?? ''); ?>"
+				 alt="<?php echo esc_attr($product->name); ?>"
+				 loading="lazy"
 				 role="button"
-				 data-wp-on--click="actions.navigateToProduct"
-				 data-wp-class--visible="context.isHovering">
-		<?php endif; ?>
+				 data-wp-class--visible="!context.isHovering">
+			<?php
+		}
+		?>
+
+		<?php
+		// Hover image with smart responsive sizes
+		if (!empty($hover_image_data) && function_exists('peaches_generate_responsive_image_html')) {
+			echo peaches_generate_responsive_image_html($hover_image_data, array(
+				'class' => 'card-img-top product-image-hover',
+				'alt' => esc_attr($product->name . ' - hover image'),
+				'role' => 'button',
+				'data-wp-on--click' => 'actions.navigateToProduct',
+				'data-wp-class--visible' => 'context.isHovering'
+			));
+		}
+		?>
 	</div>
 
 	<div

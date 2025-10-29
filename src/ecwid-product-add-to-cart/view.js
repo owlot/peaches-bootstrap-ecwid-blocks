@@ -125,10 +125,11 @@ const { state } = store( 'peaches-ecwid-add-to-cart', {
 		 * Add product to cart
 		 *
 		 * Handles the add to cart action with Ecwid integration.
+		 * Also pushes Google Tag Manager events for enhanced e-commerce tracking.
 		 */
 		addToCart: () => {
 			const context = getContext();
-			const { quantity } = context;
+			const { quantity, productData } = context;
 
 			// Use consolidated utility to get product ID
 			const productId = getProductIdWithFallback(
@@ -138,6 +139,34 @@ const { state } = store( 'peaches-ecwid-add-to-cart', {
 			if ( ! productId ) {
 				console.error( 'No product ID available for add to cart' );
 				return;
+			}
+
+			// Push GTM add to cart event before adding to Ecwid cart
+			if ( productData ) {
+				window.dataLayer = window.dataLayer || [];
+				window.dataLayer.push( {
+					event: 'addToCart',
+					ecommerce: {
+						add: {
+							products: [
+								{
+									id: productId,
+									name: productData.name || '',
+									price: productData.price || 0,
+									brand:
+										productData.brand ||
+										document.querySelector(
+											'meta[property="og:site_name"]'
+										)?.content ||
+										'',
+									category: productData.categoryName || '',
+									variant: productData.sku || '',
+									quantity: parseInt( quantity ) || 1,
+								},
+							],
+						},
+					},
+				} );
 			}
 
 			// Add to Ecwid cart using the Ecwid JavaScript API

@@ -148,6 +148,15 @@ class Peaches_Ecwid_Blocks {
 	private $rest_api;
 
 	/**
+	 * Product Debug Tool instance.
+	 *
+	 * @since  0.6.2
+	 * @access private
+	 * @var    Peaches_Ecwid_Product_Debug
+	 */
+	private $product_debug;
+
+	/**
 	 * Get singleton instance of the class.
 	 *
 	 * @since 0.2.0
@@ -243,6 +252,7 @@ class Peaches_Ecwid_Blocks {
 			'class-media-tags-manager.php',
 			'class-ecwid-image-utilities.php',
 			'class-rest-api.php',
+			'class-ecwid-product-debug.php',
 		);
 
 		foreach ($classes as $class_file) {
@@ -351,6 +361,11 @@ class Peaches_Ecwid_Blocks {
 		// Initialize block registration
 		if (class_exists('Peaches_Ecwid_Block_Registration')) {
 			$this->block_registration = new Peaches_Ecwid_Block_Registration();
+		}
+
+		// Initialize product debug tool (admin only)
+		if (is_admin() && class_exists('Peaches_Ecwid_Product_Debug') && $this->ecwid_api) {
+			$this->product_debug = new Peaches_Ecwid_Product_Debug($this->ecwid_api);
 		}
 
 		$this->init_mollie_subscription();
