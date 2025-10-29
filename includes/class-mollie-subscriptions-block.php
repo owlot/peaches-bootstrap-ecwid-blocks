@@ -8,7 +8,7 @@
  * @since   0.4.0
  */
 
-if (!defined('ABSPATH')) {
+if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
@@ -57,9 +57,9 @@ class Peaches_Mollie_Subscription_Block {
 	 * @param Peaches_Ecwid_API_Interface $ecwid_api Ecwid API instance.
 	 * @param Peaches_Cache_Interface     $cache     Cache instance.
 	 */
-	public function __construct($ecwid_api, $cache) {
+	public function __construct( $ecwid_api, $cache ) {
 		$this->ecwid_api = $ecwid_api;
-		$this->cache = $cache;
+		$this->cache     = $cache;
 
 		$this->init_hooks();
 		$this->init_mollie_integration();
@@ -68,29 +68,28 @@ class Peaches_Mollie_Subscription_Block {
 	/**
 	 * Initialize WordPress hooks.
 	 *
-	 * @since 0.4.0
-	 *
+	 * @since  0.4.0
 	 * @return void
 	 */
 	private function init_hooks() {
-		add_action('init', array($this, 'register_block_type'));
-		add_action('wp_enqueue_scripts', array($this, 'enqueue_frontend_scripts'));
-		add_action('admin_enqueue_scripts', array($this, 'enqueue_admin_scripts'));
+		add_action( 'init', array( $this, 'register_block_type' ) );
+		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_frontend_scripts' ) );
+		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_scripts' ) );
 
-		// REST API endpoints
-		add_action('rest_api_init', array($this, 'register_rest_routes'));
+		// REST API endpoints.
+		add_action( 'rest_api_init', array( $this, 'register_rest_routes' ) );
 
-		// AJAX handlers
-		add_action('wp_ajax_create_mollie_subscription', array($this, 'ajax_create_subscription'));
-		add_action('wp_ajax_nopriv_create_mollie_subscription', array($this, 'ajax_create_subscription'));
-		add_action('wp_ajax_get_subscription_plans', array($this, 'ajax_get_subscription_plans'));
-		add_action('wp_ajax_nopriv_get_subscription_plans', array($this, 'ajax_get_subscription_plans'));
+		// AJAX handlers.
+		add_action( 'wp_ajax_create_mollie_subscription', array( $this, 'ajax_create_subscription' ) );
+		add_action( 'wp_ajax_nopriv_create_mollie_subscription', array( $this, 'ajax_create_subscription' ) );
+		add_action( 'wp_ajax_get_subscription_plans', array( $this, 'ajax_get_subscription_plans' ) );
+		add_action( 'wp_ajax_nopriv_get_subscription_plans', array( $this, 'ajax_get_subscription_plans' ) );
 
-		// Mollie webhook handler
-		add_action('init', array($this, 'handle_mollie_webhooks'));
+		// Mollie webhook handler.
+		add_action( 'init', array( $this, 'handle_mollie_webhooks' ) );
 
-		// Admin settings
-		add_action('admin_init', array($this, 'register_settings'));
+		// Admin settings.
+		add_action( 'admin_init', array( $this, 'register_settings' ) );
 	}
 
 	/**
@@ -98,38 +97,33 @@ class Peaches_Mollie_Subscription_Block {
 	 *
 	 * Priority order: Direct API > Standalone Plugin > WooCommerce Plugin
 	 *
-	 * @since 0.4.0
-	 *
+	 * @since  0.4.0
 	 * @return void
 	 */
 	private function init_mollie_integration() {
-		// First priority: Direct Mollie API (recommended for Ecwid users)
-		if (get_option('peaches_mollie_api_key') && class_exists('Mollie\\Api\\MollieApiClient')) {
+		// First priority: Direct Mollie API (recommended for Ecwid users).
+		if ( get_option( 'peaches_mollie_api_key' ) && class_exists( 'Mollie\\Api\\MollieApiClient' ) ) {
 			$this->mollie_integration = new Peaches_Mollie_Direct_Integration();
-		}
-		// Second priority: Standalone Mollie Payments plugin
-		elseif (class_exists('Mollie\\WordPress\\Plugin')) {
+		} elseif ( class_exists( 'Mollie\\WordPress\\Plugin' ) ) {
+			// Second priority: Standalone Mollie Payments plugin.
 			$this->mollie_integration = new Peaches_Mollie_Standalone_Integration();
-		}
-		// Third priority: WooCommerce Mollie plugin (not recommended for Ecwid-only sites)
-		elseif (class_exists('Mollie_WC_Plugin')) {
+		} elseif ( class_exists( 'Mollie_WC_Plugin' ) ) {
+			// Third priority: WooCommerce Mollie plugin (not recommended for Ecwid-only sites).
 			$this->mollie_integration = new Peaches_Mollie_WC_Integration();
-			add_action('admin_notices', array($this, 'show_woocommerce_notice'));
-		}
-		else {
-			add_action('admin_notices', array($this, 'show_mollie_setup_notice'));
+			add_action( 'admin_notices', array( $this, 'show_woocommerce_notice' ) );
+		} else {
+			add_action( 'admin_notices', array( $this, 'show_mollie_setup_notice' ) );
 		}
 	}
 
 	/**
 	 * Register the Gutenberg block type.
 	 *
-	 * @since 0.4.0
-	 *
+	 * @since  0.4.0
 	 * @return void
 	 */
 	public function register_block_type() {
-		if (!function_exists('register_block_type')) {
+		if ( ! function_exists( 'register_block_type' ) ) {
 			return;
 		}
 
@@ -473,7 +467,7 @@ class Peaches_Mollie_Subscription_Block {
 				wp_send_json_error(__('Failed to create subscription', 'peaches'));
 			}
 		} catch (Exception $e) {
-			error_log('Mollie subscription error: ' . $e->getMessage());
+			$this->log_error('Mollie subscription error', array('error' => $e->getMessage()));
 			wp_send_json_error(__('An error occurred while creating the subscription', 'peaches'));
 		}
 	}
@@ -518,7 +512,7 @@ class Peaches_Mollie_Subscription_Block {
 		try {
 			$this->mollie_integration->handle_webhook();
 		} catch (Exception $e) {
-			error_log('Mollie webhook error: ' . $e->getMessage());
+			$this->log_error('Mollie webhook error', array('error' => $e->getMessage()));
 			status_header(500);
 			exit('Webhook processing failed');
 		}
@@ -707,5 +701,40 @@ class Peaches_Mollie_Subscription_Block {
 	public function sanitize_currency($currency) {
 		$supported = $this->get_supported_currencies();
 		return array_key_exists($currency, $supported) ? $currency : 'EUR';
+	}
+
+	/**
+	 * Log informational messages.
+	 *
+	 * @since 0.7.0
+	 *
+	 * @param string $message Log message.
+	 * @param array  $context Additional context data.
+	 *
+	 * @return void
+	 */
+	private function log_info( $message, $context = array() ) {
+		if ( class_exists( 'Peaches_Ecwid_Utilities' ) && Peaches_Ecwid_Utilities::is_debug_mode() ) {
+			Peaches_Ecwid_Utilities::log_error( '[INFO] [Mollie Subscriptions Block] ' . $message, $context );
+		}
+	}
+
+	/**
+	 * Log error messages.
+	 *
+	 * @since 0.7.0
+	 *
+	 * @param string $message Error message.
+	 * @param array  $context Additional context data.
+	 *
+	 * @return void
+	 */
+	private function log_error( $message, $context = array() ) {
+		if ( class_exists( 'Peaches_Ecwid_Utilities' ) ) {
+			Peaches_Ecwid_Utilities::log_error( '[Mollie Subscriptions Block] ' . $message, $context );
+		} else {
+			// Fallback logging if utilities class is not available
+			error_log( '[Peaches Ecwid] [Mollie Subscriptions Block] ' . $message . ( empty( $context ) ? '' : ' - Context: ' . wp_json_encode( $context ) ) );
+		}
 	}
 }

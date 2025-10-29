@@ -181,9 +181,18 @@ class Peaches_Ecwid_Settings {
 			self::PAGE_SLUG . '_templates'
 		);
 
+		// Debug Settings Section
+		add_settings_section(
+			'debug_settings',
+			__( 'Debug Settings', 'peaches' ),
+			array( $this, 'render_debug_section_description' ),
+			self::PAGE_SLUG . '_debug'
+		);
+
 		// Add fields for each section
 		$this->add_general_fields();
 		$this->add_template_fields();
+		$this->add_debug_fields();
 	}
 
 	/**
@@ -222,13 +231,6 @@ class Peaches_Ecwid_Settings {
 			'general_settings'
 		);
 
-		add_settings_field(
-			'debug_mode',
-			__( 'Debug Mode', 'peaches' ),
-			array( $this, 'render_debug_mode_field' ),
-			self::PAGE_SLUG . '_general',
-			'general_settings'
-		);
 	}
 
 	/**
@@ -260,7 +262,35 @@ class Peaches_Ecwid_Settings {
 	}
 
 	/**
-	 * Handle cache actions
+	 * Add debug settings fields
+	 *
+	 * Creates settings fields for debug configuration
+	 * including debug mode and debug tools access.
+	 *
+	 * @since 0.7.0
+	 *
+	 * @return void
+	 */
+	private function add_debug_fields() {
+		add_settings_field(
+			'debug_mode',
+			__( 'Debug Mode', 'peaches' ),
+			array( $this, 'render_debug_mode_field' ),
+			self::PAGE_SLUG . '_debug',
+			'debug_settings'
+		);
+
+		add_settings_field(
+			'debug_tools',
+			__( 'Debug Tools', 'peaches' ),
+			array( $this, 'render_debug_tools_field' ),
+			self::PAGE_SLUG . '_debug',
+			'debug_settings'
+		);
+	}
+
+	/**
+	 * Render main page
 	 *
 	 * Processes cache-related actions like clearing cache.
 	 *
@@ -353,6 +383,10 @@ class Peaches_Ecwid_Settings {
 				   class="nav-tab <?php echo $active_tab === 'templates' ? 'nav-tab-active' : ''; ?>">
 					<?php esc_html_e( 'Templates', 'peaches' ); ?>
 				</a>
+				<a href="<?php echo esc_url( admin_url( 'admin.php?page=' . self::PAGE_SLUG . '&tab=debug' ) ); ?>"
+				   class="nav-tab <?php echo $active_tab === 'debug' ? 'nav-tab-active' : ''; ?>">
+					<?php esc_html_e( 'Debug', 'peaches' ); ?>
+				</a>
 			</h2>
 
 			<form method="post" action="options.php">
@@ -365,6 +399,9 @@ class Peaches_Ecwid_Settings {
 						break;
 					case 'templates':
 						do_settings_sections( self::PAGE_SLUG . '_templates' );
+						break;
+					case 'debug':
+						do_settings_sections( self::PAGE_SLUG . '_debug' );
 						break;
 					default:
 						do_settings_sections( self::PAGE_SLUG . '_general' );
@@ -400,7 +437,20 @@ class Peaches_Ecwid_Settings {
 	 */
 	public function render_template_section_description() {
 		?>
-		<p><?php esc_html_e( 'Configure template settings for product detail pages and other dynamic templates.', 'peaches' ); ?></p>
+		<p><?php esc_html_e( 'Configure template settings for product detail pages and other Ecwid templates.', 'peaches' ); ?></p>
+		<?php
+	}
+
+	/**
+	 * Render debug section description
+	 *
+	 * @since 0.7.0
+	 *
+	 * @return void
+	 */
+	public function render_debug_section_description() {
+		?>
+		<p><?php esc_html_e( 'Configure debug settings and access advanced debugging tools for troubleshooting Ecwid blocks.', 'peaches' ); ?></p>
 		<?php
 	}
 
@@ -436,7 +486,7 @@ class Peaches_Ecwid_Settings {
 	public function render_redis_field() {
 		$settings = $this->get_settings();
 		$value = isset( $settings['enable_redis'] ) ? $settings['enable_redis'] : false;
-		
+
 		// Check if the parent Peaches Bootstrap Blocks plugin is active
 		$redis_service = $this->get_shared_cache_service();
 		$redis_configured = $redis_service && $redis_service->is_redis_available();
@@ -490,7 +540,7 @@ class Peaches_Ecwid_Settings {
 	 */
 	public function render_cache_management_field() {
 		$cache_info = $this->get_cache_info();
-		
+
 		// Get detailed cache statistics
 		$ecwid_blocks = Peaches_Ecwid_Blocks::get_instance();
 		$ecwid_api = $ecwid_blocks ? $ecwid_blocks->get_ecwid_api() : null;
@@ -499,7 +549,7 @@ class Peaches_Ecwid_Settings {
 		<div class="cache-management">
 			<div class="cache-stats" style="margin-bottom: 15px;">
 				<strong><?php esc_html_e( 'Cache Status:', 'peaches' ); ?></strong> <?php echo esc_html( $cache_info['type'] ); ?><br>
-				
+
 				<?php if ( $detailed_stats ) : ?>
 					<strong><?php esc_html_e( 'API Cache Details:', 'peaches' ); ?></strong><br>
 					<div style="margin-left: 15px; font-size: 13px;">
@@ -553,7 +603,55 @@ class Peaches_Ecwid_Settings {
 				   <?php checked( $value ); ?> />
 			<?php esc_html_e( 'Enable debug logging for Ecwid blocks', 'peaches' ); ?>
 		</label>
-		<p class="description"><?php esc_html_e( 'Logs API calls and block rendering information to help with troubleshooting.', 'peaches' ); ?></p>
+		<p class="description">
+			<?php esc_html_e( 'Logs API calls and block rendering information to help with troubleshooting.', 'peaches' ); ?>
+			<?php if ( $value ) : ?>
+				<br>
+				<strong style="color: #d63638;"><?php esc_html_e( '⚠ Debug mode is currently active', 'peaches' ); ?></strong>
+			<?php endif; ?>
+		</p>
+		<?php
+	}
+
+	/**
+	 * Render debug tools field
+	 *
+	 * @since 0.7.0
+	 *
+	 * @return void
+	 */
+	public function render_debug_tools_field() {
+		?>
+		<div class="debug-tools-links">
+			<p><?php esc_html_e( 'Access advanced debugging tools for inspecting products and system information.', 'peaches' ); ?></p>
+
+			<?php if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) : ?>
+				<a href="<?php echo esc_url( admin_url( 'admin.php?page=peaches-debug' ) ); ?>" class="button button-secondary">
+					<?php esc_html_e( 'Open Debug Tools', 'peaches' ); ?>
+				</a>
+				<p class="description">
+					<?php esc_html_e( 'Debug tools include: Product Inspector and System Information.', 'peaches' ); ?>
+					<br>
+					<?php
+					printf(
+						/* translators: %s: Link to Multilingual Settings page */
+						esc_html__( 'For rewrite rules and URL testing, visit %s.', 'peaches' ),
+						'<a href="' . esc_url( admin_url( 'admin.php?page=peaches-multilingual-settings' ) ) . '">' . esc_html__( 'Multilingual Settings', 'peaches' ) . '</a>'
+					);
+					?>
+				</p>
+			<?php else : ?>
+				<p class="description" style="color: #d63638;">
+					<strong><?php esc_html_e( 'Debug tools are only available when WP_DEBUG is enabled.', 'peaches' ); ?></strong><br>
+					<?php esc_html_e( 'Add the following to your wp-config.php file:', 'peaches' ); ?>
+				</p>
+				<code style="display: block; padding: 10px; background: #f0f0f1; margin: 10px 0;">
+					define( 'WP_DEBUG', true );<br>
+					define( 'WP_DEBUG_LOG', true );<br>
+					define( 'WP_DEBUG_DISPLAY', false );
+				</code>
+			<?php endif; ?>
+		</div>
 		<?php
 	}
 
@@ -951,5 +1049,40 @@ class Peaches_Ecwid_Settings {
 		}
 
 		return $bootstrap_blocks->get_cache_manager();
+	}
+
+	/**
+	 * Log informational messages.
+	 *
+	 * Only logs when debug mode is enabled.
+	 *
+	 * @since 0.2.0
+	 * @param string $message Log message.
+	 * @param array  $context Additional context data.
+	 * @return void
+	 */
+	private function log_info( $message, $context = array() ) {
+		if ( class_exists( 'Peaches_Ecwid_Utilities' ) && Peaches_Ecwid_Utilities::is_debug_mode() ) {
+			Peaches_Ecwid_Utilities::log_error( '[INFO] [Ecwid Settings] ' . $message, $context );
+		}
+	}
+
+	/**
+	 * Log error messages.
+	 *
+	 * Always logs, regardless of debug mode.
+	 *
+	 * @since 0.2.0
+	 * @param string $message Error message.
+	 * @param array  $context Additional context data.
+	 * @return void
+	 */
+	private function log_error( $message, $context = array() ) {
+		if ( class_exists( 'Peaches_Ecwid_Utilities' ) ) {
+			Peaches_Ecwid_Utilities::log_error( '[Ecwid Settings] ' . $message, $context );
+		} else {
+			// Fallback logging if utilities class is not available
+			error_log( '[Peaches Ecwid] [Ecwid Settings] ' . $message . ( empty( $context ) ? '' : ' - Context: ' . wp_json_encode( $context ) ) );
+		}
 	}
 }

@@ -131,28 +131,28 @@ class Peaches_Ecwid_Product_Settings {
 		$active_tab = isset( $_GET['tab'] ) ? sanitize_text_field( $_GET['tab'] ) : 'product_settings';
 
 		// Show success message if item was saved
-		if (isset($_GET['saved'])) {
-			$saved_post_id = absint($_GET['saved']);
-			$saved_post = get_post($saved_post_id);
+		if ( isset( $_GET['saved'] ) ) {
+			$saved_post_id = absint( $_GET['saved'] );
+			$saved_post    = get_post( $saved_post_id );
 
-			if ($saved_post) {
+			if ( $saved_post ) {
 				$post_type_labels = array(
-					'product_settings' => __('Product Configuration', 'peaches'),
-					'product_ingredient' => __('Product Ingredient', 'peaches'),
+					'product_settings'   => __( 'Product Configuration', 'peaches' ),
+					'product_ingredient' => __( 'Product Ingredient', 'peaches' ),
 				);
 
-				$label = isset($post_type_labels[$saved_post->post_type])
-					? $post_type_labels[$saved_post->post_type]
-					: __('Name', 'peaches');
+				$label = isset( $post_type_labels[ $saved_post->post_type ] )
+					? $post_type_labels[ $saved_post->post_type ]
+					: __( 'Name', 'peaches' );
 
 				?>
 				<div class="notice notice-success is-dismissible">
 					<p>
-						<strong><?php echo esc_html($label); ?></strong>
-						"<?php echo esc_html($saved_post->post_title); ?>"
-						<?php _e('has been saved successfully!', 'peaches'); ?>
-						<a href="<?php echo esc_url(get_edit_post_link($saved_post_id)); ?>" class="button button-small">
-							<?php _e('Edit Again', 'peaches'); ?>
+						<strong><?php echo esc_html( $label ); ?></strong>
+						"<?php echo esc_html( $saved_post->post_title ); ?>"
+						<?php _e( 'has been saved successfully!', 'peaches' ); ?>
+						<a href="<?php echo esc_url( get_edit_post_link( $saved_post_id ) ); ?>" class="button button-small">
+							<?php _e( 'Edit Again', 'peaches' ); ?>
 						</a>
 					</p>
 				</div>
@@ -188,61 +188,61 @@ class Peaches_Ecwid_Product_Settings {
 			<!-- Bootstrap Nav Tabs -->
 			<ul class="nav nav-tabs my-3" id="productManagementTabs" role="tablist">
 				<li class="nav-item" role="presentation">
-					<button class="nav-link <?php echo $active_tab === 'product_settings' ? 'active' : ''; ?>"
+					<button class="nav-link <?php echo 'product_settings' === $active_tab ? 'active' : ''; ?>"
 							id="product-settings-tab"
 							data-bs-toggle="tab"
 							data-bs-target="#product-settings"
 							type="button"
 							role="tab"
 							aria-controls="product-settings"
-							aria-selected="<?php echo $active_tab === 'product_settings' ? 'true' : 'false'; ?>">
+							aria-selected="<?php echo 'product_settings' === $active_tab ? 'true' : 'false'; ?>">
 						<?php esc_html_e( 'Product Configuration', 'peaches' ); ?>
-						<?php if ( $product_settings_count > 0 ): ?>
+						<?php if ( $product_settings_count > 0 ) : ?>
 							<span class="badge bg-secondary ms-1"><?php echo esc_html( $product_settings_count ); ?></span>
 						<?php endif; ?>
 					</button>
 				</li>
 				<li class="nav-item" role="presentation">
-					<button class="nav-link <?php echo $active_tab === 'ingredients_library' ? 'active' : ''; ?>"
+					<button class="nav-link <?php echo 'ingredients_library' === $active_tab ? 'active' : ''; ?>"
 							id="ingredients-library-tab"
 							data-bs-toggle="tab"
 							data-bs-target="#ingredients-library"
 							type="button"
 							role="tab"
 							aria-controls="ingredients-library"
-							aria-selected="<?php echo $active_tab === 'ingredients_library' ? 'true' : 'false'; ?>">
+							aria-selected="<?php echo 'ingredients_library' === $active_tab ? 'true' : 'false'; ?>">
 						<?php esc_html_e( 'Ingredients Library', 'peaches' ); ?>
-						<?php if ( $ingredients_library_count > 0 ): ?>
+						<?php if ( $ingredients_library_count > 0 ) : ?>
 							<span class="badge bg-secondary ms-1"><?php echo esc_html( $ingredients_library_count ); ?></span>
 						<?php endif; ?>
 					</button>
 				</li>
 				<li class="nav-item" role="presentation">
-					<button class="nav-link <?php echo $active_tab === 'media_tags' ? 'active' : ''; ?>"
+					<button class="nav-link <?php echo 'media_tags' === $active_tab ? 'active' : ''; ?>"
 							id="media-tags-tab"
 							data-bs-toggle="tab"
 							data-bs-target="#media-tags"
 							type="button"
 							role="tab"
 							aria-controls="media-tags"
-							aria-selected="<?php echo $active_tab === 'media_tags' ? 'true' : 'false'; ?>">
+							aria-selected="<?php echo 'media_tags' === $active_tab ? 'true' : 'false'; ?>">
 						<?php esc_html_e( 'Media Tags', 'peaches' ); ?>
-						<?php if ( $media_tags_count > 0 ): ?>
+						<?php if ( $media_tags_count > 0 ) : ?>
 							<span class="badge bg-secondary ms-1"><?php echo esc_html( $media_tags_count ); ?></span>
 						<?php endif; ?>
 					</button>
 				</li>
 				<li class="nav-item" role="presentation">
-					<button class="nav-link <?php echo $active_tab === 'product_lines' ? 'active' : ''; ?>"
+					<button class="nav-link <?php echo 'product_lines' === $active_tab ? 'active' : ''; ?>"
 							id="product-lines-tab"
 							data-bs-toggle="tab"
 							data-bs-target="#product-lines"
 							type="button"
 							role="tab"
 							aria-controls="product-lines"
-							aria-selected="<?php echo $active_tab === 'product_lines' ? 'true' : 'false'; ?>">
+							aria-selected="<?php echo 'product_lines' === $active_tab ? 'true' : 'false'; ?>">
 						<?php esc_html_e( 'Product Lines', 'peaches' ); ?>
-						<?php if ( $product_lines_count > 0 ): ?>
+						<?php if ( $product_lines_count > 0 ) : ?>
 							<span class="badge bg-secondary ms-1"><?php echo esc_html( $product_lines_count ); ?></span>
 						<?php endif; ?>
 					</button>
@@ -251,28 +251,28 @@ class Peaches_Ecwid_Product_Settings {
 
 			<!-- Bootstrap Tab Content -->
 			<div class="tab-content" id="productManagementTabContent">
-				<div class="tab-pane fade <?php echo $active_tab === 'product_settings' ? 'show active' : ''; ?>"
+				<div class="tab-pane fade <?php echo 'product_settings' === $active_tab ? 'show active' : ''; ?>"
 					 id="product-settings"
 					 role="tabpanel"
 					 aria-labelledby="product-settings-tab">
 					<?php $this->render_product_settings_tab(); ?>
 				</div>
 
-				<div class="tab-pane fade <?php echo $active_tab === 'ingredients_library' ? 'show active' : ''; ?>"
+				<div class="tab-pane fade <?php echo 'ingredients_library' === $active_tab ? 'show active' : ''; ?>"
 					 id="ingredients-library"
 					 role="tabpanel"
 					 aria-labelledby="ingredients-library-tab">
 					<?php $this->render_ingredients_library_tab(); ?>
 				</div>
 
-				<div class="tab-pane fade <?php echo $active_tab === 'media_tags' ? 'show active' : ''; ?>"
+				<div class="tab-pane fade <?php echo 'media_tags' === $active_tab ? 'show active' : ''; ?>"
 					 id="media-tags"
 					 role="tabpanel"
 					 aria-labelledby="media-tags-tab">
 					<?php $this->render_media_tags_tab(); ?>
 				</div>
 
-				<div class="tab-pane fade <?php echo $active_tab === 'product_lines' ? 'show active' : ''; ?>"
+				<div class="tab-pane fade <?php echo 'product_lines' === $active_tab ? 'show active' : ''; ?>"
 					 id="product-lines"
 					 role="tabpanel"
 					 aria-labelledby="product-lines-tab">
@@ -1397,19 +1397,19 @@ class Peaches_Ecwid_Product_Settings {
 						?>
 						<button type="button"
 								class="<?php echo esc_attr($button_class); ?>"
-								data-language="<?php echo esc_attr($lang_code); ?>"
+								data-language="<?php echo esc_attr( $lang_code ); ?>"
 								data-is-default="<?php echo $lang_code === $default_language ? 'true' : 'false'; ?>"
 								aria-pressed="<?php echo $is_active ? 'true' : 'false'; ?>">
 							<i class="dashicons dashicons-translation" style="font-size: 14px; line-height: 1;"></i>
 							<?php
-							if (isset($language['name'])) {
-								echo esc_html($language['name']);
+							if ( isset( $language['name'] ) ) {
+								echo esc_html( $language['name'] );
 							} else {
-								echo esc_html(strtoupper($lang_code));
+								echo esc_html( strtoupper( $lang_code ) );
 							}
 							?>
-							<?php if ($lang_code === $default_language): ?>
-								<small class="text-muted ms-1"><?php _e('(default)', 'peaches'); ?></small>
+							<?php if ( $lang_code === $default_language ) : ?>
+								<small class="text-muted ms-1"><?php _e( '(default)', 'peaches' ); ?></small>
 							<?php endif; ?>
 						</button>
 					<?php endforeach; ?>

@@ -8,7 +8,7 @@
  * @since   0.2.5
  */
 
-if (!defined('ABSPATH')) {
+if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
@@ -115,8 +115,8 @@ class Peaches_REST_API {
 	 * @return void
 	 */
 	private function init_hooks() {
-		add_action('rest_api_init', array($this, 'register_routes'));
-		add_filter('rest_authentication_errors', array($this, 'allow_public_endpoints'));
+		add_action( 'rest_api_init', array( $this, 'register_routes' ) );
+		add_filter( 'rest_authentication_errors', array( $this, 'allow_public_endpoints' ) );
 	}
 
 	/**
@@ -128,22 +128,22 @@ class Peaches_REST_API {
 	 *
 	 * @return WP_Error|null|true Modified result.
 	 */
-	public function allow_public_endpoints($result) {
-		// If there's already an error and it's not a 401 authentication error, pass it through
-		if (is_wp_error($result) && $result->get_error_code() !== 'rest_forbidden') {
+	public function allow_public_endpoints( $result ) {
+		// If there's already an error and it's not a 401 authentication error, pass it through.
+		if ( is_wp_error( $result ) && 'rest_forbidden' !== $result->get_error_code() ) {
 			return $result;
 		}
 
-		// Get the current request
+		// Get the current request.
 		$current_route = $GLOBALS['wp']->query_vars['rest_route'] ?? '';
 
-		// Check if this is one of our public endpoints
-		if (strpos($current_route, '/' . self::NAMESPACE . '/') === 0) {
-			// Allow access to our endpoints
+		// Check if this is one of our public endpoints.
+		if ( 0 === strpos( $current_route, '/' . self::NAMESPACE . '/' ) ) {
+			// Allow access to our endpoints.
 			return true;
 		}
 
-		// For all other endpoints, maintain the existing restriction
+		// For all other endpoints, maintain the existing restriction.
 		return $result;
 	}
 
@@ -598,7 +598,7 @@ class Peaches_REST_API {
 			);
 
 		} catch (Exception $e) {
-			error_log('Peaches API: Error getting product lines: ' . $e->getMessage());
+			$this->log_error('Error getting product lines', array('error' => $e->getMessage()));
 
 			return new WP_Error(
 				'server_error',
@@ -686,7 +686,7 @@ class Peaches_REST_API {
 			);
 
 		} catch (Exception $e) {
-			error_log('Peaches Ecwid: Error in get_product_line_media: ' . $e->getMessage());
+			$this->log_error('Error in get_product_line_media', array('error' => $e->getMessage()));
 
 			return new WP_Error(
 				'media_fetch_error',
@@ -758,7 +758,7 @@ class Peaches_REST_API {
 			);
 
 		} catch (Exception $e) {
-			error_log('Peaches API: Error getting line types: ' . $e->getMessage());
+			$this->log_error('Error getting line types', array('error' => $e->getMessage()));
 
 			return new WP_Error(
 				'server_error',
@@ -849,7 +849,7 @@ class Peaches_REST_API {
 			);
 
 		} catch (Exception $e) {
-			error_log('Peaches API: Error getting product ingredients: ' . $e->getMessage());
+			$this->log_error('Error getting product ingredients', array('error' => $e->getMessage()));
 			return new WP_Error(
 				'server_error',
 				__('Internal server error.', 'peaches'),
@@ -1033,7 +1033,7 @@ class Peaches_REST_API {
 
 			// Get current language for translations
 			$current_language = Peaches_Ecwid_Utilities::get_current_language();
-			
+
 			// Get product descriptions with translations
 			$descriptions = $this->product_settings_manager->get_product_descriptions_with_translations($product_id, $current_language);
 
@@ -1058,7 +1058,7 @@ class Peaches_REST_API {
 			);
 
 		} catch (Exception $e) {
-			error_log('Peaches API: Error getting product descriptions: ' . $e->getMessage());
+			$this->log_error('Error getting product descriptions', array('error' => $e->getMessage()));
 			return new WP_Error(
 				'server_error',
 				__('Internal server error.', 'peaches'),
@@ -1110,7 +1110,7 @@ class Peaches_REST_API {
 			// Get specific description by type
 			// Get current language for translations
 			$current_language = Peaches_Ecwid_Utilities::get_current_language();
-			
+
 			$description = $this->product_settings_manager->get_product_description_by_type($product_id, $type, $current_language);
 
 			if (!$description) {
@@ -1132,7 +1132,7 @@ class Peaches_REST_API {
 			);
 
 		} catch (Exception $e) {
-			error_log('Peaches API: Error getting product description by type: ' . $e->getMessage());
+			$this->log_error('Error getting product description by type', array('error' => $e->getMessage()));
 			return new WP_Error(
 				'server_error',
 				__('Internal server error.', 'peaches'),
@@ -1204,7 +1204,7 @@ class Peaches_REST_API {
 			);
 
 		} catch (Exception $e) {
-			error_log('Peaches API: Error getting product media by tag: ' . $e->getMessage());
+			$this->log_error('Error getting product media by tag', array('error' => $e->getMessage()));
 			return new WP_Error(
 				'server_error',
 				__('Internal server error.', 'peaches'),
@@ -1258,7 +1258,7 @@ class Peaches_REST_API {
 			);
 
 		} catch (Exception $e) {
-			error_log('Peaches API: Error getting media tags: ' . $e->getMessage());
+			$this->log_error('Error getting media tags', array('error' => $e->getMessage()));
 			return new WP_Error(
 				'server_error',
 				__('Internal server error.', 'peaches'),
@@ -1290,7 +1290,7 @@ class Peaches_REST_API {
 			);
 
 		} catch (Exception $e) {
-			error_log('Peaches API: Error getting description types: ' . $e->getMessage());
+			$this->log_error('Error getting description types', array('error' => $e->getMessage()));
 			return new WP_Error(
 				'server_error',
 				__('Internal server error.', 'peaches'),
@@ -1353,7 +1353,7 @@ class Peaches_REST_API {
 			);
 
 		} catch (Exception $e) {
-			error_log('Peaches API: Error getting related products: ' . $e->getMessage());
+			$this->log_error('Error getting related products', array('error' => $e->getMessage()));
 
 			return new WP_Error(
 				'server_error',
@@ -1536,7 +1536,6 @@ class Peaches_REST_API {
 				'error' => $e->getMessage(),
 				'trace' => $e->getTraceAsString()
 			));
-			error_log('Peaches API: Error getting category products: ' . $e->getMessage());
 
 			return new WP_Error(
 				'server_error',
@@ -1634,7 +1633,7 @@ class Peaches_REST_API {
 			);
 
 		} catch (Exception $e) {
-			error_log('Peaches API: Error getting product data: ' . $e->getMessage());
+			$this->log_error('Error getting product data', array('error' => $e->getMessage()));
 
 			return new WP_Error(
 				'server_error',
@@ -1683,7 +1682,7 @@ class Peaches_REST_API {
 			);
 
 		} catch (Exception $e) {
-			error_log('Peaches API: Error getting categories: ' . $e->getMessage());
+			$this->log_error('Error getting categories', array('error' => $e->getMessage()));
 
 			return new WP_Error(
 				'server_error',
@@ -1755,9 +1754,9 @@ class Peaches_REST_API {
 	 *
 	 * @return void
 	 */
-	private function log_info($message, $context = array()) {
-		if (class_exists('Peaches_Ecwid_Utilities') && Peaches_Ecwid_Utilities::is_debug_mode()) {
-			Peaches_Ecwid_Utilities::log_error('[INFO] [REST API] ' . $message, $context);
+	private function log_info( $message, $context = array() ) {
+		if ( class_exists( 'Peaches_Ecwid_Utilities' ) && Peaches_Ecwid_Utilities::is_debug_mode() ) {
+			Peaches_Ecwid_Utilities::log_error( '[INFO] [REST API] ' . $message, $context );
 		}
 	}
 

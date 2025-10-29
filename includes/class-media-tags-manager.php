@@ -10,7 +10,7 @@
  * @since   0.2.0
  */
 
-if (!defined('ABSPATH')) {
+if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
@@ -39,10 +39,10 @@ class Peaches_Media_Tags_Manager implements Peaches_Media_Tags_Manager_Interface
 	 * @var array
 	 */
 	const MEDIA_TYPES = array(
-		'image' => 'Image',
-		'video' => 'Video',
-		'audio' => 'Audio',
-		'document' => 'Document'
+		'image'    => 'Image',
+		'video'    => 'Video',
+		'audio'    => 'Audio',
+		'document' => 'Document',
 	);
 
 	/**
@@ -115,38 +115,36 @@ class Peaches_Media_Tags_Manager implements Peaches_Media_Tags_Manager_Interface
 	/**
 	 * Initialize hooks.
 	 *
-	 * @since 0.2.0
-	 *
+	 * @since  0.2.0
 	 * @return void
 	 */
 	private function init_hooks() {
-		add_action('wp_ajax_add_media_tag', array($this, 'ajax_add_media_tag'));
-		add_action('wp_ajax_delete_media_tag', array($this, 'ajax_delete_media_tag'));
-		add_action('wp_ajax_update_media_tag', array($this, 'ajax_update_media_tag'));
+		add_action( 'wp_ajax_add_media_tag', array( $this, 'ajax_add_media_tag' ) );
+		add_action( 'wp_ajax_delete_media_tag', array( $this, 'ajax_delete_media_tag' ) );
+		add_action( 'wp_ajax_update_media_tag', array( $this, 'ajax_update_media_tag' ) );
 	}
 
 	/**
 	 * Maybe initialize default tags on first run.
 	 *
-	 * @since 0.2.0
-	 *
+	 * @since  0.2.0
 	 * @return void
 	 */
 	private function maybe_initialize_default_tags() {
 		try {
-			$existing_tags = get_option(self::TAGS_OPTION, array());
+			$existing_tags = get_option( self::TAGS_OPTION, array() );
 
-			if (empty($existing_tags)) {
-				update_option(self::TAGS_OPTION, self::DEFAULT_TAGS);
-				$this->log_info('Default media tags initialized');
+			if ( empty( $existing_tags ) ) {
+				update_option( self::TAGS_OPTION, self::DEFAULT_TAGS );
+				$this->log_info( 'Default media tags initialized' );
 			} else {
-				// Update existing tags to use new field name
+				// Update existing tags to use new field name.
 				$updated = false;
-				foreach ($existing_tags as $key => $tag_data) {
-					// Migrate old field name to new field name
-					if (isset($tag_data['expected_media_type']) && !isset($tag_data['expectedMediaType'])) {
-						$existing_tags[$key]['expectedMediaType'] = $tag_data['expected_media_type'];
-						unset($existing_tags[$key]['expected_media_type']); // Remove old field
+				foreach ( $existing_tags as $key => $tag_data ) {
+					// Migrate old field name to new field name.
+					if ( isset( $tag_data['expected_media_type'] ) && ! isset( $tag_data['expectedMediaType'] ) ) {
+						$existing_tags[ $key ]['expectedMediaType'] = $tag_data['expected_media_type'];
+						unset( $existing_tags[ $key ]['expected_media_type'] ); // Remove old field.
 						$updated = true;
 					}
 					// If neither field exists, add default
@@ -1211,7 +1209,7 @@ class Peaches_Media_Tags_Manager implements Peaches_Media_Tags_Manager_Interface
 	 */
 	private function log_info($message, $context = array()) {
 		if (Peaches_Ecwid_Utilities::is_debug_mode()) {
-			Peaches_Ecwid_Utilities::log_error('[INFO] ' . $message, $context);
+			Peaches_Ecwid_Utilities::log_error('[INFO] [Media Tags Manager] ' . $message, $context);
 		}
 	}
 

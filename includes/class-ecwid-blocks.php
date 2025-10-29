@@ -8,7 +8,7 @@
  * @since   0.2.0
  */
 
-if (!defined('ABSPATH')) {
+if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
@@ -148,13 +148,13 @@ class Peaches_Ecwid_Blocks {
 	private $rest_api;
 
 	/**
-	 * Product Debug Tool instance.
+	 * Debug Manager instance.
 	 *
-	 * @since  0.6.2
+	 * @since  0.7.0
 	 * @access private
-	 * @var    Peaches_Ecwid_Product_Debug
+	 * @var    Peaches_Debug_Manager
 	 */
-	private $product_debug;
+	private $debug_manager;
 
 	/**
 	 * Get singleton instance of the class.
@@ -163,7 +163,7 @@ class Peaches_Ecwid_Blocks {
 	 * @return Peaches_Ecwid_Blocks The singleton instance.
 	 */
 	public static function get_instance() {
-		if (null === self::$instance) {
+		if ( null === self::$instance ) {
 			self::$instance = new self();
 		}
 		return self::$instance;
@@ -184,22 +184,24 @@ class Peaches_Ecwid_Blocks {
 			$this->initialize_components();
 			$this->init_hooks();
 
-			delete_transient('peaches_ecwid_all_products_6ed855dcb1ec6aec9d8ea36c935c6225');
-		} catch (Exception $e) {
-			error_log('Peaches Ecwid Blocks initialization error: ' . $e->getMessage());
-			add_action('admin_notices', array($this, 'show_initialization_error'));
+			delete_transient( 'peaches_ecwid_all_products_6ed855dcb1ec6aec9d8ea36c935c6225' );
+		} catch ( Exception $e ) {
+			$this->log_error( 'Initialization error: ' . $e->getMessage() );
+			add_action( 'admin_notices', array( $this, 'show_initialization_error' ) );
 		}
 	}
 
 	/**
 	 * Show initialization error notice.
+	 *
+	 * @since 0.2.0
 	 */
 	public function show_initialization_error() {
-?>
+		?>
 		<div class="notice notice-error">
-			<p><?php _e('Peaches Ecwid Blocks failed to initialize properly. Please check the error log for details.', 'peaches'); ?></p>
+			<p><?php esc_html_e( 'Peaches Ecwid Blocks failed to initialize properly. Please check the error log for details.', 'peaches' ); ?></p>
 		</div>
-<?php
+		<?php
 	}
 
 	/**
@@ -220,15 +222,15 @@ class Peaches_Ecwid_Blocks {
 			'interfaces/interface-media-tags-manager.php',
 			'interfaces/interface-product-media-manager.php',
 			'interfaces/interface-product-lines-manager.php',
-			'interfaces/interface-enhanced-navigation.php'
+			'interfaces/interface-enhanced-navigation.php',
 		);
 
-		foreach ($interfaces as $interface) {
+		foreach ( $interfaces as $interface ) {
 			$file_path = PEACHES_ECWID_INCLUDES_DIR . $interface;
-			if (file_exists($file_path)) {
+			if ( file_exists( $file_path ) ) {
 				require_once $file_path;
 			} else {
-				error_log('Missing interface file: ' . $file_path);
+				$this->log_error( 'Missing interface file: ' . $file_path );
 			}
 		}
 
@@ -252,15 +254,15 @@ class Peaches_Ecwid_Blocks {
 			'class-media-tags-manager.php',
 			'class-ecwid-image-utilities.php',
 			'class-rest-api.php',
-			'class-ecwid-product-debug.php',
+			'class-debug-manager.php',
 		);
 
-		foreach ($classes as $class_file) {
+		foreach ( $classes as $class_file ) {
 			$file_path = PEACHES_ECWID_INCLUDES_DIR . $class_file;
-			if (file_exists($file_path)) {
+			if ( file_exists( $file_path ) ) {
 				require_once $file_path;
 			} else {
-				error_log('Missing class file: ' . $file_path);
+				$this->log_error( 'Missing class file: ' . $file_path );
 			}
 		}
 
@@ -274,7 +276,7 @@ class Peaches_Ecwid_Blocks {
 	 * @since 0.2.0
 	 */
 	private function maybe_migrate_database() {
-		if (class_exists('Peaches_Ecwid_DB_Migration')) {
+		if ( class_exists( 'Peaches_Ecwid_DB_Migration' ) ) {
 			Peaches_Ecwid_DB_Migration::maybe_migrate();
 		}
 	}
@@ -288,66 +290,66 @@ class Peaches_Ecwid_Blocks {
 	 */
 	private function initialize_components() {
 		// Initialize API first as it's needed by other components
-		if (class_exists('Peaches_Ecwid_API')) {
+		if ( class_exists( 'Peaches_Ecwid_API' ) ) {
 			$this->ecwid_api = new Peaches_Ecwid_API();
 		}
 
 		// Initialize settings manager early so other components can access it
-		if (class_exists('Peaches_Ecwid_Settings')) {
+		if ( class_exists( 'Peaches_Ecwid_Settings' ) ) {
 			$this->settings_manager = Peaches_Ecwid_Settings::get_instance();
 		}
 
 		// Initialize media tags manager
-		if (class_exists('Peaches_Media_Tags_Manager')) {
+		if ( class_exists( 'Peaches_Media_Tags_Manager' ) ) {
 			$this->media_tags_manager = new Peaches_Media_Tags_Manager();
 		}
 
 		// Initialize product media manager
-		if (class_exists('Peaches_Product_Media_Manager') && $this->ecwid_api && $this->media_tags_manager) {
-			$this->product_media_manager = new Peaches_Product_Media_Manager($this->ecwid_api, $this->media_tags_manager);
+		if ( class_exists( 'Peaches_Product_Media_Manager' ) && $this->ecwid_api && $this->media_tags_manager ) {
+			$this->product_media_manager = new Peaches_Product_Media_Manager( $this->ecwid_api, $this->media_tags_manager );
 		}
 
 		// Initialize product lines manager
-		if (class_exists('Peaches_Product_Lines_Manager')) {
+		if ( class_exists( 'Peaches_Product_Lines_Manager' ) ) {
 			$this->product_lines_manager = new Peaches_Product_Lines_Manager();
 		}
 
-		if (class_exists('Peaches_Ingredients_Library_Manager')) {
+		if ( class_exists( 'Peaches_Ingredients_Library_Manager' ) ) {
 			$this->ingredients_library_manager = new Peaches_Ingredients_Library_Manager();
 		}
 
 		// Initialize product settings manager
-		if (class_exists('Peaches_Product_Settings_Manager') && $this->ecwid_api) {
-			$this->product_settings_manager = new Peaches_Product_Settings_Manager($this->ecwid_api, $this->product_lines_manager, $this->product_media_manager);
+		if ( class_exists( 'Peaches_Product_Settings_Manager' ) && $this->ecwid_api ) {
+			$this->product_settings_manager = new Peaches_Product_Settings_Manager( $this->ecwid_api, $this->product_lines_manager, $this->product_media_manager );
 		}
 
 		// Initialize other components with dependencies
-		if (class_exists('Peaches_Rewrite_Manager') && $this->ecwid_api) {
-			$this->rewrite_manager = new Peaches_Rewrite_Manager($this->ecwid_api);
+		if ( class_exists( 'Peaches_Rewrite_Manager' ) && $this->ecwid_api ) {
+			$this->rewrite_manager = new Peaches_Rewrite_Manager( $this->ecwid_api );
 		}
 
-		if (class_exists('Peaches_Product_Manager') && $this->ecwid_api) {
-			$this->product_manager = new Peaches_Product_Manager($this->ecwid_api);
+		if ( class_exists( 'Peaches_Product_Manager' ) && $this->ecwid_api ) {
+			$this->product_manager = new Peaches_Product_Manager( $this->ecwid_api );
 		}
 
 		// Initialize enhanced navigation if available
-		if (class_exists('Peaches_Enhanced_Navigation')) {
+		if ( class_exists( 'Peaches_Enhanced_Navigation' ) ) {
 			$this->enhanced_navigation = new Peaches_Enhanced_Navigation();
 		}
 
 		// Initialize patterns last and only if we're not in an AJAX request
-		if (!wp_doing_ajax() && class_exists('Peaches_Ecwid_Block_Patterns')) {
+		if ( ! wp_doing_ajax() && class_exists( 'Peaches_Ecwid_Block_Patterns' ) ) {
 			$this->block_patterns = new Peaches_Ecwid_Block_Patterns();
 		}
 
 		// Initialize REST API
-		if (class_exists('Peaches_REST_API') &&
+		if ( class_exists( 'Peaches_REST_API' ) &&
 		    $this->product_settings_manager &&
 		    $this->media_tags_manager &&
 		    $this->product_media_manager &&
 		    $this->ecwid_api &&
 		    $this->product_manager &&
-		    $this->product_lines_manager) {
+		    $this->product_lines_manager ) {
 			$this->rest_api = new Peaches_REST_API(
 				$this->product_settings_manager,
 				$this->media_tags_manager,
@@ -359,13 +361,13 @@ class Peaches_Ecwid_Blocks {
 		}
 
 		// Initialize block registration
-		if (class_exists('Peaches_Ecwid_Block_Registration')) {
+		if ( class_exists( 'Peaches_Ecwid_Block_Registration' ) ) {
 			$this->block_registration = new Peaches_Ecwid_Block_Registration();
 		}
 
-		// Initialize product debug tool (admin only)
-		if (is_admin() && class_exists('Peaches_Ecwid_Product_Debug') && $this->ecwid_api) {
-			$this->product_debug = new Peaches_Ecwid_Product_Debug($this->ecwid_api);
+		// Initialize unified debug manager (admin only, requires WP_DEBUG)
+		if ( is_admin() && class_exists( 'Peaches_Debug_Manager' ) && $this->ecwid_api ) {
+			$this->debug_manager = new Peaches_Debug_Manager( $this->ecwid_api );
 		}
 
 		$this->init_mollie_subscription();
@@ -378,19 +380,19 @@ class Peaches_Ecwid_Blocks {
 	 */
 	private function init_hooks() {
 		// Load text domain on init hook instead of immediately to avoid the "too early" error
-		add_action('init', array($this, 'load_textdomain'), 0);
+		add_action( 'init', array( $this, 'load_textdomain' ), 0 );
 
-		add_action('wp_enqueue_scripts', array($this, 'enqueue_frontend_scripts'));
-		add_action('admin_enqueue_scripts', array($this, 'enqueue_admin_scripts'));
+		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_frontend_scripts' ) );
+		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_scripts' ) );
 
 		// Add AJAX handlers
-		add_action('wp_ajax_search_ecwid_products', array($this, 'ajax_search_products'));
-		add_action('wp_ajax_get_ecwid_product_data', array($this, 'ajax_get_product_data'));
-		add_action('wp_ajax_mark_product_media', array($this, 'ajax_mark_product_media'));
+		add_action( 'wp_ajax_search_ecwid_products', array( $this, 'ajax_search_products' ) );
+		add_action( 'wp_ajax_get_ecwid_product_data', array( $this, 'ajax_get_product_data' ) );
+		add_action( 'wp_ajax_mark_product_media', array( $this, 'ajax_mark_product_media' ) );
 
 		// Plugin activation and deactivation
-		add_action('activate_plugin', array($this, 'activate'));
-		add_action('deactivate_plugin', array($this, 'deactivate'));
+		add_action( 'activate_plugin', array( $this, 'activate' ) );
+		add_action( 'deactivate_plugin', array( $this, 'deactivate' ) );
 	}
 
 	/**
@@ -413,30 +415,32 @@ class Peaches_Ecwid_Blocks {
 	 */
 	public function enqueue_frontend_scripts() {
 		// Only on frontend
-		if (is_admin()) return;
+		if ( is_admin() ) {
+			return;
+		}
 
 		// Ensure required scripts are enqueued
-		wp_enqueue_script('wp-interactivity');
+		wp_enqueue_script( 'wp-interactivity' );
 
 		// Get the shop path segment using the utility function
-		$shop_path_segment = Peaches_Ecwid_Utilities::get_shop_path(true, true); // Include parents, with trailing slash
+		$shop_path_segment = Peaches_Ecwid_Utilities::get_shop_path( true, true ); // Include parents, with trailing slash
 
 		// Get the store page ID
-		$store_page_id = get_option('ecwid_store_page_id');
+		$store_page_id = get_option( 'ecwid_store_page_id' );
 
 		// Get the correct store URL
-		$store_url = $store_page_id ? get_permalink($store_page_id) : home_url();
+		$store_url = $store_page_id ? get_permalink( $store_page_id ) : home_url();
 
 		// Localize script with AJAX data for frontend
 		wp_add_inline_script(
 			'wp-interactivity',
 			'window.EcwidSettings = window.EcwidSettings || {};
-			window.EcwidSettings.ajaxUrl = "' . admin_url('admin-ajax.php') . '";
-			window.EcwidSettings.ajaxNonce = "' . wp_create_nonce('get_ecwid_product_data') . '";
-			window.EcwidSettings.categoryNonce = "' . wp_create_nonce('get_ecwid_categories') . '";
-			window.EcwidSettings.storePageId = "' . $store_page_id . '";
-			window.EcwidSettings.storeUrl = "' . $store_url . '";
-			window.EcwidSettings.shopPath = "' . esc_js($shop_path_segment) . '";',
+			window.EcwidSettings.ajaxUrl = "' . esc_js( admin_url( 'admin-ajax.php' ) ) . '";
+			window.EcwidSettings.ajaxNonce = "' . esc_js( wp_create_nonce( 'get_ecwid_product_data' ) ) . '";
+			window.EcwidSettings.categoryNonce = "' . esc_js( wp_create_nonce( 'get_ecwid_categories' ) ) . '";
+			window.EcwidSettings.storePageId = "' . esc_js( $store_page_id ) . '";
+			window.EcwidSettings.storeUrl = "' . esc_js( $store_url ) . '";
+			window.EcwidSettings.shopPath = "' . esc_js( $shop_path_segment ) . '";',
 			'before'
 		);
 	}
@@ -448,22 +452,22 @@ class Peaches_Ecwid_Blocks {
 	 *
 	 * @param string $hook Current admin page.
 	 */
-	public function enqueue_admin_scripts($hook) {
+	public function enqueue_admin_scripts( $hook ) {
 		// Get the current screen
 		$screen = get_current_screen();
 
 		// Only on block editor
-		if ($screen && $screen->is_block_editor) {
+		if ( $screen && $screen->is_block_editor ) {
 			// Create a nonce specifically for product data and ensure it's properly generated
-			$product_data_nonce = wp_create_nonce('get_ecwid_product_data');
+			$product_data_nonce = wp_create_nonce( 'get_ecwid_product_data' );
 
 			// Ensure our nonce is available globally
 			wp_add_inline_script(
 				'wp-blocks',
 				'window.EcwidGutenbergParams = window.EcwidGutenbergParams || {};
-			window.EcwidGutenbergParams.nonce = "' . $product_data_nonce . '";
-			window.EcwidGutenbergParams.ajaxUrl = "' . admin_url('admin-ajax.php') . '";
-			window.EcwidGutenbergParams.chooseProduct = "' . __('Choose Product', 'peaches') . '";
+			window.EcwidGutenbergParams.nonce = "' . esc_js( $product_data_nonce ) . '";
+			window.EcwidGutenbergParams.ajaxUrl = "' . esc_js( admin_url( 'admin-ajax.php' ) ) . '";
+			window.EcwidGutenbergParams.chooseProduct = "' . esc_js( __( 'Choose Product', 'peaches' ) ) . '";
 			window.EcwidGutenbergParams.products = {};',
 				'before'
 			);
@@ -476,12 +480,12 @@ class Peaches_Ecwid_Blocks {
 	 * @since 0.2.0
 	 */
 	public function ajax_search_products() {
-		check_ajax_referer('search_ecwid_products', 'nonce');
+		check_ajax_referer( 'search_ecwid_products', 'nonce' );
 
-		$search_term = sanitize_text_field($_POST['search_term']);
-		$products = $this->ecwid_api->search_products($search_term);
+		$search_term = isset( $_POST['search_term'] ) ? sanitize_text_field( wp_unslash( $_POST['search_term'] ) ) : '';
+		$products    = $this->ecwid_api->search_products( $search_term );
 
-		wp_send_json_success($products);
+		wp_send_json_success( $products );
 	}
 
 	/**
@@ -490,15 +494,15 @@ class Peaches_Ecwid_Blocks {
 	 * @since 0.2.0
 	 */
 	public function ajax_get_product_data() {
-		check_ajax_referer('get_ecwid_product_data', 'nonce');
+		check_ajax_referer( 'get_ecwid_product_data', 'nonce' );
 
-		$product_id = absint($_POST['product_id']);
-		$product = $this->ecwid_api->get_product($product_id);
+		$product_id = isset( $_POST['product_id'] ) ? absint( $_POST['product_id'] ) : 0;
+		$product    = $this->ecwid_api->get_product( $product_id );
 
-		if ($product) {
-			wp_send_json_success($product);
+		if ( $product ) {
+			wp_send_json_success( $product );
 		} else {
-			wp_send_json_error('Product not found');
+			wp_send_json_error( __( 'Product not found', 'peaches' ) );
 		}
 	}
 
@@ -508,12 +512,12 @@ class Peaches_Ecwid_Blocks {
 	 * @since 0.2.0
 	 */
 	public function ajax_mark_product_media() {
-		check_ajax_referer('search_ecwid_products', 'nonce');
+		check_ajax_referer( 'search_ecwid_products', 'nonce' );
 
-		$attachment_id = isset($_POST['attachment_id']) ? absint($_POST['attachment_id']) : 0;
+		$attachment_id = isset( $_POST['attachment_id'] ) ? absint( $_POST['attachment_id'] ) : 0;
 
-		if ($attachment_id) {
-			update_post_meta($attachment_id, '_peaches_product_media', true);
+		if ( $attachment_id ) {
+			update_post_meta( $attachment_id, '_peaches_product_media', true );
 			wp_send_json_success();
 		} else {
 			wp_send_json_error();
@@ -527,10 +531,10 @@ class Peaches_Ecwid_Blocks {
 	 */
 	private function init_mollie_subscription() {
 		// Check if any Mollie plugin is available
-		if ($this->is_mollie_available()) {
+		if ( $this->is_mollie_available() ) {
 			require_once PEACHES_ECWID_INCLUDES_DIR . 'class-mollie-subscription-block.php';
 
-			new Peaches_Mollie_Subscription_Block($this->ecwid_api, $this->cache);
+			new Peaches_Mollie_Subscription_Block( $this->ecwid_api, $this->cache );
 		}
 	}
 
@@ -542,7 +546,7 @@ class Peaches_Ecwid_Blocks {
 	 * @return bool True if Mollie plugin is available
 	 */
 	private function is_mollie_available() {
-			   class_exists('Mollie\\Api\\MollieApiClient');
+		return class_exists( 'Mollie\\Api\\MollieApiClient' );
 	}
 
 	/**
@@ -552,7 +556,7 @@ class Peaches_Ecwid_Blocks {
 	 */
 	public function activate() {
 		// Flush rewrite rules on activation
-		if ($this->rewrite_manager) {
+		if ( $this->rewrite_manager ) {
 			flush_rewrite_rules();
 		}
 
@@ -569,58 +573,124 @@ class Peaches_Ecwid_Blocks {
 		flush_rewrite_rules();
 	}
 
-	// Getter methods with null checks
-
+	/**
+	 * Get Ecwid API instance.
+	 *
+	 * @since 0.2.0
+	 * @return Peaches_Ecwid_API_Interface|null
+	 */
 	public function get_ecwid_api() {
 		return $this->ecwid_api;
 	}
 
+	/**
+	 * Get Rewrite Manager instance.
+	 *
+	 * @since 0.2.0
+	 * @return Peaches_Rewrite_Manager_Interface|null
+	 */
 	public function get_rewrite_manager() {
 		return $this->rewrite_manager;
 	}
 
+	/**
+	 * Get Product Manager instance.
+	 *
+	 * @since 0.2.0
+	 * @return Peaches_Product_Manager_Interface|null
+	 */
 	public function get_product_manager() {
 		return $this->product_manager;
 	}
 
+	/**
+	 * Get Product Settings Manager instance.
+	 *
+	 * @since 0.2.0
+	 * @return Peaches_Product_Settings_Manager|null
+	 */
 	public function get_product_settings_manager() {
 		return $this->product_settings_manager;
 	}
 
+	/**
+	 * Get Product Lines Manager instance.
+	 *
+	 * @since 0.2.0
+	 * @return Peaches_Product_Lines_Manager|null
+	 */
 	public function get_product_lines_manager() {
 		return $this->product_lines_manager;
 	}
 
+	/**
+	 * Get Product Media Manager instance.
+	 *
+	 * @since 0.2.1
+	 * @return Peaches_Product_Media_Manager|null
+	 */
 	public function get_product_media_manager() {
 		return $this->product_media_manager;
 	}
 
+	/**
+	 * Get Ingredients Library Manager instance.
+	 *
+	 * @since 0.2.0
+	 * @return Peaches_Ingredients_Library_Manager|null
+	 */
 	public function get_ingredients_library_manager() {
 		return $this->ingredients_library_manager;
 	}
 
+	/**
+	 * Get Settings Manager instance.
+	 *
+	 * @since 0.2.0
+	 * @return Peaches_Ecwid_Settings|null
+	 */
 	public function get_settings_manager() {
 		return $this->settings_manager;
 	}
 
+	/**
+	 * Get Enhanced Navigation instance.
+	 *
+	 * @since 0.2.0
+	 * @return Peaches_Enhanced_Navigation|null
+	 */
 	public function get_enhanced_navigation() {
 		return $this->enhanced_navigation;
 	}
 
-	// Backward compatibility methods
-
+	/**
+	 * Get Ingredients Manager instance.
+	 *
+	 * Backward compatibility method.
+	 *
+	 * @since 0.2.0
+	 * @return Peaches_Product_Settings_Manager|null
+	 */
 	public function get_ingredients_manager() {
 		return $this->product_settings_manager;
 	}
 
+	/**
+	 * Get Product Group Manager instance.
+	 *
+	 * Backward compatibility method - redirects to lines manager.
+	 *
+	 * @since 0.2.0
+	 * @return Peaches_Product_Lines_Manager|null
+	 */
 	public function get_product_group_manager() {
-		// Redirect to lines manager for backward compatibility
 		return $this->product_lines_manager;
 	}
 
 	/**
 	 * Get Media Tags Manager instance.
 	 *
+	 * @since 0.2.0
 	 * @return Peaches_Media_Tags_Manager|null
 	 */
 	public function get_media_tags_manager() {
@@ -645,7 +715,7 @@ class Peaches_Ecwid_Blocks {
 	private function create_mollie_tables() {
 		global $wpdb;
 
-		$table_name = $wpdb->prefix . 'peaches_mollie_subscriptions';
+		$table_name      = $wpdb->prefix . 'peaches_mollie_subscriptions';
 		$charset_collate = $wpdb->get_charset_collate();
 
 		$sql = "CREATE TABLE IF NOT EXISTS $table_name (
@@ -666,6 +736,41 @@ class Peaches_Ecwid_Blocks {
 		) $charset_collate;";
 
 		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
-		dbDelta($sql);
+		dbDelta( $sql );
+	}
+
+	/**
+	 * Log informational messages.
+	 *
+	 * Only logs when debug mode is enabled.
+	 *
+	 * @since 0.2.0
+	 * @param string $message Log message.
+	 * @param array  $context Additional context data.
+	 * @return void
+	 */
+	private function log_info( $message, $context = array() ) {
+		if ( class_exists( 'Peaches_Ecwid_Utilities' ) && Peaches_Ecwid_Utilities::is_debug_mode() ) {
+			Peaches_Ecwid_Utilities::log_error( '[INFO] [Ecwid Blocks] ' . $message, $context );
+		}
+	}
+
+	/**
+	 * Log error messages.
+	 *
+	 * Always logs, regardless of debug mode.
+	 *
+	 * @since 0.2.0
+	 * @param string $message Error message.
+	 * @param array  $context Additional context data.
+	 * @return void
+	 */
+	private function log_error( $message, $context = array() ) {
+		if ( class_exists( 'Peaches_Ecwid_Utilities' ) ) {
+			Peaches_Ecwid_Utilities::log_error( '[Ecwid Blocks] ' . $message, $context );
+		} else {
+			// Fallback logging if utilities class is not available
+			error_log( '[Peaches Ecwid] [Ecwid Blocks] ' . $message . ( empty( $context ) ? '' : ' - Context: ' . wp_json_encode( $context ) ) );
+		}
 	}
 }

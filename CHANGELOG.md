@@ -5,7 +5,64 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.6.2] - 2025-01-29
+## [0.7.0] - 2025-10-29
+
+### Added
+- **Debug Manager** (@since 0.7.0)
+  - New unified `Peaches_Debug_Manager` class for centralized debug tools
+  - Product inspection tool for detailed product data analysis
+  - System information display for debugging environment details
+  - Integration with main plugin architecture
+  - Admin menu integration under Peaches menu
+  - Proper capability checks and security measures
+
+### Enhanced
+- **Logging Standards** (@since 0.7.0)
+  - Standardized all `log_error()` and `log_info()` wrapper methods across codebase
+  - All wrappers now follow consistent pattern using `Peaches_Ecwid_Utilities::log_error()`
+  - Added `log_info()` methods for debug/informational logging
+  - Replaced direct `error_log()` calls with private wrapper functions
+  - All log messages include proper class identifiers for better traceability
+  - Template functions and render files now use `is_debug_mode()` for cleaner debug checks
+  - Fallback logging mechanism when utilities class is not available
+
+- **Settings Organization** (@since 0.7.0)
+  - New Debug tab in Ecwid Settings page
+  - Debug mode toggle and debug tools access centralized
+  - Clear navigation to Debug Tools page
+  - Reference to Multilingual Settings for rewrite rules management
+
+### Refactored
+- **Code Standards** (@since 0.7.0)
+  - All PHP files now use tabs for indentation
+  - Proper spacing and Yoda conditions throughout
+  - Complete PHPDoc blocks for all methods
+  - Escaped output and sanitized input across all files
+  - Translatable user-facing strings
+
+- **Logging Architecture** (@since 0.7.0)
+  - Bootstrap Blocks classes wrap `Peaches_Utilities::log_error()`
+  - Ecwid Blocks classes wrap `Peaches_Ecwid_Utilities::log_error()`
+  - Debug logging separated from error logging using `log_info()`
+  - Consistent error context using arrays instead of string concatenation
+
+### Fixed
+- **Static Method Context** (@since 0.7.0)
+  - Fixed "Using $this when not in object context" error in `Peaches_Responsive_Sizes_Calculator`
+  - Made log methods static to match class architecture
+
+### Deprecated
+- **Legacy Product Debug Class** (@since 0.7.0)
+  - Old product debug class marked as deprecated
+  - Shows redirect notice pointing to new unified Debug Tools
+
+### Documentation
+- **Logging Patterns** (@since 0.7.0)
+  - Documented standardized logging wrapper pattern
+  - Guidelines for using `log_info()` vs `log_error()`
+  - Examples of proper class identifier usage
+
+## [0.6.2] - 2025-10-29
 
 ### Added
 - **GTM Product Block Tracking** (@since 0.6.2)

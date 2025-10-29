@@ -8,7 +8,7 @@
  * @since   0.2.0
  */
 
-if (!defined('ABSPATH')) {
+if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
@@ -46,9 +46,9 @@ class Peaches_Ecwid_Utilities {
 	 * @return bool True if peaches-multilingual plugin is available.
 	 */
 	public static function is_peaches_multilingual_available() {
-		return function_exists('peaches_get_render_language') || 
-		       function_exists('peaches_current_language') || 
-		       class_exists('Peaches_Multilingual_Integration');
+		return function_exists( 'peaches_get_render_language' ) ||
+		       function_exists( 'peaches_current_language' ) ||
+		       class_exists( 'Peaches_Multilingual_Integration' );
 	}
 
 	/**
@@ -62,31 +62,31 @@ class Peaches_Ecwid_Utilities {
 	 *
 	 * @throws InvalidArgumentException If attributes are not an array or string.
 	 */
-	public static function sanitize_attributes($attributes) {
-		if (is_string($attributes)) {
-			return array(sanitize_text_field($attributes));
+	public static function sanitize_attributes( $attributes ) {
+		if ( is_string( $attributes ) ) {
+			return array( sanitize_text_field( $attributes ) );
 		}
 
-		if (!is_array($attributes)) {
-			self::log_error('Invalid attributes type provided to sanitize_attributes', array(
-				'type' => gettype($attributes),
-				'value' => $attributes
-			));
+		if ( ! is_array( $attributes ) ) {
+			self::log_error( 'Invalid attributes type provided to sanitize_attributes', array(
+				'type'  => gettype( $attributes ),
+				'value' => $attributes,
+			) );
 			return array();
 		}
 
 		$sanitized = array();
-		foreach ($attributes as $key => $value) {
-			$sanitized_key = sanitize_key($key);
+		foreach ( $attributes as $key => $value ) {
+			$sanitized_key = sanitize_key( $key );
 
-			if (is_array($value)) {
-				$sanitized[$sanitized_key] = self::sanitize_attributes($value);
-			} elseif (is_numeric($value)) {
-				$sanitized[$sanitized_key] = is_float($value) ? floatval($value) : absint($value);
-			} elseif (is_bool($value)) {
-				$sanitized[$sanitized_key] = (bool) $value;
+			if ( is_array( $value ) ) {
+				$sanitized[ $sanitized_key ] = self::sanitize_attributes( $value );
+			} elseif ( is_numeric( $value ) ) {
+				$sanitized[ $sanitized_key ] = is_float( $value ) ? floatval( $value ) : absint( $value );
+			} elseif ( is_bool( $value ) ) {
+				$sanitized[ $sanitized_key ] = (bool) $value;
 			} else {
-				$sanitized[$sanitized_key] = sanitize_text_field($value);
+				$sanitized[ $sanitized_key ] = sanitize_text_field( $value );
 			}
 		}
 
@@ -102,55 +102,55 @@ class Peaches_Ecwid_Utilities {
 	 *
 	 * @return string The current language code.
 	 */
-	public static function get_current_language($force_refresh = false) {
+	public static function get_current_language( $force_refresh = false ) {
 		$cache_key = 'current_language';
 
-		if (!$force_refresh && isset(self::$language_cache[$cache_key])) {
-			return self::$language_cache[$cache_key];
+		if ( ! $force_refresh && isset( self::$language_cache[ $cache_key ] ) ) {
+			return self::$language_cache[ $cache_key ];
 		}
 
 		$language = '';
 
 		try {
 			// 1. First priority: peaches-multilingual plugin
-			if (self::is_peaches_multilingual_available()) {
-				if (function_exists('peaches_get_render_language')) {
+			if ( self::is_peaches_multilingual_available() ) {
+				if ( function_exists( 'peaches_get_render_language' ) ) {
 					$language = peaches_get_render_language();
-				} elseif (function_exists('peaches_current_language')) {
+				} elseif ( function_exists( 'peaches_current_language' ) ) {
 					$language = peaches_current_language();
 				}
 			}
-			
+
 			// 2. Second priority: Direct Polylang support
-			if (empty($language) && function_exists('pll_current_language')) {
+			if ( empty( $language ) && function_exists( 'pll_current_language' ) ) {
 				$language = pll_current_language();
 			}
-			
+
 			// 3. Third priority: Direct WPML support
-			if (empty($language) && defined('ICL_LANGUAGE_CODE')) {
+			if ( empty( $language ) && defined( 'ICL_LANGUAGE_CODE' ) ) {
 				$language = ICL_LANGUAGE_CODE;
 			}
-			
+
 			// 4. WordPress locale fallback
-			if (empty($language)) {
-				$locale = get_locale();
-				$language = substr($locale, 0, 2);
+			if ( empty( $language ) ) {
+				$locale   = get_locale();
+				$language = substr( $locale, 0, 2 );
 			}
 
 			// Validate language code
-			if (empty($language) || !preg_match('/^[a-z]{2}(_[A-Z]{2})?$/', $language)) {
+			if ( empty( $language ) || ! preg_match( '/^[a-z]{2}(_[A-Z]{2})?$/', $language ) ) {
 				$language = 'en';
 			}
 
-		} catch (Exception $e) {
-			self::log_error('Error detecting current language', array(
+		} catch ( Exception $e ) {
+			self::log_error( 'Error detecting current language', array(
 				'error' => $e->getMessage(),
-				'trace' => $e->getTraceAsString()
-			));
+				'trace' => $e->getTraceAsString(),
+			) );
 			$language = 'en';
 		}
 
-		self::$language_cache[$cache_key] = $language;
+		self::$language_cache[ $cache_key ] = $language;
 		return $language;
 	}
 
@@ -163,531 +163,487 @@ class Peaches_Ecwid_Utilities {
 	 *
 	 * @return array Array of languages with codes as keys.
 	 */
-	public static function get_available_languages($force_refresh = false) {
+	public static function get_available_languages( $force_refresh = false ) {
 		$cache_key = 'available_languages';
 
-		if (!$force_refresh && isset(self::$language_cache[$cache_key])) {
-			return self::$language_cache[$cache_key];
+		if ( ! $force_refresh && isset( self::$language_cache[ $cache_key ] ) ) {
+			return self::$language_cache[ $cache_key ];
 		}
 
 		$languages = array();
 
 		try {
 			// 1. First priority: peaches-multilingual plugin
-			if (self::is_peaches_multilingual_available() && function_exists('peaches_available_languages')) {
-				$lang_codes = peaches_available_languages();
-				$default_lang = function_exists('peaches_default_language') ? peaches_default_language() : '';
-				
-				if (is_array($lang_codes) && !empty($lang_codes)) {
-					foreach ($lang_codes as $code) {
-						$languages[$code] = array(
-							'code' => $code,
-							'is_default' => ($code === $default_lang),
-							'name' => $code // peaches-multilingual might provide names in the future
+			if ( self::is_peaches_multilingual_available() && function_exists( 'peaches_available_languages' ) ) {
+				$lang_codes   = peaches_available_languages();
+				$default_lang = function_exists( 'peaches_default_language' ) ? peaches_default_language() : '';
+
+				if ( is_array( $lang_codes ) && ! empty( $lang_codes ) ) {
+					foreach ( $lang_codes as $code ) {
+						$languages[ $code ] = array(
+							'code'       => $code,
+							'is_default' => ( $code === $default_lang ),
+							'name'       => $code, // peaches-multilingual might provide names in the future
 						);
 					}
 				}
 			}
-			
+
 			// 2. Second priority: Direct Polylang support
-			if (empty($languages) && function_exists('pll_languages_list') && function_exists('pll_default_language')) {
-				$lang_codes = pll_languages_list(array('fields' => 'slug'));
-				$default_lang = pll_default_language('slug');
+			if ( empty( $languages ) && function_exists( 'pll_languages_list' ) && function_exists( 'pll_default_language' ) ) {
+				$lang_codes   = pll_languages_list( array( 'fields' => 'slug' ) );
+				$default_lang = pll_default_language( 'slug' );
 
-				if (is_array($lang_codes)) {
-					foreach ($lang_codes as $code) {
-						$languages[$code] = array(
-							'code' => $code,
-							'is_default' => ($code === $default_lang),
-							'name' => function_exists('pll_get_language') ? pll_get_language($code, 'name') : $code
+				if ( is_array( $lang_codes ) ) {
+					foreach ( $lang_codes as $code ) {
+						$languages[ $code ] = array(
+							'code'       => $code,
+							'is_default' => ( $code === $default_lang ),
+							'name'       => function_exists( 'pll_the_languages' ) ? pll_the_languages( array( 'raw' => 1 ) )[ $code ]['name'] : $code,
 						);
 					}
 				}
 			}
-			
+
 			// 3. Third priority: Direct WPML support
-			if (empty($languages) && function_exists('icl_get_languages')) {
-				$wpml_languages = icl_get_languages('skip_missing=0');
-				$default_lang = apply_filters('wpml_default_language', null);
+			if ( empty( $languages ) && function_exists( 'icl_get_languages' ) ) {
+				$wpml_languages = icl_get_languages( 'skip_missing=0' );
 
-				if (is_array($wpml_languages)) {
-					foreach ($wpml_languages as $code => $lang) {
-						$languages[$code] = array(
-							'code' => $code,
-							'is_default' => ($code === $default_lang),
-							'name' => isset($lang['native_name']) ? $lang['native_name'] : $code
+				if ( is_array( $wpml_languages ) ) {
+					foreach ( $wpml_languages as $code => $lang_data ) {
+						$languages[ $code ] = array(
+							'code'       => $code,
+							'is_default' => ! empty( $lang_data['default_locale'] ),
+							'name'       => ! empty( $lang_data['native_name'] ) ? $lang_data['native_name'] : $code,
 						);
 					}
 				}
 			}
-			
-			// 4. Fallback to English only
-			if (empty($languages)) {
-				$languages['en'] = array(
-					'code' => 'en',
+
+			// 4. Fallback: Single language site
+			if ( empty( $languages ) ) {
+				$locale        = get_locale();
+				$language_code = substr( $locale, 0, 2 );
+
+				$languages[ $language_code ] = array(
+					'code'       => $language_code,
 					'is_default' => true,
-					'name' => 'English'
+					'name'       => $language_code,
 				);
 			}
 
-		} catch (Exception $e) {
-			self::log_error('Error getting available languages', array(
+		} catch ( Exception $e ) {
+			self::log_error( 'Error getting available languages', array(
 				'error' => $e->getMessage(),
-				'trace' => $e->getTraceAsString()
-			));
+				'trace' => $e->getTraceAsString(),
+			) );
 
-			// Fallback
+			// Return default language on error
 			$languages = array(
 				'en' => array(
-					'code' => 'en',
+					'code'       => 'en',
 					'is_default' => true,
-					'name' => 'English'
-				)
+					'name'       => 'en',
+				),
 			);
 		}
 
-		self::$language_cache[$cache_key] = $languages;
+		self::$language_cache[ $cache_key ] = $languages;
 		return $languages;
 	}
 
 	/**
-	 * Get translated post with enhanced error handling.
+	 * Get translated post ID for current language.
 	 *
 	 * @since 0.2.0
 	 *
-	 * @param int         $post_id The post ID.
-	 * @param string|null $lang    The language code.
+	 * @param int    $post_id     Original post ID.
+	 * @param string $language    Optional. Target language code.
+	 * @param string $post_type   Optional. Post type for validation.
 	 *
-	 * @return int The translated post ID.
-	 *
-	 * @throws InvalidArgumentException If post ID is invalid.
+	 * @return int Translated post ID or original if translation not found.
 	 */
-	public static function get_translated_post($post_id, $lang = null) {
-		if (!is_numeric($post_id) || $post_id <= 0) {
-			throw new InvalidArgumentException('Invalid post ID provided to get_translated_post');
+	public static function get_translated_post( $post_id, $language = '', $post_type = 'page' ) {
+		if ( empty( $language ) ) {
+			$language = self::get_current_language();
 		}
 
-		$post_id = absint($post_id);
-
-		if ($lang === null) {
-			$lang = self::get_current_language();
-		}
+		$translated_id = $post_id;
 
 		try {
-			// Polylang support
-			if (function_exists('pll_get_post')) {
-				$translated_id = pll_get_post($post_id, $lang);
-				return $translated_id ? absint($translated_id) : $post_id;
+			// Try peaches-multilingual first
+			if ( self::is_peaches_multilingual_available() && function_exists( 'peaches_get_translation' ) ) {
+				$translated_id = peaches_get_translation( $post_id, $language );
+			} elseif ( function_exists( 'pll_get_post' ) ) {
+				// Direct Polylang support
+				$translated = pll_get_post( $post_id, $language );
+				if ( $translated ) {
+					$translated_id = $translated;
+				}
+			} elseif ( function_exists( 'icl_object_id' ) ) {
+				// Direct WPML support
+				$translated = icl_object_id( $post_id, $post_type, false, $language );
+				if ( $translated ) {
+					$translated_id = $translated;
+				}
 			}
-			// WPML support
-			elseif (function_exists('icl_object_id')) {
-				$translated_id = icl_object_id($post_id, 'page', false, $lang);
-				return $translated_id ? absint($translated_id) : $post_id;
-			}
-
-		} catch (Exception $e) {
-			self::log_error('Error getting translated post', array(
-				'post_id' => $post_id,
-				'language' => $lang,
-				'error' => $e->getMessage()
-			));
+		} catch ( Exception $e ) {
+			self::log_error( 'Error getting translated post', array(
+				'post_id'  => $post_id,
+				'language' => $language,
+				'error'    => $e->getMessage(),
+			) );
 		}
 
-		return $post_id;
+		return absint( $translated_id );
 	}
 
 	/**
-	 * Check if the site is configured for multiple languages.
+	 * Check if site is multilingual.
 	 *
 	 * @since 0.2.0
 	 *
-	 * @return bool True if multilingual plugin is active and configured.
+	 * @return bool True if multilingual plugin is active.
 	 */
 	public static function is_multilingual_site() {
 		static $is_multilingual = null;
 
-		if ($is_multilingual !== null) {
+		if ( null !== $is_multilingual ) {
 			return $is_multilingual;
 		}
 
+		$is_multilingual = false;
+
 		try {
-			// Check for Polylang
-			if (function_exists('pll_languages_list')) {
-				$languages = pll_languages_list();
-				$is_multilingual = is_array($languages) && count($languages) > 1;
-				return $is_multilingual;
+			// Check peaches-multilingual first
+			if ( self::is_peaches_multilingual_available() ) {
+				$is_multilingual = true;
+			} elseif ( function_exists( 'pll_languages_list' ) || function_exists( 'icl_get_languages' ) ) {
+				// Check for direct Polylang or WPML
+				$is_multilingual = true;
 			}
-
-			// Check for WPML
-			if (function_exists('icl_get_languages')) {
-				$languages = icl_get_languages('skip_missing=0');
-				$is_multilingual = is_array($languages) && count($languages) > 1;
-				return $is_multilingual;
-			}
-
-		} catch (Exception $e) {
-			self::log_error('Error checking if site is multilingual', array(
-				'error' => $e->getMessage()
-			));
+		} catch ( Exception $e ) {
+			self::log_error( 'Error checking multilingual status', array(
+				'error' => $e->getMessage(),
+			) );
 		}
 
-		$is_multilingual = false;
 		return $is_multilingual;
 	}
 
 	/**
-	 * Get the Ecwid shop page slug and path with multilingual support.
+	 * Get the shop path for current language.
 	 *
-	 * @since 0.2.0
+	 * Returns the correct shop path based on current language, with fallback to default.
 	 *
-	 * @param bool        $include_parents     Whether to include parent page slugs in the path.
-	 * @param bool        $with_trailing_slash Whether to add a trailing slash.
-	 * @param string|null $lang                Language code to get the path for. Empty for current language.
-	 *
-	 * @return string The store page slug or full path.
-	 *
+	 * @since  0.2.0
+	 * @param  bool        $include_parents      Optional. Include parent page slugs. Default true.
+	 * @param  bool        $with_trailing_slash  Optional. Add trailing slash. Default true.
+	 * @param  string|null $lang                 Optional. Language code to get path for. Default null (current language).
+	 * @return string Shop path.
 	 * @throws InvalidArgumentException If language code format is invalid.
 	 */
-	public static function get_shop_path($include_parents = true, $with_trailing_slash = true, $lang = null) {
-		if ($lang !== null && !empty($lang) && !preg_match('/^[a-z]{2}(_[A-Z]{2})?$/', $lang)) {
-			throw new InvalidArgumentException('Invalid language code format provided to get_shop_path');
+	public static function get_shop_path( $include_parents = true, $with_trailing_slash = true, $lang = null ) {
+		// Validate language code format if provided.
+		if ( null !== $lang && ! empty( $lang ) && ! preg_match( '/^[a-z]{2}(_[A-Z]{2})?$/', $lang ) ) {
+			throw new InvalidArgumentException( 'Invalid language code format provided to get_shop_path' );
 		}
 
 		$shop_path = '';
 
 		try {
-			// Check for custom shop slug in Ecwid settings
+			// Check for custom shop slug in Ecwid settings.
 			$custom_shop_slug = self::get_ecwid_shop_slug();
 
-			// For single-language sites, use custom slug if available
-			if (!empty($custom_shop_slug) && !self::is_multilingual_site()) {
+			// For single-language sites, use custom slug if available.
+			if ( ! empty( $custom_shop_slug ) && ! self::is_multilingual_site() ) {
 				$shop_path = $custom_shop_slug;
 			} else {
-				// Get language-specific path
-				if ($lang === null) {
+				// Get language-specific path.
+				if ( null === $lang ) {
 					$lang = self::get_current_language();
 				}
 
-				// Try multilingual settings first
-				$shop_path = self::get_multilingual_shop_path($lang);
-
-				// Fallback to store page method
-				if (empty($shop_path)) {
-					$shop_path = self::get_store_page_path($include_parents, $lang);
+				// Try multilingual settings first.
+				if ( class_exists( 'Peaches_Multilingual_Settings' ) ) {
+					$settings_manager = Peaches_Multilingual_Settings::get_instance();
+					$shop_path        = $settings_manager->get_shop_path_for_language( $lang );
 				}
 
-				// Ultimate fallback to language-specific defaults
-				if (empty($shop_path)) {
-					$shop_path = self::get_default_shop_path_for_language($lang);
+				// Fallback to store page if no multilingual settings.
+				if ( empty( $shop_path ) ) {
+					$store_page_id = self::get_store_page_id();
+
+					if ( $store_page_id ) {
+						// Get translated page if multilingual.
+						if ( self::is_multilingual_site() ) {
+							$translated_id = self::get_translated_post( $store_page_id, $lang, 'page' );
+							$post          = get_post( $translated_id );
+						} else {
+							$post = get_post( $store_page_id );
+						}
+
+						if ( $post && 'publish' === $post->post_status ) {
+							// Build the full path including parent slugs if requested.
+							if ( $include_parents ) {
+								$parent_slugs = self::get_parent_page_slugs( $post->ID );
+								$shop_path    = implode( '/', array_merge( $parent_slugs, array( $post->post_name ) ) );
+							} else {
+								$shop_path = $post->post_name;
+							}
+						}
+					}
 				}
 			}
 
-			// Add trailing slash if requested
-			if ($with_trailing_slash && !empty($shop_path)) {
-				$shop_path = rtrim($shop_path, '/') . '/';
+			// Fallback to Ecwid default.
+			if ( empty( $shop_path ) ) {
+				$shop_path = $custom_shop_slug ? $custom_shop_slug : 'shop';
 			}
 
-		} catch (Exception $e) {
-			self::log_error('Error getting shop path', array(
-				'language' => $lang,
-				'include_parents' => $include_parents,
-				'error' => $e->getMessage()
-			));
+			// Add trailing slash if requested.
+			if ( $with_trailing_slash && ! empty( $shop_path ) ) {
+				$shop_path = rtrim( $shop_path, '/' ) . '/';
+			}
 
-			// Fallback
-			$shop_path = $with_trailing_slash ? 'shop/' : 'shop';
+		} catch ( Exception $e ) {
+			self::log_error(
+				'Error getting shop path',
+				array(
+					'language' => $lang,
+					'error'    => $e->getMessage(),
+				)
+			);
+			$shop_path = 'shop';
+			if ( $with_trailing_slash ) {
+				$shop_path .= '/';
+			}
 		}
 
 		return $shop_path;
 	}
 
 	/**
-	 * Get Ecwid shop slug from settings.
+	 * Get Ecwid's configured shop slug.
 	 *
 	 * @since 0.2.0
 	 *
-	 * @return string|null Ecwid shop slug or null if not set.
+	 * @return string Shop slug from Ecwid settings.
 	 */
-	private static function get_ecwid_shop_slug() {
-		try {
-			if (class_exists('Ecwid_Store_Page') && method_exists('Ecwid_Store_Page', 'get_store_url_prefix')) {
-				return Ecwid_Store_Page::get_store_url_prefix();
-			}
-
-			return get_option('ecwid_store_url_prefix');
-
-		} catch (Exception $e) {
-			self::log_error('Error getting Ecwid shop slug', array(
-				'error' => $e->getMessage()
-			));
-			return null;
-		}
-	}
-
-	/**
-	 * Get multilingual shop path from settings.
-	 *
-	 * @since 0.2.0
-	 *
-	 * @param string $lang Language code.
-	 *
-	 * @return string Shop path or empty string.
-	 */
-	private static function get_multilingual_shop_path($lang) {
-		try {
-			if (class_exists('Peaches_Multilingual_Settings')) {
-				$settings_manager = Peaches_Multilingual_Settings::get_instance();
-				return $settings_manager->get_shop_path_for_language($lang);
-			}
-		} catch (Exception $e) {
-			self::log_error('Error getting multilingual shop path', array(
-				'language' => $lang,
-				'error' => $e->getMessage()
-			));
-		}
-
-		return '';
-	}
-
-	/**
-	 * Get store page path.
-	 *
-	 * @since 0.2.0
-	 *
-	 * @param bool   $include_parents Whether to include parent pages.
-	 * @param string $lang           Language code.
-	 *
-	 * @return string Store page path.
-	 */
-	private static function get_store_page_path($include_parents, $lang) {
-		try {
-			$store_page_id = self::get_store_page_id();
-
-			if (!$store_page_id) {
-				return '';
-			}
-
-			// Get translated page ID
-			$default_lang = self::get_default_language();
-			if (!empty($lang) && $lang !== $default_lang) {
-				$translated_id = self::get_translated_post($store_page_id, $lang);
-				if ($translated_id) {
-					$store_page_id = $translated_id;
+	public static function get_ecwid_shop_slug() {
+		if ( function_exists( 'get_ecwid_store_page_data' ) ) {
+			$page_data = get_ecwid_store_page_data();
+			if ( ! empty( $page_data['page_id'] ) ) {
+				$post = get_post( $page_data['page_id'] );
+				if ( $post ) {
+					return $post->post_name;
 				}
 			}
-
-			$store_page = get_post($store_page_id);
-			if (!$store_page || !isset($store_page->post_name)) {
-				return '';
-			}
-
-			$shop_path = $store_page->post_name;
-
-			// Include parent pages if requested
-			if ($include_parents && $store_page->post_parent != 0) {
-				$parent_slugs = self::get_parent_page_slugs($store_page->post_parent);
-				if (!empty($parent_slugs)) {
-					$shop_path = implode('/', array_reverse($parent_slugs)) . '/' . $shop_path;
-				}
-			}
-
-			return $shop_path;
-
-		} catch (Exception $e) {
-			self::log_error('Error getting store page path', array(
-				'include_parents' => $include_parents,
-				'language' => $lang,
-				'error' => $e->getMessage()
-			));
-			return '';
 		}
+
+		return 'shop';
 	}
 
 	/**
-	 * Get store page ID from Ecwid settings.
+	 * Get shop path with multilingual support.
+	 *
+	 * @since 0.2.0
+	 *
+	 * @param string $language Language code.
+	 *
+	 * @return string Shop path.
+	 */
+	public static function get_multilingual_shop_path( $language = '' ) {
+		return self::get_shop_path( $language );
+	}
+
+	/**
+	 * Get store page path from Ecwid configuration.
+	 *
+	 * @since 0.2.0
+	 *
+	 * @param string $language Optional. Language code.
+	 *
+	 * @return string Store page path or empty string.
+	 */
+	public static function get_store_page_path( $language = '' ) {
+		if ( empty( $language ) ) {
+			$language = self::get_current_language();
+		}
+
+		$cache_key = 'store_page_path_' . $language;
+
+		if ( isset( self::$language_cache[ $cache_key ] ) ) {
+			return self::$language_cache[ $cache_key ];
+		}
+
+		$path          = '';
+		$store_page_id = self::get_store_page_id();
+
+		if ( $store_page_id ) {
+			if ( self::is_multilingual_site() ) {
+				$store_page_id = self::get_translated_post( $store_page_id, $language, 'page' );
+			}
+
+			$post = get_post( $store_page_id );
+			if ( $post && 'publish' === $post->post_status ) {
+				$parent_slugs = self::get_parent_page_slugs( $post->ID );
+				$path         = implode( '/', array_merge( $parent_slugs, array( $post->post_name ) ) );
+			}
+		}
+
+		self::$language_cache[ $cache_key ] = $path;
+		return $path;
+	}
+
+	/**
+	 * Get Ecwid store page ID.
 	 *
 	 * @since 0.2.0
 	 *
 	 * @return int|null Store page ID or null if not found.
 	 */
-	private static function get_store_page_id() {
-		try {
-			if (defined('Ecwid_Store_Page::OPTION_MAIN_STORE_PAGE_ID')) {
-				$store_page_id = get_option(Ecwid_Store_Page::OPTION_MAIN_STORE_PAGE_ID);
-				if ($store_page_id) {
-					return absint($store_page_id);
-				}
+	public static function get_store_page_id() {
+		if ( function_exists( 'get_ecwid_store_page_data' ) ) {
+			$page_data = get_ecwid_store_page_data();
+			if ( ! empty( $page_data['page_id'] ) ) {
+				return absint( $page_data['page_id'] );
 			}
-
-			$store_page_id = get_option('ecwid_store_page_id');
-			return $store_page_id ? absint($store_page_id) : null;
-
-		} catch (Exception $e) {
-			self::log_error('Error getting store page ID', array(
-				'error' => $e->getMessage()
-			));
-			return null;
 		}
+
+		return null;
 	}
 
 	/**
-	 * Get default language from multilingual plugins.
+	 * Get default language code.
 	 *
 	 * @since 0.2.0
 	 *
 	 * @return string Default language code.
 	 */
 	public static function get_default_language() {
-		static $default_language = null;
+		$cache_key = 'default_language';
 
-		if ($default_language !== null) {
-			return $default_language;
+		if ( isset( self::$language_cache[ $cache_key ] ) ) {
+			return self::$language_cache[ $cache_key ];
 		}
 
+		$default_language = '';
+
 		try {
-			// 1. First priority: peaches-multilingual plugin
-			if (self::is_peaches_multilingual_available() && function_exists('peaches_default_language')) {
+			// Try peaches-multilingual first
+			if ( self::is_peaches_multilingual_available() && function_exists( 'peaches_default_language' ) ) {
 				$default_language = peaches_default_language();
-			}
-			
-			// 2. Second priority: Direct Polylang support
-			if (empty($default_language) && function_exists('pll_default_language')) {
-				$default_language = pll_default_language('slug');
-			}
-			
-			// 3. Third priority: Direct WPML support
-			if (empty($default_language) && defined('ICL_LANGUAGE_CODE') && class_exists('SitePress')) {
-				global $sitepress;
-				if ($sitepress && method_exists($sitepress, 'get_default_language')) {
-					$default_language = $sitepress->get_default_language();
-				}
+			} elseif ( function_exists( 'pll_default_language' ) ) {
+				// Direct Polylang support
+				$default_language = pll_default_language();
+			} elseif ( defined( 'ICL_LANGUAGE_CODE' ) ) {
+				// Direct WPML support
+				$default_language = ICL_LANGUAGE_CODE;
 			}
 
-			// 4. Fallback to English
-			if (empty($default_language)) {
-				$default_language = 'en';
+			// WordPress locale fallback
+			if ( empty( $default_language ) ) {
+				$locale           = get_locale();
+				$default_language = substr( $locale, 0, 2 );
 			}
 
-		} catch (Exception $e) {
-			self::log_error('Error getting default language', array(
-				'error' => $e->getMessage()
-			));
+		} catch ( Exception $e ) {
+			self::log_error( 'Error getting default language', array(
+				'error' => $e->getMessage(),
+			) );
 			$default_language = 'en';
 		}
 
+		self::$language_cache[ $cache_key ] = $default_language;
 		return $default_language;
 	}
 
 	/**
-	 * Get parent page slugs recursively.
+	 * Get parent page slugs for building full paths.
 	 *
 	 * @since 0.2.0
 	 *
-	 * @param int $parent_id Parent page ID.
+	 * @param int $page_id Page ID to get parents for.
 	 *
 	 * @return array Array of parent slugs.
 	 */
-	private static function get_parent_page_slugs($parent_id) {
-		$parent_slugs = array();
-		$max_depth = 10; // Prevent infinite loops
-		$current_depth = 0;
+	public static function get_parent_page_slugs( $page_id ) {
+		$slugs     = array();
+		$ancestors = get_post_ancestors( $page_id );
 
-		while ($parent_id && $current_depth < $max_depth) {
-			$parent = get_post($parent_id);
-			if ($parent && isset($parent->post_name)) {
-				$parent_slugs[] = $parent->post_name;
-				$parent_id = $parent->post_parent;
-				$current_depth++;
-			} else {
-				break;
+		if ( ! empty( $ancestors ) ) {
+			$ancestors = array_reverse( $ancestors );
+			foreach ( $ancestors as $ancestor_id ) {
+				$post = get_post( $ancestor_id );
+				if ( $post ) {
+					$slugs[] = $post->post_name;
+				}
 			}
 		}
 
-		return $parent_slugs;
+		return $slugs;
 	}
 
 	/**
-	 * Get default shop path for a specific language.
+	 * Get default shop path for a given language.
 	 *
 	 * @since 0.2.0
 	 *
-	 * @param string $language_code Language code.
+	 * @param string $language Language code.
 	 *
-	 * @return string Default shop path for the language.
+	 * @return string Shop path.
 	 */
-	private static function get_default_shop_path_for_language($language_code) {
-		// For default language, try to get from Ecwid first
-		$default_lang = self::get_default_language();
-		if ($language_code === $default_lang) {
-			$ecwid_path = self::get_ecwid_shop_slug();
-			if (!empty($ecwid_path)) {
-				return trim($ecwid_path, '/');
-			}
+	public static function get_default_shop_path_for_language( $language ) {
+		$cache_key = 'default_shop_path_' . $language;
+
+		if ( isset( self::$language_cache[ $cache_key ] ) ) {
+			return self::$language_cache[ $cache_key ];
 		}
 
-		// Language-specific defaults
-		$defaults = array(
-			'en' => 'shop',
-			'nl' => 'winkel',
-			'fr' => 'boutique',
-			'de' => 'geschaeft',
-			'es' => 'tienda',
-			'it' => 'negozio',
-			'pt' => 'loja',
-			'ru' => 'magazin',
-			'zh' => 'shop',
-			'ja' => 'shop',
-		);
+		$shop_path = self::get_shop_path( $language );
 
-		return isset($defaults[$language_code]) ? $defaults[$language_code] : 'shop';
+		if ( empty( $shop_path ) ) {
+			$shop_path = 'shop';
+		}
+
+		self::$language_cache[ $cache_key ] = $shop_path;
+		return $shop_path;
 	}
 
 	/**
-	 * Build gallery HTML based on layout with enhanced error handling.
+	 * Build gallery HTML with proper error handling.
 	 *
 	 * @since 0.2.0
 	 *
-	 * @param array  $images Array of image URLs.
+	 * @param array  $images Gallery images.
 	 * @param string $layout Gallery layout type.
+	 * @param string $main_image_url Main image URL.
 	 *
-	 * @return string HTML for gallery.
-	 *
-	 * @throws InvalidArgumentException If images is not an array.
+	 * @return string Gallery HTML markup.
 	 */
-	public static function build_gallery_html($images, $layout = 'standard') {
-		if (!is_array($images)) {
-			throw new InvalidArgumentException('Images parameter must be an array');
-		}
-
-		if (empty($images)) {
+	public static function build_gallery_html( $images, $layout = 'standard', $main_image_url = '' ) {
+		if ( empty( $images ) || ! is_array( $images ) ) {
 			return '';
 		}
 
-		// Sanitize layout parameter
-		$allowed_layouts = array('standard', 'thumbnails-below', 'thumbnails-side');
-		if (!in_array($layout, $allowed_layouts, true)) {
-			self::log_error('Invalid gallery layout provided', array(
-				'layout' => $layout,
-				'allowed' => $allowed_layouts
-			));
-			$layout = 'standard';
-		}
-
 		try {
-			switch ($layout) {
+			switch ( $layout ) {
 				case 'thumbnails-below':
-					return self::build_gallery_thumbnails_below($images);
+					return self::build_gallery_thumbnails_below( $images, $main_image_url );
+
 				case 'thumbnails-side':
-					return self::build_gallery_thumbnails_side($images);
+					return self::build_gallery_thumbnails_side( $images, $main_image_url );
+
+				case 'standard':
 				default:
-					return self::build_gallery_standard($images);
+					return self::build_gallery_standard( $images );
 			}
-		} catch (Exception $e) {
-			self::log_error('Error building gallery HTML', array(
+		} catch ( Exception $e ) {
+			self::log_error( 'Error building gallery HTML', array(
 				'layout' => $layout,
-				'image_count' => count($images),
-				'error' => $e->getMessage()
-			));
+				'error'  => $e->getMessage(),
+			) );
 			return '';
 		}
 	}
@@ -697,65 +653,47 @@ class Peaches_Ecwid_Utilities {
 	 *
 	 * @since 0.2.0
 	 *
-	 * @param array $images Array of image URLs.
+	 * @param array $images Gallery images.
 	 *
-	 * @return string HTML for standard gallery.
+	 * @return string Gallery HTML.
 	 */
-	private static function build_gallery_standard($images) {
-		$output = '<div class="product-gallery standard-gallery">';
-
-		if (!empty($images)) {
-			$main_image = esc_url($images[0]);
-			$output .= '<div class="main-image mb-3">
-				<img src="' . $main_image . '" class="img-fluid rounded" alt="' . esc_attr__('Product image', 'peaches') . '" loading="lazy">
-				</div>';
+	private static function build_gallery_standard( $images ) {
+		$html = '<div class="ecwid-gallery ecwid-gallery-standard">';
+		foreach ( $images as $image ) {
+			$html .= sprintf( '<img src="%s" alt="%s" loading="lazy">', esc_url( $image['url'] ), esc_attr( $image['alt'] ?? '' ) );
 		}
-
-		$output .= '</div>';
-		return $output;
+		$html .= '</div>';
+		return $html;
 	}
 
 	/**
-	 * Build gallery with thumbnails below.
+	 * Build gallery with thumbnails below main image.
 	 *
 	 * @since 0.2.0
 	 *
-	 * @param array $images Array of image URLs.
+	 * @param array  $images Gallery images.
+	 * @param string $main_image_url Main image URL.
 	 *
-	 * @return string HTML for gallery with thumbnails below.
+	 * @return string Gallery HTML.
 	 */
-	private static function build_gallery_thumbnails_below($images) {
-		if (empty($images)) {
-			return '';
+	private static function build_gallery_thumbnails_below( $images, $main_image_url ) {
+		$html  = '<div class="ecwid-gallery ecwid-gallery-thumbnails-below">';
+		$html .= '<div class="ecwid-gallery-main">';
+		$html .= sprintf( '<img src="%s" alt="" loading="lazy">', esc_url( $main_image_url ) );
+		$html .= '</div>';
+		$html .= '<div class="ecwid-gallery-thumbnails">';
+
+		foreach ( $images as $image ) {
+			$html .= sprintf(
+				'<img src="%s" alt="%s" class="ecwid-gallery-thumbnail" loading="lazy">',
+				esc_url( $image['url'] ),
+				esc_attr( $image['alt'] ?? '' )
+			);
 		}
 
-		$main_image = esc_url($images[0]);
-
-		$output = '<div class="product-gallery thumbnails-below-gallery">';
-		$output .= '<div class="main-image mb-3">
-			<img src="' . $main_image . '" class="img-fluid rounded main-gallery-image" alt="' . esc_attr__('Product image', 'peaches') . '" loading="lazy">
-			</div>';
-
-		if (count($images) > 1) {
-			$output .= '<div class="thumbnails-row d-flex flex-wrap">';
-			foreach ($images as $index => $image) {
-				$image_url = esc_url($image);
-				$active_class = ($index === 0) ? 'active' : '';
-				$output .= '<div class="thumbnail-container p-1" style="width: 80px;">
-					<img src="' . $image_url . '"
-					class="img-thumbnail thumbnail-image ' . esc_attr($active_class) . '"
-						alt="' . esc_attr__('Thumbnail', 'peaches') . '"
-						data-full-image="' . $image_url . '"
-						loading="lazy">
-						</div>';
-			}
-			$output .= '</div>';
-
-			$output .= self::get_gallery_javascript();
-		}
-
-		$output .= '</div>';
-		return $output;
+		$html .= '</div>';
+		$html .= '</div>';
+		return $html;
 	}
 
 	/**
@@ -763,90 +701,55 @@ class Peaches_Ecwid_Utilities {
 	 *
 	 * @since 0.2.0
 	 *
-	 * @param array $images Array of image URLs.
+	 * @param array  $images Gallery images.
+	 * @param string $main_image_url Main image URL.
 	 *
-	 * @return string HTML for gallery with thumbnails on the side.
+	 * @return string Gallery HTML.
 	 */
-	private static function build_gallery_thumbnails_side($images) {
-		if (empty($images)) {
-			return '';
+	private static function build_gallery_thumbnails_side( $images, $main_image_url ) {
+		$html  = '<div class="ecwid-gallery ecwid-gallery-thumbnails-side">';
+		$html .= '<div class="ecwid-gallery-thumbnails">';
+
+		foreach ( $images as $image ) {
+			$html .= sprintf(
+				'<img src="%s" alt="%s" class="ecwid-gallery-thumbnail" loading="lazy">',
+				esc_url( $image['url'] ),
+				esc_attr( $image['alt'] ?? '' )
+			);
 		}
 
-		$main_image = esc_url($images[0]);
+		$html .= '</div>';
+		$html .= '<div class="ecwid-gallery-main">';
+		$html .= sprintf( '<img src="%s" alt="" loading="lazy">', esc_url( $main_image_url ) );
+		$html .= '</div>';
+		$html .= '</div>';
 
-		$output = '<div class="product-gallery thumbnails-side-gallery">';
-		$output .= '<div class="row">';
+		// Add JavaScript for gallery interaction
+		$html .= self::get_gallery_javascript();
 
-		// Thumbnails on the left (only if we have more than one image)
-		if (count($images) > 1) {
-			$output .= '<div class="col-2 d-flex flex-column">';
-			foreach ($images as $index => $image) {
-				$image_url = esc_url($image);
-				$active_class = ($index === 0) ? 'active' : '';
-				$output .= '<div class="thumbnail-container mb-2">
-					<img src="' . $image_url . '"
-					class="img-thumbnail thumbnail-image ' . esc_attr($active_class) . '"
-						alt="' . esc_attr__('Thumbnail', 'peaches') . '"
-						data-full-image="' . $image_url . '"
-						loading="lazy">
-						</div>';
-			}
-			$output .= '</div>';
-
-			// Main image on the right
-			$output .= '<div class="col-10">';
-		} else {
-			// If only one image, use full width
-			$output .= '<div class="col-12">';
-		}
-
-		$output .= '<div class="main-image">
-			<img src="' . $main_image . '" class="img-fluid rounded main-gallery-image" alt="' . esc_attr__('Product image', 'peaches') . '" loading="lazy">
-			</div>';
-		$output .= '</div>'; // End column
-
-		$output .= '</div>'; // End row
-
-		// Add JavaScript for thumbnail clicks (only if we have more than one image)
-		if (count($images) > 1) {
-			$output .= self::get_gallery_javascript();
-		}
-
-		$output .= '</div>'; // End gallery
-		return $output;
+		return $html;
 	}
 
 	/**
-	 * Get gallery JavaScript for thumbnail interactions.
+	 * Get gallery interaction JavaScript.
 	 *
 	 * @since 0.2.0
 	 *
-	 * @return string JavaScript code for gallery interactions.
+	 * @return string JavaScript code.
 	 */
 	private static function get_gallery_javascript() {
-		return '
-		<script>
+		return '<script>
 		document.addEventListener("DOMContentLoaded", function() {
-			const thumbnails = document.querySelectorAll(".thumbnail-image");
-			const mainImage = document.querySelector(".main-gallery-image");
+			const thumbnails = document.querySelectorAll(".ecwid-gallery-thumbnail");
+			const mainImage = document.querySelector(".ecwid-gallery-main img");
 
-			if (!mainImage) return;
-
-			thumbnails.forEach(function(thumbnail) {
-				thumbnail.addEventListener("click", function() {
-					// Remove active class from all thumbnails
-					thumbnails.forEach(thumb => thumb.classList.remove("active"));
-
-					// Add active class to clicked thumbnail
-					this.classList.add("active");
-
-					// Update main image
-					const fullImageUrl = this.getAttribute("data-full-image");
-					if (fullImageUrl) {
-						mainImage.src = fullImageUrl;
-					}
+			if (thumbnails && mainImage) {
+				thumbnails.forEach(function(thumb) {
+					thumb.addEventListener("click", function() {
+						mainImage.src = this.src;
+					});
 				});
-			});
+			}
 		});
 		</script>';
 	}
@@ -860,32 +763,23 @@ class Peaches_Ecwid_Utilities {
 	 *
 	 * @return array Plugin settings.
 	 */
-	public static function get_plugin_settings($force_refresh = false) {
-		if ($force_refresh || self::$settings_cache === null) {
-			try {
-				if (class_exists('Peaches_Ecwid_Settings')) {
-					$settings_manager = Peaches_Ecwid_Settings::get_instance();
-					self::$settings_cache = $settings_manager->get_settings();
-				} else {
-					self::$settings_cache = array(
-						'cache_duration' => 60,
-						'debug_mode' => false,
-						'enable_redis' => false,
-					);
-				}
-			} catch (Exception $e) {
-				self::log_error('Error getting plugin settings', array(
-					'error' => $e->getMessage()
-				));
-				self::$settings_cache = array();
-			}
+	public static function get_plugin_settings( $force_refresh = false ) {
+		if ( ! $force_refresh && null !== self::$settings_cache ) {
+			return self::$settings_cache;
 		}
 
-		return self::$settings_cache;
+		$settings = get_option( 'peaches_ecwid_blocks_settings', array() );
+
+		if ( ! is_array( $settings ) ) {
+			$settings = array();
+		}
+
+		self::$settings_cache = $settings;
+		return $settings;
 	}
 
 	/**
-	 * Log error messages with context.
+	 * Log error messages.
 	 *
 	 * @since 0.2.0
 	 *
@@ -894,18 +788,18 @@ class Peaches_Ecwid_Utilities {
 	 *
 	 * @return void
 	 */
-	public static function log_error($message, $context = array()) {
-		if (!is_string($message)) {
+	public static function log_error( $message, $context = array() ) {
+		if ( ! is_string( $message ) ) {
 			$message = 'Non-string error message provided';
 		}
 
 		$log_message = '[Peaches Ecwid Blocks] ' . $message;
 
-		if (!empty($context) && is_array($context)) {
-			$log_message .= ' - Context: ' . wp_json_encode($context);
+		if ( ! empty( $context ) && is_array( $context ) ) {
+			$log_message .= ' - Context: ' . wp_json_encode( $context );
 		}
 
-		error_log($log_message);
+		error_log( $log_message );
 	}
 
 	/**
@@ -913,23 +807,23 @@ class Peaches_Ecwid_Utilities {
 	 *
 	 * @since 0.2.0
 	 *
-	 * @param string $url     URL to validate.
+	 * @param string $url           URL to validate.
 	 * @param bool   $require_https Whether to require HTTPS.
 	 *
 	 * @return string|false Validated URL or false if invalid.
 	 */
-	public static function validate_url($url, $require_https = false) {
-		if (!is_string($url) || empty($url)) {
+	public static function validate_url( $url, $require_https = false ) {
+		if ( ! is_string( $url ) || empty( $url ) ) {
 			return false;
 		}
 
-		$url = esc_url_raw($url);
+		$url = esc_url_raw( $url );
 
-		if (!filter_var($url, FILTER_VALIDATE_URL)) {
+		if ( ! filter_var( $url, FILTER_VALIDATE_URL ) ) {
 			return false;
 		}
 
-		if ($require_https && strpos($url, 'https://') !== 0) {
+		if ( $require_https && strpos( $url, 'https://' ) !== 0 ) {
 			return false;
 		}
 
@@ -946,15 +840,15 @@ class Peaches_Ecwid_Utilities {
 	 *
 	 * @return string Formatted file size.
 	 */
-	public static function format_file_size($bytes, $precision = 2) {
-		$bytes = max($bytes, 0);
-		$units = array('B', 'KB', 'MB', 'GB', 'TB', 'PB');
+	public static function format_file_size( $bytes, $precision = 2 ) {
+		$bytes = max( $bytes, 0 );
+		$units = array( 'B', 'KB', 'MB', 'GB', 'TB', 'PB' );
 
-		for ($i = 0; $bytes > 1024 && $i < count($units) - 1; $i++) {
+		for ( $i = 0; $bytes > 1024 && $i < count( $units ) - 1; $i++ ) {
 			$bytes /= 1024;
 		}
 
-		return round($bytes, $precision) . ' ' . $units[$i];
+		return round( $bytes, $precision ) . ' ' . $units[ $i ];
 	}
 
 	/**
@@ -978,7 +872,7 @@ class Peaches_Ecwid_Utilities {
 	 */
 	public static function is_debug_mode() {
 		$settings = self::get_plugin_settings();
-		return !empty($settings['debug_mode']);
+		return ! empty( $settings['debug_mode'] );
 	}
 
 	/**
@@ -991,41 +885,41 @@ class Peaches_Ecwid_Utilities {
 	 *
 	 * @return string Media type (image, video, audio, document).
 	 */
-	public static function get_media_type($file_path_or_url, $mime_type = '') {
+	public static function get_media_type( $file_path_or_url, $mime_type = '' ) {
 		// Check MIME type first if provided
-		if (!empty($mime_type)) {
-			if (strpos($mime_type, 'image/') === 0) {
+		if ( ! empty( $mime_type ) ) {
+			if ( strpos( $mime_type, 'image/' ) === 0 ) {
 				return 'image';
 			}
-			if (strpos($mime_type, 'video/') === 0) {
+			if ( strpos( $mime_type, 'video/' ) === 0 ) {
 				return 'video';
 			}
-			if (strpos($mime_type, 'audio/') === 0) {
+			if ( strpos( $mime_type, 'audio/' ) === 0 ) {
 				return 'audio';
 			}
-			if (strpos($mime_type, 'application/pdf') === 0 || strpos($mime_type, 'text/') === 0) {
+			if ( strpos( $mime_type, 'application/pdf' ) === 0 || strpos( $mime_type, 'text/' ) === 0 ) {
 				return 'document';
 			}
 		}
 
 		// Parse file extension
-		$extension = strtolower(pathinfo($file_path_or_url, PATHINFO_EXTENSION));
+		$extension = strtolower( pathinfo( $file_path_or_url, PATHINFO_EXTENSION ) );
 
 		$type_map = array(
-			'image' => array('jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp', 'tiff'),
-			'video' => array('mp4', 'webm', 'ogg', 'avi', 'mov', 'wmv', 'flv', 'm4v', '3gp', 'mkv'),
-			'audio' => array('mp3', 'wav', 'ogg', 'aac', 'flac', 'm4a', 'wma'),
-			'document' => array('pdf', 'doc', 'docx', 'txt', 'rtf', 'xls', 'xlsx', 'ppt', 'pptx')
+			'image'    => array( 'jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp', 'tiff' ),
+			'video'    => array( 'mp4', 'webm', 'ogg', 'avi', 'mov', 'wmv', 'flv', 'm4v', '3gp', 'mkv' ),
+			'audio'    => array( 'mp3', 'wav', 'ogg', 'aac', 'flac', 'm4a', 'wma' ),
+			'document' => array( 'pdf', 'doc', 'docx', 'txt', 'rtf', 'xls', 'xlsx', 'ppt', 'pptx' ),
 		);
 
-		foreach ($type_map as $type => $extensions) {
-			if (in_array($extension, $extensions, true)) {
+		foreach ( $type_map as $type => $extensions ) {
+			if ( in_array( $extension, $extensions, true ) ) {
 				return $type;
 			}
 		}
 
 		// Check for video hosting patterns
-		if (preg_match('/(?:youtube\.com|youtu\.be|vimeo\.com|wistia\.com)/i', $file_path_or_url)) {
+		if ( preg_match( '/(?:youtube\.com|youtu\.be|vimeo\.com|wistia\.com)/i', $file_path_or_url ) ) {
 			return 'video';
 		}
 

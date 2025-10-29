@@ -8,7 +8,7 @@
  * @since   0.1.2
  */
 
-if (!defined('ABSPATH')) {
+if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
@@ -37,32 +37,33 @@ class Peaches_Rewrite_Manager implements Peaches_Rewrite_Manager_Interface {
 	 * @since 0.1.2
 	 * @param Peaches_Ecwid_API_Interface $ecwid_api Ecwid API instance.
 	 */
-	public function __construct($ecwid_api) {
+	public function __construct( $ecwid_api ) {
 		$this->ecwid_api = $ecwid_api;
 
-		// Initialize hooks
+		// Initialize hooks.
 		$this->init_hooks();
 	}
 
 	/**
 	 * Initialize hooks.
 	 *
-	 * @since 0.1.2
+	 * @since  0.1.2
+	 * @return void
 	 */
 	private function init_hooks() {
-		add_action('init', array($this, 'add_ecwid_rewrite_rules'), 999);
-		add_action('template_redirect', array($this, 'product_template_redirect'), 1);
-		add_action('template_redirect', array($this, 'remove_default_canonical'), 999);
-		add_action('init', array($this, 'check_rewrite_rules'), 1000);
-		add_action('wp_head', array($this, 'add_product_og_tags'));
-		add_action('wp_footer', array($this, 'set_ecwid_config'), 1000);
+		add_action( 'init', array( $this, 'add_ecwid_rewrite_rules' ), 999 );
+		add_action( 'template_redirect', array( $this, 'product_template_redirect' ), 1 );
+		add_action( 'template_redirect', array( $this, 'remove_default_canonical' ), 999 );
+		add_action( 'init', array( $this, 'check_rewrite_rules' ), 1000 );
+		add_action( 'wp_head', array( $this, 'add_product_og_tags' ) );
+		add_action( 'wp_footer', array( $this, 'set_ecwid_config' ), 1000 );
 
-		// Add hooks for dynamic page title and meta content
-		add_filter('document_title_parts', array($this, 'filter_product_page_title'), 10, 1);
-		add_filter('the_title', array($this, 'filter_product_title'), 10, 2);
-		add_filter('get_the_excerpt', array($this, 'filter_product_excerpt'), 10, 2);
-		add_filter('wp_get_attachment_image_src', array($this, 'filter_product_featured_image'), 10, 4);
-		add_filter('get_canonical_url', array($this, 'filter_product_canonical_url'), 10, 2);
+		// Add hooks for dynamic page title and meta content.
+		add_filter( 'document_title_parts', array( $this, 'filter_product_page_title' ), 10, 1 );
+		add_filter( 'the_title', array( $this, 'filter_product_title' ), 10, 2 );
+		add_filter( 'get_the_excerpt', array( $this, 'filter_product_excerpt' ), 10, 2 );
+		add_filter( 'wp_get_attachment_image_src', array( $this, 'filter_product_featured_image' ), 10, 4 );
+		add_filter( 'get_canonical_url', array( $this, 'filter_product_canonical_url' ), 10, 2 );
 	}
 
 	/**
@@ -71,14 +72,13 @@ class Peaches_Rewrite_Manager implements Peaches_Rewrite_Manager_Interface {
 	 * Creates rewrite rules for each configured language using the shop paths
 	 * defined in the multilingual settings.
 	 *
-	 * @since 0.1.2
-	 *
+	 * @since  0.1.2
 	 * @return void
 	 */
 	public function add_ecwid_rewrite_rules() {
 		add_rewrite_tag( '%ecwid_product_slug%', '([^&]+)' );
 
-		// Get the template page ID from settings
+		// Get the template page ID from settings.
 		$template_page_id = $this->get_template_page_id();
 
 		if ( ! $template_page_id ) {
@@ -87,11 +87,11 @@ class Peaches_Rewrite_Manager implements Peaches_Rewrite_Manager_Interface {
 		}
 
 		if ( ! $template_page_id ) {
-			error_log( 'Peaches Ecwid: Could not create or find product template page' );
+			$this->log_error( 'Could not create or find product template page' );
 			return;
 		}
 
-		// Check if we have multilingual configuration
+		// Check if we have multilingual configuration.
 		if ( $this->is_multilingual_site() ) {
 			$this->add_multilingual_rewrite_rules( $template_page_id );
 		} else {
@@ -102,10 +102,8 @@ class Peaches_Rewrite_Manager implements Peaches_Rewrite_Manager_Interface {
 	/**
 	 * Add rewrite rules for multilingual sites.
 	 *
-	 * @since 0.1.2
-	 *
-	 * @param int $template_page_id Template page ID.
-	 *
+	 * @since  0.1.2
+	 * @param  int $template_page_id Template page ID.
 	 * @return void
 	 */
 	private function add_multilingual_rewrite_rules( $template_page_id ) {
@@ -123,9 +121,9 @@ class Peaches_Rewrite_Manager implements Peaches_Rewrite_Manager_Interface {
 				continue;
 			}
 
-			// For Polylang
+			// For Polylang.
 			if ( function_exists( 'pll_languages_list' ) ) {
-				// Default language (no prefix)
+				// Default language (no prefix).
 				if ( $language_data['is_default'] ) {
 					add_rewrite_rule(
 						'^' . preg_quote( $shop_path, '^' ) . '/([^/]+)/?$',
@@ -134,18 +132,17 @@ class Peaches_Rewrite_Manager implements Peaches_Rewrite_Manager_Interface {
 					);
 				}
 
-				// Language with prefix
+				// Language with prefix.
 				add_rewrite_rule(
 					'^' . preg_quote( $lang_code, '^' ) . '/' . preg_quote( $shop_path, '^' ) . '/([^/]+)/?$',
 					'index.php?page_id=' . $template_page_id . '&ecwid_product_slug=$matches[1]&lang=' . $lang_code,
 					'top'
 				);
-			}
-			// For WPML
-			elseif ( function_exists( 'icl_get_languages' ) ) {
+			} elseif ( function_exists( 'icl_get_languages' ) ) {
+				// For WPML.
 				$default_lang = apply_filters( 'wpml_default_language', null );
 
-				// Default language (no prefix)
+				// Default language (no prefix).
 				if ( $lang_code === $default_lang ) {
 					add_rewrite_rule(
 						'^' . preg_quote( $shop_path, '^' ) . '/([^/]+)/?$',
@@ -174,11 +171,11 @@ class Peaches_Rewrite_Manager implements Peaches_Rewrite_Manager_Interface {
 	 * @return void
 	 */
 	private function add_single_language_rewrite_rules( $template_page_id ) {
-		// Get the shop path from utility function (which will use Ecwid settings or default)
+		// Get the shop path from utility function (which will use Ecwid settings or default).
 		$shop_path = Peaches_Ecwid_Utilities::get_shop_path( true, false ); // Include parents, no trailing slash
 
 		if ( empty( $shop_path ) ) {
-			$shop_path = 'shop'; // Ultimate fallback
+			$shop_path = 'shop'; // Ultimate fallback.
 		}
 
 		// Add rewrite rule for single language
@@ -243,7 +240,7 @@ class Peaches_Rewrite_Manager implements Peaches_Rewrite_Manager_Interface {
 			return $settings_manager->get_shop_path_for_language( $language_code );
 		}
 
-		// Fallback to utility function
+		// Fallback to utility function.
 		return Peaches_Ecwid_Utilities::get_shop_path( true, false, $language_code );
 	}
 
@@ -629,14 +626,13 @@ class Peaches_Rewrite_Manager implements Peaches_Rewrite_Manager_Interface {
 
 		// Optional debug logging (enable WP_DEBUG to see)
 		if (defined('WP_DEBUG') && WP_DEBUG && defined('WP_DEBUG_LOG') && WP_DEBUG_LOG) {
-			error_log(sprintf(
-				'[Product Schema] Product #%d availability: inStock=%s, unlimited=%s, enabled=%s, quantity=%s, available_for_purchase=%s',
-				$product->id ?? 'unknown',
-				$in_stock ? 'true' : 'false',
-				$unlimited ? 'true' : 'false',
-				isset($product->enabled) ? ($product->enabled ? 'true' : 'false') : 'not-set',
-				isset($product->quantity) ? $product->quantity : 'not-set',
-				$available_for_purchase ? 'true' : 'false'
+			$this->log_info('[Product Schema] Product availability', array(
+				'product_id' => $product->id ?? 'unknown',
+				'in_stock' => $in_stock,
+				'unlimited' => $unlimited,
+				'enabled' => isset($product->enabled) ? $product->enabled : null,
+				'quantity' => isset($product->quantity) ? $product->quantity : null,
+				'available_for_purchase' => $available_for_purchase
 			));
 		}
 
@@ -932,7 +928,7 @@ class Peaches_Rewrite_Manager implements Peaches_Rewrite_Manager_Interface {
 			}
 		} catch (Exception $e) {
 			// Log error but don't break the page
-			error_log('Peaches Ecwid: Error getting translated product description: ' . $e->getMessage());
+			$this->log_error('Error getting translated product description', array('error' => $e->getMessage()));
 		}
 
 		return '';
@@ -959,13 +955,48 @@ class Peaches_Rewrite_Manager implements Peaches_Rewrite_Manager_Interface {
 	 * @since 0.1.2
 	 */
 	public function check_rewrite_rules() {
-		// Check if we need to update rewrite rules
-		$activated = get_option('peaches_ecwid_activated', 0);
-		$flushed = get_option('peaches_ecwid_flushed', 0);
+		// Check if we need to update rewrite rules.
+		$activated = get_option( 'peaches_ecwid_activated', 0 );
+		$flushed   = get_option( 'peaches_ecwid_flushed', 0 );
 
-		if ($activated > $flushed) {
-			flush_rewrite_rules(false);
-			update_option('peaches_ecwid_flushed', time());
+		if ( $activated > $flushed ) {
+			flush_rewrite_rules( false );
+			update_option( 'peaches_ecwid_flushed', time() );
+		}
+	}
+
+	/**
+	 * Log informational messages.
+	 *
+	 * @since 0.7.0
+	 *
+	 * @param string $message Log message.
+	 * @param array  $context Additional context data.
+	 *
+	 * @return void
+	 */
+	private function log_info( $message, $context = array() ) {
+		if ( class_exists( 'Peaches_Ecwid_Utilities' ) && Peaches_Ecwid_Utilities::is_debug_mode() ) {
+			Peaches_Ecwid_Utilities::log_error( '[INFO] [Rewrite Manager] ' . $message, $context );
+		}
+	}
+
+	/**
+	 * Log error messages.
+	 *
+	 * @since 0.7.0
+	 *
+	 * @param string $message Error message.
+	 * @param array  $context Additional context data.
+	 *
+	 * @return void
+	 */
+	private function log_error( $message, $context = array() ) {
+		if ( class_exists( 'Peaches_Ecwid_Utilities' ) ) {
+			Peaches_Ecwid_Utilities::log_error( '[Rewrite Manager] ' . $message, $context );
+		} else {
+			// Fallback logging if utilities class is not available
+			error_log( '[Peaches Ecwid] [Rewrite Manager] ' . $message . ( empty( $context ) ? '' : ' - Context: ' . wp_json_encode( $context ) ) );
 		}
 	}
 }

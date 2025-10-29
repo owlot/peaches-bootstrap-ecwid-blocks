@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       Peaches Boostrap Ecwid Blocks
  * Description:       Gutenberg blocks created for Ecwid Bootstrap themed components
- * Version:           0.6.2
+ * Version:           0.7.0
  * Requires at least: 6.7
  * Requires PHP:      7.4
  * Author:            Peaches.io
@@ -10,54 +10,59 @@
  * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain:       peaches
  *
- * @package CreateBlock
+ * @package PeachesEcwidBlocks
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit; // Exit if accessed directly.
 }
 
-// Define plugin constants
-define('PEACHES_ECWID_VERSION', '0.6.2');
-define('PEACHES_ECWID_PLUGIN_FILE', __FILE__);
-define('PEACHES_ECWID_PLUGIN_DIR', plugin_dir_path(__FILE__));
-define('PEACHES_ECWID_PLUGIN_URL', plugin_dir_url(__FILE__));
-define('PEACHES_ECWID_INCLUDES_DIR', PEACHES_ECWID_PLUGIN_DIR . 'includes/');
-define('PEACHES_ECWID_ASSETS_URL', PEACHES_ECWID_PLUGIN_URL . 'assets/');
-// Require the main plugin class
+// Define plugin constants.
+define( 'PEACHES_ECWID_VERSION', '0.7.0' );
+define( 'PEACHES_ECWID_PLUGIN_FILE', __FILE__ );
+define( 'PEACHES_ECWID_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
+define( 'PEACHES_ECWID_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
+define( 'PEACHES_ECWID_INCLUDES_DIR', PEACHES_ECWID_PLUGIN_DIR . 'includes/' );
+define( 'PEACHES_ECWID_ASSETS_URL', PEACHES_ECWID_PLUGIN_URL . 'assets/' );
+
+// Require the main plugin class.
 require_once PEACHES_ECWID_INCLUDES_DIR . 'class-ecwid-blocks.php';
 
-// Require block caching helper functions
+// Require block caching helper functions.
 require_once PEACHES_ECWID_INCLUDES_DIR . 'block-cache-helper.php';
 
-// Initialize the plugin
+// Initialize the plugin.
 Peaches_Ecwid_Blocks::get_instance();
 
 /**
- * Plugin activation hook
+ * Plugin activation hook.
+ *
+ * @since 0.1.0
+ *
+ * @return void
  */
 function peaches_bootstrap_ecwid_activate() {
-	// Get the instance and register the activation hook
+	// Get the instance and register the activation hook.
 	$instance = Peaches_Ecwid_Blocks::get_instance();
 	$instance->activate();
 }
-register_activation_hook(__FILE__, 'peaches_bootstrap_ecwid_activate');
+register_activation_hook( __FILE__, 'peaches_bootstrap_ecwid_activate' );
 
 /**
- * Plugin deactivation hook
+ * Plugin deactivation hook.
+ *
+ * @since 0.1.0
+ *
+ * @return void
  */
 function peaches_bootstrap_ecwid_deactivate() {
-	// Get the instance and register the deactivation hook
+	// Get the instance and register the deactivation hook.
 	$instance = Peaches_Ecwid_Blocks::get_instance();
 	$instance->deactivate();
 }
-register_deactivation_hook(__FILE__, 'peaches_bootstrap_ecwid_deactivate');
+register_deactivation_hook( __FILE__, 'peaches_bootstrap_ecwid_deactivate' );
 
-if (file_exists(plugin_dir_path(__FILE__) . 'vendor/autoload.php')) {
-    require_once plugin_dir_path(__FILE__) . 'vendor/autoload.php';
-}
-
-// Load debug utility if it exists (development/admin tool)
-if (file_exists(PEACHES_ECWID_INCLUDES_DIR . 'debug-product-object.php')) {
-    require_once PEACHES_ECWID_INCLUDES_DIR . 'debug-product-object.php';
+// Load Composer autoloader if available.
+if ( file_exists( plugin_dir_path( __FILE__ ) . 'vendor/autoload.php' ) ) {
+	require_once plugin_dir_path( __FILE__ ) . 'vendor/autoload.php';
 }

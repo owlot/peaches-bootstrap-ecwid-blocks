@@ -10,7 +10,7 @@
  * @version 0.3.2
  */
 
-if (!defined('ABSPATH')) {
+if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
@@ -38,101 +38,111 @@ class Peaches_Product_Lines_Manager implements Peaches_Product_Lines_Manager_Int
 	/**
 	 * Initialize WordPress hooks.
 	 *
-	 * @since 0.2.0
-	 *
+	 * @since  0.2.0
 	 * @return void
 	 */
 	private function init_hooks() {
-		add_action('init', array($this, 'register_taxonomies'));
-		add_action('admin_enqueue_scripts', array($this, 'enqueue_admin_scripts'));
+		add_action( 'init', array( $this, 'register_taxonomies' ) );
+		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_scripts' ) );
 
-		// Term meta boxes and saving
-		add_action('product_line_add_form_fields', array($this, 'add_term_meta_fields'));
-		add_action('product_line_edit_form_fields', array($this, 'edit_term_meta_fields'));
-		add_action('created_product_line', array($this, 'save_term_meta'));
-		add_action('edited_product_line', array($this, 'save_term_meta'));
+		// Term meta boxes and saving.
+		add_action( 'product_line_add_form_fields', array( $this, 'add_term_meta_fields' ) );
+		add_action( 'product_line_edit_form_fields', array( $this, 'edit_term_meta_fields' ) );
+		add_action( 'created_product_line', array( $this, 'save_term_meta' ) );
+		add_action( 'edited_product_line', array( $this, 'save_term_meta' ) );
 
-		// Custom columns in term list
-		add_filter('manage_edit-product_line_columns', array($this, 'add_term_columns'));
-		add_filter('manage_product_line_custom_column', array($this, 'render_term_columns'), 10, 3);
+		// Custom columns in term list.
+		add_filter( 'manage_edit-product_line_columns', array( $this, 'add_term_columns' ) );
+		add_filter( 'manage_product_line_custom_column', array( $this, 'render_term_columns' ), 10, 3 );
 
-		// Menu manipulation for unified admin experience
-		add_action('admin_init', array($this, 'setup_menu_manipulation'));
-		add_filter('parent_file', array($this, 'set_parent_menu_active'));
-		add_filter('submenu_file', array($this, 'set_submenu_active'));
-		add_action('admin_head', array($this, 'add_menu_styling'));
+		// Menu manipulation for unified admin experience.
+		add_action( 'admin_init', array( $this, 'setup_menu_manipulation' ) );
+		add_filter( 'parent_file', array( $this, 'set_parent_menu_active' ) );
+		add_filter( 'submenu_file', array( $this, 'set_submenu_active' ) );
+		add_action( 'admin_head', array( $this, 'add_menu_styling' ) );
 
-
-
-		// Modify default description field labels
-		add_action('admin_head', array($this, 'customize_description_field_labels'));
+		// Modify default description field labels.
+		add_action( 'admin_head', array( $this, 'customize_description_field_labels' ) );
 	}
 
 	/**
 	 * Register taxonomies.
 	 *
-	 * @since 0.2.0
-	 *
+	 * @since  0.2.0
 	 * @return void
 	 */
 	public function register_taxonomies() {
 		try {
-			// Register Product Lines taxonomy
+			// Register Product Lines taxonomy.
 			$labels = array(
-				'name'              => _x('Product Lines', 'taxonomy general name', 'peaches'),
-				'singular_name'     => _x('Product Line', 'taxonomy singular name', 'peaches'),
-				'search_items'      => __('Search Product Lines', 'peaches'),
-				'all_items'         => __('All Product Lines', 'peaches'),
-				'edit_item'         => __('Edit Product Line', 'peaches'),
-				'update_item'       => __('Update Product Line', 'peaches'),
-				'add_new_item'      => __('Add New Product Line', 'peaches'),
-				'new_item_name'     => __('New Product Line Name', 'peaches'),
-				'menu_name'         => __('Product Lines', 'peaches'),
+				'name'              => _x( 'Product Lines', 'taxonomy general name', 'peaches' ),
+				'singular_name'     => _x( 'Product Line', 'taxonomy singular name', 'peaches' ),
+				'search_items'      => __( 'Search Product Lines', 'peaches' ),
+				'all_items'         => __( 'All Product Lines', 'peaches' ),
+				'edit_item'         => __( 'Edit Product Line', 'peaches' ),
+				'update_item'       => __( 'Update Product Line', 'peaches' ),
+				'add_new_item'      => __( 'Add New Product Line', 'peaches' ),
+				'new_item_name'     => __( 'New Product Line Name', 'peaches' ),
+				'menu_name'         => __( 'Product Lines', 'peaches' ),
 			);
 
-			$result = register_taxonomy('product_line', 'product_settings', array(
-				'hierarchical'       => true, // For future flexibility
-				'labels'             => $labels,
-				'show_ui'            => true,
-				'show_in_menu'       => false, // We'll integrate with unified interface
-				'show_admin_column'  => false, // We'll handle our own columns
-				'query_var'          => true,
-				'rewrite'            => array(
-					'slug'       => 'product-line',
-					'with_front' => false,
-				),
-				'capabilities'       => array(
-					'manage_terms' => 'manage_categories',
-					'edit_terms'   => 'manage_categories',
-					'delete_terms' => 'manage_categories',
-					'assign_terms' => 'edit_posts',
-				),
-				'public'             => false,
-				'publicly_queryable' => false,
-			));
+			$result = register_taxonomy(
+				'product_line',
+				'product_settings',
+				array(
+					'hierarchical'       => true, // For future flexibility.
+					'labels'             => $labels,
+					'show_ui'            => true,
+					'show_in_menu'       => false, // We'll integrate with unified interface.
+					'show_admin_column'  => false, // We'll handle our own columns.
+					'query_var'          => true,
+					'rewrite'            => array(
+						'slug'       => 'product-line',
+						'with_front' => false,
+					),
+					'capabilities'       => array(
+						'manage_terms' => 'manage_categories',
+						'edit_terms'   => 'manage_categories',
+						'delete_terms' => 'manage_categories',
+						'assign_terms' => 'edit_posts',
+					),
+					'public'             => false,
+					'publicly_queryable' => false,
+				)
+			);
 
-			if (is_wp_error($result)) {
-				$this->log_error('Failed to register product_line taxonomy', array(
-					'error' => $result->get_error_message(),
-				));
+			if ( is_wp_error( $result ) ) {
+				$this->log_error(
+					'Failed to register product_line taxonomy',
+					array(
+						'error' => $result->get_error_message(),
+					)
+				);
 			}
 
-			// Register line media tag taxonomy for organizing media
-			register_taxonomy('line_media_tag', null, array(
-				'labels'            => array(
-					'name' => __('Line Media Tags', 'peaches'),
-				),
-				'public'            => false,
-				'publicly_queryable' => false,
-				'show_ui'           => false,
-				'show_in_menu'      => false,
-			));
+			// Register line media tag taxonomy for organizing media.
+			register_taxonomy(
+				'line_media_tag',
+				null,
+				array(
+					'labels'             => array(
+						'name' => __( 'Line Media Tags', 'peaches' ),
+					),
+					'public'             => false,
+					'publicly_queryable' => false,
+					'show_ui'            => false,
+					'show_in_menu'       => false,
+				)
+			);
 
-		} catch (Exception $e) {
-			$this->log_error('Exception registering taxonomies', array(
-				'error' => $e->getMessage(),
-				'trace' => $e->getTraceAsString(),
-			));
+		} catch ( Exception $e ) {
+			$this->log_error(
+				'Exception registering taxonomies',
+				array(
+					'error' => $e->getMessage(),
+					'trace' => $e->getTraceAsString(),
+				)
+			);
 		}
 	}
 

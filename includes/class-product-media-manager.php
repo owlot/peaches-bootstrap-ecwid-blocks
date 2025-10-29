@@ -9,7 +9,7 @@
  * @since   0.2.1
  */
 
-if (!defined('ABSPATH')) {
+if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
@@ -58,7 +58,7 @@ class Peaches_Product_Media_Manager implements Peaches_Product_Media_Manager_Int
 	 * @access private
 	 * @var    array
 	 */
-	private $supported_media_types = array('upload', 'url', 'ecwid');
+	private $supported_media_types = array( 'upload', 'url', 'ecwid' );
 
 	/**
 	 * Constructor.
@@ -70,16 +70,16 @@ class Peaches_Product_Media_Manager implements Peaches_Product_Media_Manager_Int
 	 *
 	 * @throws InvalidArgumentException If required parameters are invalid.
 	 */
-	public function __construct($ecwid_api, $media_tags_manager) {
-		if (!$ecwid_api instanceof Peaches_Ecwid_API_Interface) {
-			throw new InvalidArgumentException('Ecwid API instance is required');
+	public function __construct( $ecwid_api, $media_tags_manager ) {
+		if ( ! $ecwid_api instanceof Peaches_Ecwid_API_Interface ) {
+			throw new InvalidArgumentException( 'Ecwid API instance is required' );
 		}
 
-		if (!$media_tags_manager instanceof Peaches_Media_Tags_Manager) {
-			throw new InvalidArgumentException('Media Tags Manager instance is required');
+		if ( ! $media_tags_manager instanceof Peaches_Media_Tags_Manager ) {
+			throw new InvalidArgumentException( 'Media Tags Manager instance is required' );
 		}
 
-		$this->ecwid_api = $ecwid_api;
+		$this->ecwid_api          = $ecwid_api;
 		$this->media_tags_manager = $media_tags_manager;
 
 		$this->init_hooks();
@@ -88,15 +88,14 @@ class Peaches_Product_Media_Manager implements Peaches_Product_Media_Manager_Int
 	/**
 	 * Initialize WordPress hooks.
 	 *
-	 * @since 0.2.1
-	 *
+	 * @since  0.2.1
 	 * @return void
 	 */
 	private function init_hooks() {
-		add_action('wp_ajax_preview_media_url', array($this, 'ajax_preview_media_url'));
-		add_action('wp_ajax_load_ecwid_media', array($this, 'ajax_load_ecwid_media'));
-		add_action('wp_enqueue_scripts', array($this, 'enqueue_frontend_scripts'));
-		add_action('admin_enqueue_scripts', array($this, 'enqueue_admin_scripts'));
+		add_action( 'wp_ajax_preview_media_url', array( $this, 'ajax_preview_media_url' ) );
+		add_action( 'wp_ajax_load_ecwid_media', array( $this, 'ajax_load_ecwid_media' ) );
+		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_frontend_scripts' ) );
+		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_scripts' ) );
 	}
 
 	/**
@@ -104,87 +103,102 @@ class Peaches_Product_Media_Manager implements Peaches_Product_Media_Manager_Int
 	 *
 	 * Saves product media with validation and error handling.
 	 *
-	 * @since 0.2.1
-	 *
-	 * @param int   $post_id    Post ID.
-	 * @param array $media_data Media data from form.
-	 *
+	 * @since  0.2.1
+	 * @param  int   $post_id    Post ID.
+	 * @param  array $media_data Media data from form.
 	 * @return void
-	 *
 	 * @throws InvalidArgumentException If parameters are invalid.
 	 */
-	public function save_product_media($post_id, $media_data) {
-		if (!is_numeric($post_id) || $post_id <= 0) {
-			throw new InvalidArgumentException('Invalid post ID provided');
+	public function save_product_media( $post_id, $media_data ) {
+		if ( ! is_numeric( $post_id ) || $post_id <= 0 ) {
+			throw new InvalidArgumentException( 'Invalid post ID provided' );
 		}
 
-		if (!is_array($media_data)) {
-			$this->log_error('Invalid media data provided', array(
-				'post_id'    => $post_id,
-				'data_type'  => gettype($media_data),
-			));
+		if ( ! is_array( $media_data ) ) {
+			$this->log_error(
+				'Invalid media data provided',
+				array(
+					'post_id'   => $post_id,
+					'data_type' => gettype( $media_data ),
+				)
+			);
 			return;
 		}
 
-		$post_id = absint($post_id);
+		$post_id = absint( $post_id );
 
 		try {
-			$product_media = array();
+			$product_media   = array();
 			$processed_count = 0;
-			$errors = array();
+			$errors          = array();
 
-			foreach ($media_data as $tag_key => $media_item) {
+			foreach ( $media_data as $tag_key => $media_item ) {
 				try {
-					$processed_item = $this->process_media_item($tag_key, $media_item, $post_id);
-					if ($processed_item) {
+					$processed_item = $this->process_media_item( $tag_key, $media_item, $post_id );
+					if ( $processed_item ) {
 						$product_media[] = $processed_item;
 						$processed_count++;
 					}
-				} catch (Exception $e) {
+				} catch ( Exception $e ) {
 					$errors[] = array(
 						'tag_key' => $tag_key,
 						'error'   => $e->getMessage(),
 					);
-					$this->log_error('Error processing media item', array(
-						'post_id'  => $post_id,
-						'tag_key'  => $tag_key,
-						'error'    => $e->getMessage(),
-					));
+					$this->log_error(
+						'Error processing media item',
+						array(
+							'post_id' => $post_id,
+							'tag_key' => $tag_key,
+							'error'   => $e->getMessage(),
+						)
+					);
 				}
 			}
 
-			$this->log_info('Callimg update post meta _product_media', $product_media);
-			// Save the processed media data
-			$result = update_post_meta($post_id, '_product_media', $product_media);
+			$this->log_info( 'Calling update post meta _product_media', $product_media );
+			// Save the processed media data.
+			$result = update_post_meta( $post_id, '_product_media', $product_media );
 
-			if ($result === false) {
-				$this->log_error('Failed to save product media meta', array(
-					'post_id' => $post_id,
-				));
+			if ( false === $result ) {
+				$this->log_error(
+					'Failed to save product media meta',
+					array(
+						'post_id' => $post_id,
+					)
+				);
 			} else {
-				$this->log_info('Successfully saved product media', array(
-					'post_id'          => $post_id,
-					'processed_count'  => $processed_count,
-					'error_count'      => count($errors),
-				));
+				$this->log_info(
+					'Successfully saved product media',
+					array(
+						'post_id'         => $post_id,
+						'processed_count' => $processed_count,
+						'error_count'     => count( $errors ),
+					)
+				);
 
-				// Clear cache for this post
-				unset($this->cache['media_' . $post_id]);
+				// Clear cache for this post.
+				unset( $this->cache[ 'media_' . $post_id ] );
 			}
 
-			if (!empty($errors)) {
-				$this->log_error('Errors occurred during media processing', array(
+			if ( ! empty( $errors ) ) {
+				$this->log_error(
+					'Errors occurred during media processing',
+					array(
+						'post_id' => $post_id,
+						'errors'  => $errors,
+					)
+				);
+			}
+
+		} catch ( Exception $e ) {
+			$this->log_error(
+				'Exception saving product media',
+				array(
 					'post_id' => $post_id,
-					'errors'  => $errors,
-				));
-			}
-
-		} catch (Exception $e) {
-			$this->log_error('Exception saving product media', array(
-				'post_id' => $post_id,
-				'error'   => $e->getMessage(),
-				'trace'   => $e->getTraceAsString(),
-			));
+					'error'   => $e->getMessage(),
+					'trace'   => $e->getTraceAsString(),
+				)
+			);
 		}
 	}
 
@@ -193,10 +207,9 @@ class Peaches_Product_Media_Manager implements Peaches_Product_Media_Manager_Int
 	 *
 	 * Retrieves media data for a specific tag with caching and validation.
 	 *
-	 * @since 0.2.1
-	 *
-	 * @param int    $post_id Post ID.
-	 * @param string $tag_key Media tag key.
+	 * @since  0.2.1
+	 * @param  int    $post_id Post ID.
+	 * @param  string $tag_key Media tag key.
 	 *
 	 * @return array|null Media data or null if not found.
 	 *
